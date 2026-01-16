@@ -8,6 +8,7 @@ edition = "2024"
 [dev-dependencies]
 rstest = "0.26"
 fastrand = "2"
+bytemuck = "1"
 
 [features]
 avx512 = []

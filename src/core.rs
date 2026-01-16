@@ -1,4 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 /// Information about the compressed block.
 pub struct CompressionDetails {
     /// The bit length of the compressed values.
