@@ -867,8 +867,8 @@ pub unsafe fn to_u32(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 
 #[cfg(test)]
 mod tests {
-    use crate::uint32::max_compressed_size;
     use super::*;
+    use crate::uint32::max_compressed_size;
 
     #[test]
     #[cfg_attr(not(target_feature = "avx512f"), ignore)]
@@ -1207,6 +1207,10 @@ mod tests {
         let values = [pack_value; X128];
         let mut output = [0; X128_MAX_OUTPUT_LEN];
         unsafe { packer(&mut output, &values, X128) };
-        assert!(output[..max_compressed_size::<X128>(bit_len as usize)].iter().all(|b| *b == u8::MAX));
+        assert!(
+            output[..max_compressed_size::<X128>(bit_len as usize)]
+                .iter()
+                .all(|b| *b == u8::MAX)
+        );
     }
 }

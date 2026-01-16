@@ -1,5 +1,4 @@
 //! 32-bit integer bitpacking routines
-
 use crate::{X128, X256};
 
 #[doc(hidden)]
@@ -32,4 +31,15 @@ const fn compressed_size(bit_length: usize, num_elements: usize) -> usize {
     let remainder = bit_length % 4;
     let remainder_bytes = num_elements.div_ceil(8) * remainder;
     (quotient * num_elements).div_ceil(2) + remainder_bytes
+}
+
+/// Split the provided block of 256 elements into two 128 bit elements.
+pub(super) fn split_x256(block: &mut [u32; X256]) -> [&mut [u32; X128]; 2] {
+    // SAFETY:
+    // We know the exact length of the input block and can guarantee
+    // the ranges do not overlap.
+    let [half1, half2] = unsafe { block.get_disjoint_unchecked_mut([0..X128, X128..X256]) };
+    let half1: &mut [u32; X128] = unsafe { half1.try_into().unwrap_unchecked() };
+    let half2: &mut [u32; X128] = unsafe { half2.try_into().unwrap_unchecked() };
+    [half1, half2]
 }
