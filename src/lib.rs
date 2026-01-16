@@ -20,11 +20,16 @@ where
 /// applying Delta encoding to the array.
 ///
 /// This requires that the input values are sorted from smallest to largest.
-pub fn compress_delta<A>(n: usize, input: &A, out: &mut A::CompressedBuffer) -> CompressionDetails
+pub fn compress_delta<A>(
+    initial_value: A::InitialValue,
+    n: usize,
+    input: &mut A,
+    out: &mut A::CompressedBuffer,
+) -> CompressionDetails
 where
     A: CompressibleArray,
 {
-    A::compress_delta(n, input, out)
+    A::compress_delta(initial_value, n, input, out)
 }
 
 /// Apply bitpacking compression to the provided input after first
@@ -32,11 +37,16 @@ where
 ///
 /// This requires that the input values are monotonic, meaning there must be _at least_
 /// a gap of `1` between each succeeding value.
-pub fn compress_delta1<A>(n: usize, input: &A, out: &mut A::CompressedBuffer) -> CompressionDetails
+pub fn compress_delta1<A>(
+    initial_value: A::InitialValue,
+    n: usize,
+    input: &mut A,
+    out: &mut A::CompressedBuffer,
+) -> CompressionDetails
 where
     A: CompressibleArray,
 {
-    A::compress_delta1(n, input, out)
+    A::compress_delta1(initial_value, n, input, out)
 }
 
 /// Decompress the input block containing the packed values, writing the decompressed
@@ -47,7 +57,12 @@ where
 /// - `n` should be the number of elements that the compressed buffer holds.
 /// - `compressed_bit_length` should be the bit length of the compressed block values
 ///   as reported by the [CompressionDetails] after compressing the block.
-pub fn decompress<A>(n: usize, compressed_bit_length: u8, input: &A::CompressedBuffer, out: &mut A)
+pub fn decompress<A>(
+    n: usize,
+    compressed_bit_length: u8,
+    input: &A::CompressedBuffer,
+    out: &mut A,
+) -> usize
 where
     A: CompressibleArray,
 {
@@ -63,14 +78,16 @@ where
 /// - `compressed_bit_length` should be the bit length of the compressed block values
 ///   as reported by the [CompressionDetails] after compressing the block.
 pub fn decompress_delta<A>(
+    initial_value: A::InitialValue,
     n: usize,
     compressed_bit_length: u8,
     input: &A::CompressedBuffer,
     out: &mut A,
-) where
+) -> usize
+where
     A: CompressibleArray,
 {
-    A::decompress_delta(n, compressed_bit_length, input, out)
+    A::decompress_delta(initial_value, n, compressed_bit_length, input, out)
 }
 
 /// Decompress the input block containing the packed values, reverse the Delta-1 encoding and then
@@ -82,12 +99,14 @@ pub fn decompress_delta<A>(
 /// - `compressed_bit_length` should be the bit length of the compressed block values
 ///   as reported by the [CompressionDetails] after compressing the block.
 pub fn decompress_delta1<A>(
+    initial_value: A::InitialValue,
     n: usize,
     compressed_bit_length: u8,
     input: &A::CompressedBuffer,
     out: &mut A,
-) where
+) -> usize
+where
     A: CompressibleArray,
 {
-    A::decompress_delta1(n, compressed_bit_length, input, out)
+    A::decompress_delta1(initial_value, n, compressed_bit_length, input, out)
 }

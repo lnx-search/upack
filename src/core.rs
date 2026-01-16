@@ -11,6 +11,8 @@ pub struct CompressionDetails {
 pub trait CompressibleArray {
     /// The output array to have the compressed output written to.
     type CompressedBuffer;
+    /// The type of the initial value.
+    type InitialValue;
 
     /// The maximum number of bytes that can be written to the output
     const MAX_OUTPUT_SIZE: usize;
@@ -27,8 +29,9 @@ pub trait CompressibleArray {
     /// `n` should be the number of elements to select from the input
     /// to compress.
     fn compress_delta(
+        initial_value: Self::InitialValue,
         n: usize,
-        input: &Self,
+        input: &mut Self,
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails;
 
@@ -38,8 +41,9 @@ pub trait CompressibleArray {
     /// `n` should be the number of elements to select from the input
     /// to compress.
     fn compress_delta1(
+        initial_value: Self::InitialValue,
         n: usize,
-        input: &Self,
+        input: &mut Self,
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails;
 
@@ -48,12 +52,14 @@ pub trait CompressibleArray {
     /// - `n` should be the number of elements that the compressed buffer holds.
     /// - `compressed_bit_length` should be the bit length of the compressed block values
     ///   as reported by the [CompressionDetails] after compressing the block.
+    ///
+    /// Returns the number of bytes read from the input.
     fn decompress(
         n: usize,
         compressed_bit_length: u8,
         input: &Self::CompressedBuffer,
-        out: &mut Self,
-    );
+        output: &mut Self,
+    ) -> usize;
 
     /// Decompress the input and write the recovered values, reverse the Delta encoding
     /// and write the output.
@@ -61,12 +67,15 @@ pub trait CompressibleArray {
     /// - `n` should be the number of elements that the compressed buffer holds.
     /// - `compressed_bit_length` should be the bit length of the compressed block values
     ///   as reported by the [CompressionDetails] after compressing the block.
+    ///
+    /// Returns the number of bytes read from the input.
     fn decompress_delta(
+        initial_value: Self::InitialValue,
         n: usize,
         compressed_bit_length: u8,
         input: &Self::CompressedBuffer,
-        out: &mut Self,
-    );
+        output: &mut Self,
+    ) -> usize;
 
     /// Decompress the input and write the recovered values, reverse the Delta-1 encoding
     /// and write the output.
@@ -74,10 +83,13 @@ pub trait CompressibleArray {
     /// - `n` should be the number of elements that the compressed buffer holds.
     /// - `compressed_bit_length` should be the bit length of the compressed block values
     ///   as reported by the [CompressionDetails] after compressing the block.
+    ///
+    /// Returns the number of bytes read from the input.
     fn decompress_delta1(
+        initial_value: Self::InitialValue,
         n: usize,
         compressed_bit_length: u8,
         input: &Self::CompressedBuffer,
-        out: &mut Self,
-    );
+        output: &mut Self,
+    ) -> usize;
 }

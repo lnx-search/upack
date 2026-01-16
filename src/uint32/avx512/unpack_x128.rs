@@ -1,9 +1,10 @@
+use std::arch::x86_64::*;
+use std::cmp;
+
 use super::data::*;
 use super::utils::*;
 use crate::X128;
 use crate::uint32::X128_MAX_OUTPUT_LEN;
-use std::arch::x86_64::*;
-use std::cmp;
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
 /// Unpack the provided block of integers from `nbits` sized elements.

@@ -8,3 +8,10 @@ edition = "2024"
 [dev-dependencies]
 rstest = "0.26"
 fastrand = "2"
+
+[features]
+avx512 = []
+avx2 = []
+sse = []
+neon = []
+default = ["avx512", "avx2", "sse", "neon"]
