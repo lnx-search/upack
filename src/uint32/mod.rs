@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_compress_decompress_real_data_sample() {
-        let sample_data = load_sample_u32_doc_id_data_x128();
+        let sample_data = crate::test_utils::load_sample_u32_doc_id_data_x128();
 
         for select_n in 1..X128 {
             let mut data = sample_data.clone();
@@ -293,16 +293,9 @@ mod tests {
         }
     }
 
-    fn load_sample_u32_doc_id_data_x128() -> Vec<[u32; X128]> {
-        let raw_data_le = std::fs::read("data/wikipedia-sample-docids.bin")
-            .expect("unable to read wikipedia-sample-docids.bin");
-        let slice: &[[u32; X128]] = bytemuck::cast_slice(&raw_data_le);
-        slice.to_vec()
-    }
-
     #[test]
     fn test_compress_decompress_base_fuzz() {
-        let mut data = load_sample_u32_doc_id_data_x128();
+        let mut data = crate::test_utils::load_sample_u32_doc_id_data_x128();
         let mut out = [0; X128_MAX_OUTPUT_LEN];
         for _ in 0..10 {
             for sample in data.iter_mut() {
@@ -313,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_compress_decompress_delta_fuzz() {
-        let mut data = load_sample_u32_doc_id_data_x128();
+        let mut data = crate::test_utils::load_sample_u32_doc_id_data_x128();
         let mut out = [0; X128_MAX_OUTPUT_LEN];
         for _ in 0..10 {
             for sample in data.iter_mut() {
@@ -324,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_compress_decompress_delta1_fuzz() {
-        let mut data = load_sample_u32_doc_id_data_x128();
+        let mut data = crate::test_utils::load_sample_u32_doc_id_data_x128();
         let mut out = [0; X128_MAX_OUTPUT_LEN];
         for _ in 0..10 {
             for sample in data.iter_mut() {
