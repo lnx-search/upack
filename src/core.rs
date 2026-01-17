@@ -54,12 +54,7 @@ pub trait CompressibleArray {
     ///   as reported by the [CompressionDetails] after compressing the block.
     ///
     /// Returns the number of bytes read from the input.
-    fn decompress(
-        n: usize,
-        compressed_bit_length: u8,
-        input: &Self::CompressedBuffer,
-        output: &mut Self,
-    ) -> usize;
+    fn decompress(n: usize, compressed_bit_length: u8, input: &[u8], output: &mut Self) -> usize;
 
     /// Decompress the input and write the recovered values, reverse the Delta encoding
     /// and write the output.
@@ -73,7 +68,7 @@ pub trait CompressibleArray {
         initial_value: Self::InitialValue,
         n: usize,
         compressed_bit_length: u8,
-        input: &Self::CompressedBuffer,
+        input: &[u8],
         output: &mut Self,
     ) -> usize;
 
@@ -89,7 +84,7 @@ pub trait CompressibleArray {
         initial_value: Self::InitialValue,
         n: usize,
         compressed_bit_length: u8,
-        input: &Self::CompressedBuffer,
+        input: &[u8],
         output: &mut Self,
     ) -> usize;
 }

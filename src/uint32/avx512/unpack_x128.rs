@@ -11,15 +11,12 @@ use crate::uint32::X128_MAX_OUTPUT_LEN;
 ///
 /// # Safety
 /// - The CPU features required must be met.
+/// - The `input` buffer must be at least [max_compressed_size(nbits)](crate::uint32::max_compressed_size)
+///   in size to safely read.
 /// - `read_n` must also be between `0..=128`.
 /// - `nbits` being between `1..=32`.
-pub unsafe fn from_nbits(
-    input: &[u8; X128_MAX_OUTPUT_LEN],
-    nbits: u8,
-    block: &mut [u32; X128],
-    read_n: usize,
-) {
-    const LUT: [unsafe fn(&[u8; X128_MAX_OUTPUT_LEN], &mut [u32; X128], usize); 33] = [
+pub unsafe fn from_nbits(input: *const u8, nbits: u8, block: &mut [u32; X128], read_n: usize) {
+    const LUT: [unsafe fn(*const u8, &mut [u32; X128], usize); 33] = [
         from_u0, from_u1, from_u2, from_u3, from_u4, from_u5, from_u6, from_u7, from_u8, from_u9,
         from_u10, from_u11, from_u12, from_u13, from_u14, from_u15, from_u16, from_u17, from_u18,
         from_u19, from_u20, from_u21, from_u22, from_u23, from_u24, from_u25, from_u26, from_u27,
@@ -35,7 +32,7 @@ pub unsafe fn from_nbits(
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u0(_input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], _read_n: usize) {
+pub unsafe fn from_u0(_input: *const u8, block: &mut [u32; X128], _read_n: usize) {
     let data = [_mm512_setzero_si512(); 8];
     store_u32x128(block, data);
 }
@@ -47,9 +44,9 @@ pub unsafe fn from_u0(_input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u1(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u1(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let data = unsafe { unpack_u1_registers::<1>(input) };
     store_u32x128(block, data);
 }
@@ -82,9 +79,9 @@ unsafe fn unpack_u1_registers<const FILL_VALUE: u32>(input: *const u8) -> [__m51
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u2(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u2(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let data = unsafe { unpack_u2_registers(input, read_n) };
     store_u32x128(block, data);
 }
@@ -123,9 +120,9 @@ unsafe fn unpack_u2_registers(input: *const u8, read_n: usize) -> [__m512i; 8] {
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u3(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u3(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let packed = unsafe { unpack_u3_registers::<0>(input, read_n) };
     let data = unpack_u8_u32_x8(packed);
     store_u32x128(block, data);
@@ -174,9 +171,9 @@ unsafe fn unpack_u3_registers<const SHIFT_BITS_LEFT: u32>(
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u4(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u4(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let packed = unsafe { unpack_u4_registers(input) };
     let data = unpack_u8_u32_x8(packed);
     store_u32x128(block, data);
@@ -216,9 +213,9 @@ unsafe fn unpack_u4_registers(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u5(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u5(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let data = unsafe { unpack_u5_registers(input, read_n) };
     store_u32x128(block, data);
 }
@@ -252,9 +249,9 @@ unsafe fn unpack_u5_registers(input: *const u8, read_n: usize) -> [__m512i; 8] {
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u6(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u6(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let data = unsafe { unpack_u6_registers(input, read_n) };
     store_u32x128(block, data);
 }
@@ -298,9 +295,9 @@ unsafe fn unpack_u6_registers(input: *const u8, read_n: usize) -> [__m512i; 8] {
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u7(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u7(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let data = unsafe { unpack_u7_registers(input, read_n) };
     store_u32x128(block, data);
 }
@@ -327,9 +324,9 @@ unsafe fn unpack_u7_registers(input: *const u8, read_n: usize) -> [__m512i; 8] {
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u8(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u8(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let packed = unsafe { load_si512x2(input) };
     let data = unpack_u8_u32_x8(packed);
     store_u32x128(block, data);
@@ -342,9 +339,8 @@ pub unsafe fn from_u8(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128]
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u9(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u9(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -365,9 +361,8 @@ pub unsafe fn from_u9(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128]
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u10(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u10(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -388,9 +383,8 @@ pub unsafe fn from_u10(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u11(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u11(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -412,9 +406,8 @@ pub unsafe fn from_u11(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u12(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u12(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -436,9 +429,8 @@ pub unsafe fn from_u12(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u13(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u13(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -459,9 +451,8 @@ pub unsafe fn from_u13(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u14(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u14(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -482,9 +473,8 @@ pub unsafe fn from_u14(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u15(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u15(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x2(input) };
     let data_lo_bits = unpack_u8_u32_x8(packed);
@@ -505,9 +495,8 @@ pub unsafe fn from_u15(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u16(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u16(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data = unpack_u16_u32_x8(packed);
@@ -521,9 +510,8 @@ pub unsafe fn from_u16(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u17(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u17(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -544,9 +532,8 @@ pub unsafe fn from_u17(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u18(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u18(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -567,9 +554,8 @@ pub unsafe fn from_u18(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u19(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u19(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -591,9 +577,8 @@ pub unsafe fn from_u19(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u20(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u20(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -615,9 +600,8 @@ pub unsafe fn from_u20(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u21(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u21(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -638,9 +622,8 @@ pub unsafe fn from_u21(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u22(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u22(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -661,9 +644,8 @@ pub unsafe fn from_u22(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u23(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u23(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -684,9 +666,8 @@ pub unsafe fn from_u23(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u24(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u24(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let packed = unsafe { load_si512x4(input) };
     let data_lo_bits = unpack_u16_u32_x8(packed);
@@ -708,9 +689,8 @@ pub unsafe fn from_u24(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u25(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u25(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -739,9 +719,8 @@ pub unsafe fn from_u25(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u26(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u26(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -770,9 +749,8 @@ pub unsafe fn from_u26(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u27(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u27(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -802,9 +780,8 @@ pub unsafe fn from_u27(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u28(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u28(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -834,9 +811,8 @@ pub unsafe fn from_u28(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u29(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u29(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -865,9 +841,8 @@ pub unsafe fn from_u29(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u30(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u30(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -896,9 +871,8 @@ pub unsafe fn from_u30(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u31(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u31(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
 
     let mut offset = 0;
 
@@ -927,9 +901,9 @@ pub unsafe fn from_u31(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128
 /// # Safety
 /// - The CPU features required must be met.
 /// - `read_n` must also be between `0..=128`.
-pub unsafe fn from_u32(input: &[u8; X128_MAX_OUTPUT_LEN], block: &mut [u32; X128], read_n: usize) {
+pub unsafe fn from_u32(input: *const u8, block: &mut [u32; X128], read_n: usize) {
     debug_assert!(read_n <= 128, "read_n must be less than or equal to 128");
-    let input = input.as_ptr();
+
     let data = unsafe { load_si512x8(input) };
     store_u32x128(block, data);
 }
@@ -976,12 +950,12 @@ mod tests {
     #[cfg_attr(not(target_feature = "avx512f"), ignore)]
     fn test_saturated_unpack(
         #[case] bit_len: u8,
-        #[case] unpacker: unsafe fn(&[u8; X128_MAX_OUTPUT_LEN], &mut [u32; X128], usize),
+        #[case] unpacker: unsafe fn(*const u8, &mut [u32; X128], usize),
     ) {
         let saturated_bytes = [u8::MAX; X128_MAX_OUTPUT_LEN];
 
         let mut unpacked = [0; X128];
-        unsafe { unpacker(&saturated_bytes, &mut unpacked, X128) };
+        unsafe { unpacker(saturated_bytes.as_ptr(), &mut unpacked, X128) };
 
         let expected_value = (2u64.pow(bit_len as u32) - 1) as u32;
         assert_eq!(unpacked, [expected_value; X128]);
@@ -1024,7 +998,7 @@ mod tests {
     fn test_pack_unpack(
         #[case] bit_len: u8,
         #[case] packer: unsafe fn(&mut [u8; X128_MAX_OUTPUT_LEN], &[u32; X128], usize),
-        #[case] unpacker: unsafe fn(&[u8; X128_MAX_OUTPUT_LEN], &mut [u32; X128], usize),
+        #[case] unpacker: unsafe fn(*const u8, &mut [u32; X128], usize),
     ) {
         fastrand::seed(5876358762523525);
 
@@ -1039,7 +1013,7 @@ mod tests {
         unsafe { packer(&mut packed, &values, X128) };
 
         let mut unpacked = [0; X128];
-        unsafe { unpacker(&packed, &mut unpacked, X128) };
+        unsafe { unpacker(packed.as_ptr(), &mut unpacked, X128) };
         assert_eq!(unpacked, values);
     }
 
@@ -1080,7 +1054,7 @@ mod tests {
     fn test_pack_unpack_partial(
         #[case] bit_len: u8,
         #[case] packer: unsafe fn(&mut [u8; X128_MAX_OUTPUT_LEN], &[u32; X128], usize),
-        #[case] unpacker: unsafe fn(&[u8; X128_MAX_OUTPUT_LEN], &mut [u32; X128], usize),
+        #[case] unpacker: unsafe fn(*const u8, &mut [u32; X128], usize),
         #[values(1, 32, 64, 65, 97)] num_values: usize,
     ) {
         fastrand::seed(5876358762523525);
@@ -1099,7 +1073,7 @@ mod tests {
         packed[expected_bytes_required..].fill(0);
 
         let mut unpacked = [0; X128];
-        unsafe { unpacker(&packed, &mut unpacked, num_values) };
+        unsafe { unpacker(packed.as_ptr(), &mut unpacked, num_values) };
         assert_eq!(unpacked[..num_values], values[..num_values]);
     }
 
@@ -1142,7 +1116,7 @@ mod tests {
     #[cfg_attr(not(target_feature = "avx512f"), ignore)]
     fn test_pack_unpack_partial_check_length_valid(
         #[case] bit_len: u8,
-        #[case] unpacker: unsafe fn(&[u8; X128_MAX_OUTPUT_LEN], &mut [u32; X128], usize),
+        #[case] unpacker: unsafe fn(*const u8, &mut [u32; X128], usize),
         #[values(1, 32, 64, 65, 97)] num_values: usize,
     ) {
         let mut saturated_bytes = [u8::MAX; X128_MAX_OUTPUT_LEN];
@@ -1151,7 +1125,7 @@ mod tests {
         saturated_bytes[expected_bytes_required - 1..].fill(0);
 
         let mut unpacked = [0; X128];
-        unsafe { unpacker(&saturated_bytes, &mut unpacked, num_values) };
+        unsafe { unpacker(saturated_bytes.as_ptr(), &mut unpacked, num_values) };
 
         let max_value = (2u64.pow(bit_len as u32) - 1) as u32;
         assert_eq!(unpacked[..num_values], vec![max_value; num_values]);
@@ -1172,7 +1146,14 @@ mod tests {
 
                 let mut zeroed_output = out.clone();
                 zeroed_output[expected_length..].fill(0);
-                unsafe { from_nbits(&zeroed_output, bit_length as u8, &mut decompressed, n) };
+                unsafe {
+                    from_nbits(
+                        zeroed_output.as_ptr(),
+                        bit_length as u8,
+                        &mut decompressed,
+                        n,
+                    )
+                };
 
                 assert_eq!(
                     decompressed[..n],
@@ -1202,7 +1183,14 @@ mod tests {
 
                 let mut zeroed_output = out.clone();
                 zeroed_output[expected_length..].fill(0);
-                unsafe { from_nbits(&zeroed_output, bit_length as u8, &mut decompressed, n) };
+                unsafe {
+                    from_nbits(
+                        zeroed_output.as_ptr(),
+                        bit_length as u8,
+                        &mut decompressed,
+                        n,
+                    )
+                };
 
                 assert_eq!(
                     decompressed[..n],

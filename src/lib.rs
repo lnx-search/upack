@@ -57,12 +57,7 @@ where
 /// - `n` should be the number of elements that the compressed buffer holds.
 /// - `compressed_bit_length` should be the bit length of the compressed block values
 ///   as reported by the [CompressionDetails] after compressing the block.
-pub fn decompress<A>(
-    n: usize,
-    compressed_bit_length: u8,
-    input: &A::CompressedBuffer,
-    out: &mut A,
-) -> usize
+pub fn decompress<A>(n: usize, compressed_bit_length: u8, input: &[u8], out: &mut A) -> usize
 where
     A: CompressibleArray,
 {
@@ -81,7 +76,7 @@ pub fn decompress_delta<A>(
     initial_value: A::InitialValue,
     n: usize,
     compressed_bit_length: u8,
-    input: &A::CompressedBuffer,
+    input: &[u8],
     out: &mut A,
 ) -> usize
 where
@@ -102,7 +97,7 @@ pub fn decompress_delta1<A>(
     initial_value: A::InitialValue,
     n: usize,
     compressed_bit_length: u8,
-    input: &A::CompressedBuffer,
+    input: &[u8],
     out: &mut A,
 ) -> usize
 where

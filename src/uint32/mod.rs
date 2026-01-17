@@ -100,21 +100,25 @@ impl CompressibleArray for [u32; X128] {
         Self::compress(n, input, output)
     }
 
-    fn decompress(
-        n: usize,
-        compressed_bit_length: u8,
-        input: &Self::CompressedBuffer,
-        output: &mut Self,
-    ) -> usize {
+    fn decompress(n: usize, compressed_bit_length: u8, input: &[u8], output: &mut Self) -> usize {
         assert!(
             compressed_bit_length <= 32,
             "compressed bitlength must be no more than 32"
         );
+        assert!(
+            input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
+            "input buffer is too small/incorrectly padded to safely decompress",
+        );
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
-            // SAFETY: The runtime CPU supports the required features.
-            unsafe { avx512::unpack_x128::from_nbits(input, compressed_bit_length, output, n) };
+            // SAFETY:
+            // - The runtime CPU supports the required features.
+            // - We have ensured the input buffer is correctly padded so the SIMD reads do
+            //   not go out of bounds.
+            unsafe {
+                avx512::unpack_x128::from_nbits(input.as_ptr(), compressed_bit_length, output, n)
+            };
         }
 
         compressed_size(compressed_bit_length as usize, n)
@@ -124,7 +128,7 @@ impl CompressibleArray for [u32; X128] {
         initial_value: u32,
         n: usize,
         compressed_bit_length: u8,
-        input: &Self::CompressedBuffer,
+        input: &[u8],
         output: &mut Self,
     ) -> usize {
         let bytes_read = Self::decompress(n, compressed_bit_length, input, output);
@@ -142,7 +146,7 @@ impl CompressibleArray for [u32; X128] {
         initial_value: u32,
         n: usize,
         compressed_bit_length: u8,
-        input: &Self::CompressedBuffer,
+        input: &[u8],
         output: &mut Self,
     ) -> usize {
         let bytes_read = Self::decompress(n, compressed_bit_length, input, output);
@@ -323,6 +327,62 @@ mod tests {
             for sample in data.iter_mut() {
                 crate::compress_delta1(0, X128, sample, &mut out);
             }
+        }
+    }
+
+    #[test]
+    fn test_sequentially_increasing_delta() {
+        let mut compressed = [0; X128_MAX_OUTPUT_LEN];
+        let mut decompressed = [0; X128];
+
+        let mut values: Vec<u32> = (0..896).collect();
+        let mut last_value = 0;
+        for chunk in values.chunks_exact_mut(X128) {
+            let original = chunk.to_vec();
+            let input: &mut [u32; X128] = chunk.try_into().unwrap();
+
+            let details = crate::compress_delta(last_value, X128, input, &mut compressed);
+            assert_eq!(details.compressed_bit_length, 1);
+
+            let read = crate::decompress_delta(
+                last_value,
+                X128,
+                details.compressed_bit_length,
+                &compressed,
+                &mut decompressed,
+            );
+            assert_eq!(read, details.bytes_written);
+            assert_eq!(decompressed.as_slice(), original.as_slice());
+
+            last_value = *original.last().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_sequentially_increasing_delta1() {
+        let mut compressed = [0; X128_MAX_OUTPUT_LEN];
+        let mut decompressed = [0; X128];
+
+        let mut values: Vec<u32> = (1..897).collect();
+        let mut last_value = 0;
+        for chunk in values.chunks_exact_mut(X128) {
+            let original = chunk.to_vec();
+            let input: &mut [u32; X128] = chunk.try_into().unwrap();
+
+            let details = crate::compress_delta1(last_value, X128, input, &mut compressed);
+            assert_eq!(details.compressed_bit_length, 0);
+
+            let read = crate::decompress_delta1(
+                last_value,
+                X128,
+                details.compressed_bit_length,
+                &compressed,
+                &mut decompressed,
+            );
+            assert_eq!(read, details.bytes_written);
+            assert_eq!(decompressed.as_slice(), original.as_slice());
+
+            last_value = *original.last().unwrap();
         }
     }
 }
