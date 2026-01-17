@@ -4,7 +4,6 @@ use std::cmp;
 use super::data::*;
 use super::utils::*;
 use crate::X128;
-use crate::uint32::X128_MAX_OUTPUT_LEN;
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
 /// Unpack the provided block of integers from `nbits` sized elements.
@@ -911,6 +910,7 @@ pub unsafe fn from_u32(input: *const u8, block: &mut [u32; X128], read_n: usize)
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::uint32::X128_MAX_OUTPUT_LEN;
     use crate::uint32::avx512::pack_x128::*;
 
     #[rstest::rstest]
