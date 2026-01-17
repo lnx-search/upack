@@ -10,9 +10,21 @@ rstest = "0.26"
 fastrand = "2"
 bytemuck = "1"
 
+# benchmarking
+divan = "0.1"
+bitpacking = "0.9"
+
 [features]
 avx512 = []
 avx2 = []
 sse = []
 neon = []
 default = ["avx512", "avx2", "sse", "neon"]
+
+[[bench]]
+harness = false
+name = "compress"
+
+[[bench]]
+harness = false
+name = "decompress"
