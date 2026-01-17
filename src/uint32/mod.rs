@@ -43,20 +43,39 @@ pub const fn compressed_size(bit_length: usize, num_elements: usize) -> usize {
     (quotient * num_elements).div_ceil(2) + remainder_bytes
 }
 
+unsafe fn pack_to_bits(
+    n: usize,
+    nbits: u8,
+    input: &[u32; X128],
+    output: &mut [u8; X128_MAX_OUTPUT_LEN],
+) {
+    #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
+    if avx512::can_use() {
+        // SAFETY: The runtime CPU supports the required features.
+        unsafe { avx512::pack_x128::to_nbits(output, nbits, input, n) };
+        return;
+    }
+
+    #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+    if avx2::can_use() {
+        // SAFETY: The runtime CPU supports the required features.
+        unsafe { avx2::pack_x128::to_nbits(output, nbits, input, n) };
+        return;
+    }
+}
+
 impl CompressibleArray for [u32; X128] {
     type CompressedBuffer = [u8; Self::MAX_OUTPUT_SIZE];
     type InitialValue = u32;
     const MAX_OUTPUT_SIZE: usize = X128 * size_of::<u32>();
 
     fn compress(n: usize, input: &Self, output: &mut Self::CompressedBuffer) -> CompressionDetails {
-        let max_value = input.iter().take(n).fold(0, |a, b| a.max(*b));
+        let max_value = input.iter().take(n).fold(0, |a, b| a | b);
         let nbits = (32 - max_value.leading_zeros()) as u8;
 
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            // SAFETY: The runtime CPU supports the required features.
-            unsafe { avx512::pack_x128::to_nbits(output, nbits, input, n) };
-        }
+        // SAFETY: We know an u32 cannot have more than 32 leading zeroes, keeping it
+        //         within range of the packing functions.
+        unsafe { pack_to_bits(n, nbits, input, output) };
 
         CompressionDetails {
             bytes_written: compressed_size(nbits as usize, n),

@@ -31,11 +31,11 @@ pub unsafe fn to_nbits(
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Bitpack the provided block of integers to 1-bit elements.
+/// Bitpack the provided block of integers to 0-bit elements.
 ///
 /// # Safety
 /// - The CPU features required must be met.
-/// - The provided `pack_n` must also be between `0..=128` along with `nbits` being between `1..=32`.
+/// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u0(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
 }
