@@ -5,9 +5,21 @@ use crate::core::{CompressibleArray, CompressionDetails};
 #[cfg(target_endian = "big")]
 compile_error!("big endian machines are not supported");
 
+#[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-#[doc(hidden)]
-pub mod avx512;
+mod avx512;
+#[cfg(all(
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    any(feature = "sse", feature = "neon")
+))]
+mod dual_128;
+#[cfg(all(
+    any(target_arch = "x86_64", target_arch = "aarch64"),
+    any(feature = "sse", feature = "neon")
+))]
+mod polyfill;
+mod scalar;
 
 /// The maximum output size of a compressed buffer for a [X128] block, assuming worst case compression.
 pub const X128_MAX_OUTPUT_LEN: usize = <[u32; X128] as CompressibleArray>::MAX_OUTPUT_SIZE;
@@ -276,6 +288,15 @@ mod tests {
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn test_compress_decompress_diff() {
+        let mut data = crate::test_utils::load_sample_u32_doc_id_data_x128();
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        for sample in data.iter_mut() {
+            crate::compress_delta1(0, X128, sample, &mut out);
         }
     }
 
