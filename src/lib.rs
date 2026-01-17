@@ -5,8 +5,6 @@ pub use self::core::{CompressibleArray, CompressionDetails};
 
 /// 128 elements
 pub const X128: usize = 128;
-/// 256 elements
-pub const X256: usize = 256;
 
 /// Apply bitpacking compression to the provided input.
 pub fn compress<A>(n: usize, input: &A, out: &mut A::CompressedBuffer) -> CompressionDetails
