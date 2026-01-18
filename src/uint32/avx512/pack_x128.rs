@@ -102,6 +102,9 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [__m512i; 2], pack_n: usize) {
     let hi_mask1 = _mm512_test_epi8_mask(d1, mask);
     let hi_mask2 = _mm512_test_epi8_mask(d2, mask);
 
+    eprintln!("{lo_mask1:b}");
+    eprintln!("{hi_mask1:b}");
+    
     let hi_offset = cmp::min(64, pack_n).div_ceil(8);
     unsafe { std::ptr::write_unaligned(out.add(0).cast(), lo_mask1) };
     unsafe { std::ptr::write_unaligned(out.add(hi_offset).cast(), hi_mask1) };

@@ -6,9 +6,9 @@ use crate::core::{CompressibleArray, CompressionDetails};
 compile_error!("big endian machines are not supported");
 
 #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
-mod avx2;
+pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-mod avx512;
+pub mod avx512;
 #[cfg(all(
     any(target_arch = "x86_64", target_arch = "aarch64"),
     any(feature = "sse", feature = "neon")
