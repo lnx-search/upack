@@ -268,8 +268,8 @@ unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 4]) {
     let ordered1 = _mm256_permute4x64_epi64::<INTERLEAVE_SHUFFLE>(interleaved1);
     let ordered2 = _mm256_permute4x64_epi64::<INTERLEAVE_SHUFFLE>(interleaved2);
 
-    unsafe { _mm256_store_si256(out.add(0).cast(), ordered1) };
-    unsafe { _mm256_store_si256(out.add(32).cast(), ordered2) };
+    unsafe { _mm256_storeu_si256(out.add(0).cast(), ordered1) };
+    unsafe { _mm256_storeu_si256(out.add(32).cast(), ordered2) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -278,8 +278,34 @@ unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 4]) {
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u5(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u5(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u8_x8(left);
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u8_x8(right);
+    let partially_packed = [
+        left_packed[0],
+        left_packed[1],
+        right_packed[0],
+        right_packed[1],
+    ];
+    unsafe { pack_u5_registers(out.as_mut_ptr(), partially_packed, pack_n) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack four registers containing 32 8-bit elements each into a 5-bit
+/// bitmap and write to `out`.
+unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
+    let mask = _mm256_set1_epi8(0b1111);
+    let masked = and_si256(data, mask);
+    unsafe { pack_u4_registers(out, masked) };
+
+    // 4bit * pack_n / 8-bits per byte.
+    let offset = pack_n.div_ceil(2);
+    let remaining = andnot_si256(data, mask);
+    unsafe { pack_u1_registers(out.add(offset), remaining) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -707,5 +733,48 @@ mod tests {
         assert_eq!(out[2], 0b0000_0001); // [1, 0]
         assert_eq!(out[4], 0b0010_0101); // [5, 2]
         assert_eq!(out[7], 0b0000_1111); // [15, 0]
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_to_u5() {
+        let mut data = [0; X128];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X128 {
+            data[i] = (i % 32) as u32;
+        }
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u5(&mut out, &data, 128) };
+        assert_eq!(out[..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[8..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[16..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[24..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[32..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[40..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[48..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[56..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[64..][..8], [0, 0, 255, 255, 0, 0, 255, 255]);
+        assert_eq!(out[72..][..8], [0, 0, 255, 255, 0, 0, 255, 255]);
+
+        let mut data = [0; X128];
+        data[0] = 1;
+        data[1] = 15;
+        data[2] = 2;
+        data[3] = 15;
+        data[4] = 1;
+        data[8] = 5;
+        data[9] = 2;
+        data[14] = 17;
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u5(&mut out, &data, 15) };
+        assert_eq!(out[0], 0b1111_0001); // [1, 15]
+        assert_eq!(out[1], 0b1111_0010); // [2, 15]
+        assert_eq!(out[2], 0b0000_0001); // [1, 0]
+        assert_eq!(out[4], 0b0010_0101); // [5, 2]
+        assert_eq!(out[7], 0b0000_0001); // [17, 0]  -- well, the lower 4 bits
+        assert_eq!(out[8], 0b0000_0000);
+        assert_eq!(out[9], 0b0100_0000); // upper bits from that 17
     }
 }
