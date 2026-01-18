@@ -1,5 +1,11 @@
 use std::arch::x86_64::*;
 
+#[inline]
+#[allow(non_snake_case)]
+pub const fn _mm_shuffle(z: u32, y: u32, x: u32, w: u32) -> i32 {
+    ((z << 6) | (y << 4) | (x << 2) | w) as i32
+}
+
 #[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
 /// 8-bit elements.
