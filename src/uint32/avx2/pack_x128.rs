@@ -1,5 +1,6 @@
 use std::arch::x86_64::*;
 use std::cmp;
+
 use super::data::*;
 use super::utils::*;
 use crate::X128;
@@ -156,8 +157,73 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u3(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u3(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u8_x8(left);
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u8_x8(right);
+    let partially_packed = [
+        left_packed[0],
+        left_packed[1],
+        right_packed[0],
+        right_packed[1],
+    ];
+    unsafe { pack_u3_registers(out.as_mut_ptr(), partially_packed, pack_n) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack four registers containing 32 8-bit elements each into a 3-bit
+/// bitmap and write to `out`.
+unsafe fn pack_u3_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
+    let [d1, d2, d3, d4] = data;
+
+    let b0_cmp1 = _mm256_slli_epi16::<7>(d1);
+    let b1_cmp1 = _mm256_slli_epi16::<6>(d1);
+    let b2_cmp1 = _mm256_slli_epi16::<5>(d1);
+    let b0_mask1 = _mm256_movemask_epi8(b0_cmp1) as u32;
+    let b1_mask1 = _mm256_movemask_epi8(b1_cmp1) as u32;
+    let b2_mask1 = _mm256_movemask_epi8(b2_cmp1) as u32;
+
+    let b0_cmp2 = _mm256_slli_epi16::<7>(d2);
+    let b1_cmp2 = _mm256_slli_epi16::<6>(d2);
+    let b2_cmp2 = _mm256_slli_epi16::<5>(d2);
+    let b0_mask2 = _mm256_movemask_epi8(b0_cmp2) as u32;
+    let b1_mask2 = _mm256_movemask_epi8(b1_cmp2) as u32;
+    let b2_mask2 = _mm256_movemask_epi8(b2_cmp2) as u32;
+
+    let b0_merged_mask1 = ((b0_mask2 as u64) << 32) | b0_mask1 as u64;
+    let b1_merged_mask1 = ((b1_mask2 as u64) << 32) | b1_mask1 as u64;
+    let b2_merged_mask1 = ((b2_mask2 as u64) << 32) | b2_mask1 as u64;
+
+    let step = cmp::min(64, pack_n).div_ceil(8);
+    unsafe { std::ptr::write_unaligned(out.add(0).cast(), b0_merged_mask1) };
+    unsafe { std::ptr::write_unaligned(out.add(step).cast(), b1_merged_mask1) };
+    unsafe { std::ptr::write_unaligned(out.add(step * 2).cast(), b2_merged_mask1) };
+
+    let b0_cmp3 = _mm256_slli_epi16::<7>(d3);
+    let b1_cmp3 = _mm256_slli_epi16::<6>(d3);
+    let b2_cmp3 = _mm256_slli_epi16::<5>(d3);
+    let b0_mask3 = _mm256_movemask_epi8(b0_cmp3) as u32;
+    let b1_mask3 = _mm256_movemask_epi8(b1_cmp3) as u32;
+    let b2_mask3 = _mm256_movemask_epi8(b2_cmp3) as u32;
+
+    let b0_cmp4 = _mm256_slli_epi16::<7>(d4);
+    let b1_cmp4 = _mm256_slli_epi16::<6>(d4);
+    let b2_cmp4 = _mm256_slli_epi16::<5>(d4);
+    let b0_mask4 = _mm256_movemask_epi8(b0_cmp4) as u32;
+    let b1_mask4 = _mm256_movemask_epi8(b1_cmp4) as u32;
+    let b2_mask4 = _mm256_movemask_epi8(b2_cmp4) as u32;
+
+    let b0_merged_mask2 = ((b0_mask4 as u64) << 32) | b0_mask3 as u64;
+    let b1_merged_mask2 = ((b1_mask4 as u64) << 32) | b1_mask3 as u64;
+    let b2_merged_mask2 = ((b2_mask4 as u64) << 32) | b2_mask3 as u64;
+
+    let step = pack_n.saturating_sub(64).div_ceil(8);
+    unsafe { std::ptr::write_unaligned(out.add(24).cast(), b0_merged_mask2) };
+    unsafe { std::ptr::write_unaligned(out.add(24 + step).cast(), b1_merged_mask2) };
+    unsafe { std::ptr::write_unaligned(out.add(24 + step * 2).cast(), b2_merged_mask2) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -455,7 +521,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
     fn test_to_u1() {
         let mut data = [0; X128];
         #[allow(clippy::needless_range_loop)]
@@ -483,7 +549,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
     fn test_to_u2() {
         let mut data = [0; X128];
         #[allow(clippy::needless_range_loop)]
@@ -521,4 +587,50 @@ mod tests {
         assert_eq!(out[4..][..28], [0; 28]);
     }
 
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_to_u3() {
+        let mut data = [0; X128];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X128 {
+            data[i] = (i % 4) as u32;
+        }
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u3(&mut out, &data, 128) };
+        assert_eq!(
+            out[..24],
+            [
+                170, 170, 170, 170, 170, 170, 170, 170, 204, 204, 204, 204, 204, 204, 204, 204, 0,
+                0, 0, 0, 0, 0, 0, 0
+            ]
+        );
+        assert_eq!(
+            out[24..][..24],
+            [
+                170, 170, 170, 170, 170, 170, 170, 170, 204, 204, 204, 204, 204, 204, 204, 204, 0,
+                0, 0, 0, 0, 0, 0, 0
+            ]
+        );
+
+        let mut data = [0; X128];
+        data[0] = 1;
+        data[1] = 1;
+        data[2] = 1;
+        data[3] = 1;
+        data[4] = 1;
+        data[8] = 5;
+        data[9] = 2;
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u3(&mut out, &data, 10) };
+
+        // Imagine the data is in bits:
+        //
+        // b0_bits: 0b00000001_00011111 -> [31, 1, 0, 0] LE
+        // b1_bits: 0b00000010_00000000 -> [0, 2, 0, 0] LE
+        // b2_bits: 0b00000001_00000000 -> [0, 1, 0, 0] LE
+        assert_eq!(out[..6], [31, 1, 0, 2, 0, 1]);
+        assert_eq!(out[6..][..42], [0; 42]);
+    }
 }
