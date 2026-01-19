@@ -314,8 +314,34 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u6(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u6(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u8_x8(left);
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u8_x8(right);
+    let partially_packed = [
+        left_packed[0],
+        left_packed[1],
+        right_packed[0],
+        right_packed[1],
+    ];
+    unsafe { pack_u6_registers(out.as_mut_ptr(), partially_packed, pack_n) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack four registers containing 32 8-bit elements each into a 6-bit
+/// bitmap and write to `out`.
+unsafe fn pack_u6_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
+    let mask = _mm256_set1_epi8(0b1111);
+    let masked = and_si256(data, mask);
+    unsafe { pack_u4_registers(out, masked) };
+
+    // 4bit * pack_n / 8-bits per byte.
+    let offset = pack_n.div_ceil(2);
+    let remaining = srli_epi16::<4, 4>(data);
+    unsafe { pack_u2_registers(out.add(offset), remaining, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -324,8 +350,34 @@ pub unsafe fn to_u6(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], 
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u7(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u7(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u8_x8(left);
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u8_x8(right);
+    let partially_packed = [
+        left_packed[0],
+        left_packed[1],
+        right_packed[0],
+        right_packed[1],
+    ];
+    unsafe { pack_u7_registers(out.as_mut_ptr(), partially_packed, pack_n) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack four registers containing 32 8-bit elements each into a 7-bit
+/// bitmap and write to `out`.
+unsafe fn pack_u7_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
+    let mask = _mm256_set1_epi8(0b1111);
+    let masked = and_si256(data, mask);
+    unsafe { pack_u4_registers(out, masked) };
+
+    // 4bit * pack_n / 8-bits per byte.
+    let offset = pack_n.div_ceil(2);
+    let remaining = srli_epi16::<4, 4>(data);
+    unsafe { pack_u3_registers(out.add(offset), remaining, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -334,8 +386,20 @@ pub unsafe fn to_u7(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], 
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u8(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u8(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u8_x8(left);
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u8_x8(right);
+    let partially_packed = [
+        left_packed[0],
+        left_packed[1],
+        right_packed[0],
+        right_packed[1],
+    ];
+    unsafe { store_si256x4(out.as_mut_ptr(), partially_packed) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -581,6 +645,7 @@ pub unsafe fn to_u32(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::uint32::max_compressed_size;
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
@@ -776,5 +841,153 @@ mod tests {
         assert_eq!(out[7], 0b0000_0001); // [17, 0]  -- well, the lower 4 bits
         assert_eq!(out[8], 0b0000_0000);
         assert_eq!(out[9], 0b0100_0000); // upper bits from that 17
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_to_u6() {
+        let mut data = [0; X128];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X128 {
+            data[i] = (i % 64) as u32;
+        }
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u6(&mut out, &data, 128) };
+        assert_eq!(out[..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[8..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[16..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[24..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[32..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[40..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[48..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[56..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[64..][..8], [0, 0, 255, 255, 0, 0, 255, 255]);
+        assert_eq!(out[72..][..8], [0, 0, 0, 0, 255, 255, 255, 255]);
+        assert_eq!(out[80..][..8], [0, 0, 255, 255, 0, 0, 255, 255]);
+        assert_eq!(out[88..][..8], [0, 0, 0, 0, 255, 255, 255, 255]);
+
+        let mut data = [0; X128];
+        data[0] = 1;
+        data[1] = 15;
+        data[2] = 2;
+        data[3] = 15;
+        data[4] = 1;
+        data[8] = 5;
+        data[9] = 2;
+        data[14] = 59;
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u6(&mut out, &data, 15) };
+        assert_eq!(out[0], 0b1111_0001); // [1, 15]
+        assert_eq!(out[1], 0b1111_0010); // [2, 15]
+        assert_eq!(out[2], 0b0000_0001); // [1, 0]
+        assert_eq!(out[4], 0b0010_0101); // [5, 2]
+        assert_eq!(out[7], 0b0000_1011); // [59, 0]  -- well, the lower 4 bits
+        assert_eq!(out[8], 0b0000_0000);
+        assert_eq!(out[9], 0b0100_0000); // upper 1 bit from that 59
+        assert_eq!(out[10], 0b0000_0000);
+        assert_eq!(out[11], 0b0100_0000); // upper 1 bit from that 59
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_to_u7() {
+        let mut data = [0; X128];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X128 {
+            data[i] = (i % 64) as u32;
+        }
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u7(&mut out, &data, 128) };
+        assert_eq!(out[..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[8..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[16..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[24..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[32..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[40..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[48..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[56..][..8], [16, 50, 84, 118, 152, 186, 220, 254]);
+        assert_eq!(out[64..][..8], [0, 0, 255, 255, 0, 0, 255, 255]);
+        assert_eq!(out[72..][..8], [0, 0, 0, 0, 255, 255, 255, 255]);
+        assert_eq!(out[80..][..8], [0, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(out[88..][..8], [0, 0, 255, 255, 0, 0, 255, 255]);
+        assert_eq!(out[96..][..8], [0, 0, 0, 0, 255, 255, 255, 255]);
+        assert_eq!(out[104..][..8], [0, 0, 0, 0, 0, 0, 0, 0]);
+
+        let mut data = [0; X128];
+        data[0] = 1;
+        data[1] = 15;
+        data[2] = 2;
+        data[3] = 15;
+        data[4] = 1;
+        data[8] = 5;
+        data[9] = 2;
+        data[14] = 127;
+
+        let mut out = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { to_u7(&mut out, &data, 15) };
+        assert_eq!(out[0], 0b1111_0001); // [1, 15]
+        assert_eq!(out[1], 0b1111_0010); // [2, 15]
+        assert_eq!(out[2], 0b0000_0001); // [1, 0]
+        assert_eq!(out[4], 0b0010_0101); // [5, 2]
+        assert_eq!(out[7], 0b0000_1111); // [127, 0]  -- well, the lower 4 bits
+        assert_eq!(out[8], 0b0000_0000);
+        assert_eq!(out[9], 0b0100_0000); // upper 1 bit from that 127
+        assert_eq!(out[10], 0b0000_0000);
+        assert_eq!(out[11], 0b0100_0000); // upper 1 bit from that 127
+        assert_eq!(out[12], 0b0000_0000);
+        assert_eq!(out[13], 0b0100_0000); // upper 1 bit from that 127
+    }
+
+    #[rstest::rstest]
+    #[case(1, to_u1)]
+    #[case(2, to_u2)]
+    #[case(3, to_u3)]
+    #[case(4, to_u4)]
+    #[case(5, to_u5)]
+    #[case(6, to_u6)]
+    #[case(7, to_u7)]
+    #[case(8, to_u8)]
+    #[case(9, to_u9)]
+    #[case(10, to_u10)]
+    #[case(11, to_u11)]
+    #[case(12, to_u12)]
+    #[case(13, to_u13)]
+    #[case(14, to_u14)]
+    #[case(15, to_u15)]
+    #[case(16, to_u16)]
+    #[case(17, to_u17)]
+    #[case(18, to_u18)]
+    #[case(19, to_u19)]
+    #[case(20, to_u20)]
+    #[case(21, to_u21)]
+    #[case(22, to_u22)]
+    #[case(23, to_u23)]
+    #[case(24, to_u24)]
+    #[case(25, to_u25)]
+    #[case(26, to_u26)]
+    #[case(27, to_u27)]
+    #[case(28, to_u28)]
+    #[case(29, to_u29)]
+    #[case(30, to_u30)]
+    #[case(31, to_u31)]
+    #[case(32, to_u32)]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_saturation(
+        #[case] bit_len: u8,
+        #[case] packer: unsafe fn(&mut [u8; X128_MAX_OUTPUT_LEN], &[u32; X128], usize),
+    ) {
+        let pack_value = (2u64.pow(bit_len as u32) - 1) as u32;
+
+        let values = [pack_value; X128];
+        let mut output = [0; X128_MAX_OUTPUT_LEN];
+        unsafe { packer(&mut output, &values, X128) };
+        assert!(
+            output[..max_compressed_size::<X128>(bit_len as usize)]
+                .iter()
+                .all(|b| *b == u8::MAX)
+        );
     }
 }

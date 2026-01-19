@@ -67,3 +67,25 @@ pub(super) fn or_si256_all<const N: usize>(mut d1: [__m256i; N], d2: [__m256i; N
     }
     d1
 }
+
+#[target_feature(enable = "avx2")]
+/// Shift all registers right by [IMM8] in 16-bit lanes.
+pub(super) fn srli_epi16<const IMM8: i32, const N: usize>(mut data: [__m256i; N]) -> [__m256i; N] {
+    let mut i = 0;
+    while i < N {
+        data[i] = _mm256_srli_epi16::<IMM8>(data[i]);
+        i += 1;
+    }
+    data
+}
+
+#[target_feature(enable = "avx2")]
+/// Shift all registers right by [IMM8] in 16-bit lanes.
+pub(super) fn slli_epi16<const IMM8: i32, const N: usize>(mut data: [__m256i; N]) -> [__m256i; N] {
+    let mut i = 0;
+    while i < N {
+        data[i] = _mm256_slli_epi16::<IMM8>(data[i]);
+        i += 1;
+    }
+    data
+}
