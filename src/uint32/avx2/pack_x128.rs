@@ -462,13 +462,45 @@ pub unsafe fn to_u16(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 }
 
 #[target_feature(enable = "avx2")]
+unsafe fn store_lo_u16_registers(out: *mut u8, data: [__m256i; 8]) {
+    let mask = _mm256_set1_epi32(0xFFFF);
+    let shifted = and_si256(data, mask);
+    let packed = pack_u32_u16_x8(shifted);
+    unsafe { store_si256x4(out, packed) };
+}
+
+#[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 17-bit elements.
 ///
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u17(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u17(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u1_registers(out.add(offset), hi_bits) }
 }
 
 #[target_feature(enable = "avx2")]
