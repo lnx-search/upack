@@ -47,17 +47,7 @@ pub unsafe fn to_u0(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], 
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u1(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u1_registers(out.as_mut_ptr(), partially_packed) }
 }
 
@@ -96,17 +86,7 @@ unsafe fn pack_u1_registers(out: *mut u8, data: [__m256i; 4]) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u2(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u2_registers(out.as_mut_ptr(), partially_packed, pack_n) }
 }
 
@@ -159,17 +139,7 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u3(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u3_registers(out.as_mut_ptr(), partially_packed, pack_n) }
 }
 
@@ -234,17 +204,7 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u4(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u4_registers(out.as_mut_ptr(), partially_packed) }
 }
 
@@ -280,17 +240,7 @@ unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 4]) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u5(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u5_registers(out.as_mut_ptr(), partially_packed, pack_n) }
 }
 
@@ -316,17 +266,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u6(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u6_registers(out.as_mut_ptr(), partially_packed, pack_n) }
 }
 
@@ -352,17 +292,7 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u7(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { pack_u7_registers(out.as_mut_ptr(), partially_packed, pack_n) }
 }
 
@@ -388,17 +318,7 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [__m256i; 4], pack_n: usize) {
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u8(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-    let [left, right] = split_block(block);
-    let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
-    let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
-    let partially_packed = [
-        left_packed[0],
-        left_packed[1],
-        right_packed[0],
-        right_packed[1],
-    ];
+    let partially_packed = pack_block_to_u8s(block);
     unsafe { store_si256x4(out.as_mut_ptr(), partially_packed) }
 }
 
@@ -408,8 +328,15 @@ pub unsafe fn to_u8(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pa
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u9(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u9(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u1_registers(out.add(offset), hi) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -418,8 +345,15 @@ pub unsafe fn to_u9(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], 
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u10(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u10(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u2_registers(out.add(offset), hi, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -428,8 +362,15 @@ pub unsafe fn to_u10(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u11(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u11(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u3_registers(out.add(offset), hi, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -438,8 +379,15 @@ pub unsafe fn to_u11(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u12(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u12(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u4_registers(out.add(offset), hi) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -448,8 +396,15 @@ pub unsafe fn to_u12(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u13(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u13(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u5_registers(out.add(offset), hi, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -458,8 +413,15 @@ pub unsafe fn to_u13(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u14(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u14(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u6_registers(out.add(offset), hi, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -468,8 +430,15 @@ pub unsafe fn to_u14(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u15(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u15(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+    let (hi, lo) = pack_block_to_u16_split(block);
+
+    unsafe { store_si256x4(out.add(0), lo) };
+
+    let offset = pack_n;
+    unsafe { pack_u7_registers(out.add(offset), hi, pack_n) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -478,8 +447,18 @@ pub unsafe fn to_u15(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u16(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u16(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u16_x8(left);
+    unsafe { store_si256x4(out.add(0), left_packed) };
+
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u16_x8(right);
+    unsafe { store_si256x4(out.add(128), right_packed) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -640,6 +619,35 @@ pub unsafe fn to_u31(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u32(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+}
+
+#[target_feature(enable = "avx2")]
+fn pack_block_to_u8s(block: &[u32; X128]) -> [__m256i; 4] {
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let left_packed = pack_u32_u8_x8(left);
+    let right = load_u32x64(right);
+    let right_packed = pack_u32_u8_x8(right);
+    [
+        left_packed[0],
+        left_packed[1],
+        right_packed[0],
+        right_packed[1],
+    ]
+}
+
+#[target_feature(enable = "avx2")]
+fn pack_block_to_u16_split(block: &[u32; X128]) -> ([__m256i; 4], [__m256i; 4]) {
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let (left_hi, left_lo) = pack_u32_u16_split_x8(left);
+    let right = load_u32x64(right);
+    let (right_hi, right_lo) = pack_u32_u16_split_x8(right);
+
+    let hi = [left_hi[0], left_hi[1], right_hi[0], right_hi[1]];
+    let lo = [left_lo[0], left_lo[1], right_lo[0], right_lo[1]];
+
+    (hi, lo)
 }
 
 #[cfg(test)]
