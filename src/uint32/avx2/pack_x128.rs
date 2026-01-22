@@ -685,22 +685,22 @@ pub unsafe fn to_u23(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 
     let [left, right] = split_block(block);
     let left = load_u32x64(left);
-    unsafe { store_lo_u16_registers(out.add(0), left) };
-
-    let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
-
     let right = load_u32x64(right);
+
+    unsafe { store_lo_u16_registers(out.add(0), left) };
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
-    let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_left_bits = srli_epi32::<16, 8>(left);
+    let hi_right_bits = srli_epi32::<16, 8>(right);
+
+    let packed_hi_left_8bits = pack_u32_u8_x8(hi_left_bits);
+    let packed_hi_right_8bits = pack_u32_u8_x8(hi_right_bits);
 
     let hi_bits = [
-        hi_bits_left[0],
-        hi_bits_left[1],
-        hi_bits_right[0],
-        hi_bits_right[1],
+        packed_hi_left_8bits[0],
+        packed_hi_left_8bits[1],
+        packed_hi_right_8bits[0],
+        packed_hi_right_8bits[1],
     ];
 
     let offset = pack_n * 2;
@@ -713,18 +713,32 @@ pub unsafe fn to_u23(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u24(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u24(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
-}
+    let out = out.as_mut_ptr();
 
-#[target_feature(enable = "avx2")]
-/// Pack eight registers containing 16 32-bit elements each into a 24-bit
-/// compressed block and write to `out`.
-unsafe fn pack_u24_registers(out: *mut u8, data: [__m256i; 16], pack_n: usize) {
-    // unsafe { store_lo_u16_registers(out.add(0), left) };
-    // unsafe { store_lo_u16_registers(out.add(128), right) };
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    let right = load_u32x64(right);
 
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+    unsafe { store_lo_u16_registers(out.add(128), right) };
 
+    let hi_left_bits = srli_epi32::<16, 8>(left);
+    let hi_right_bits = srli_epi32::<16, 8>(right);
+
+    let packed_hi_left_8bits = pack_u32_u8_x8(hi_left_bits);
+    let packed_hi_right_8bits = pack_u32_u8_x8(hi_right_bits);
+
+    let merged = [
+        packed_hi_left_8bits[0],
+        packed_hi_left_8bits[1],
+        packed_hi_right_8bits[0],
+        packed_hi_right_8bits[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { store_si256x4(out.add(offset), merged) }
 }
 
 #[target_feature(enable = "avx2")]
