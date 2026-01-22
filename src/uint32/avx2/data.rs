@@ -25,10 +25,3 @@ pub(super) unsafe fn store_si256x4(out: *mut u8, data: [__m256i; 4]) {
     unsafe { _mm256_storeu_si256(ptr.add(2), data[2]) };
     unsafe { _mm256_storeu_si256(ptr.add(3), data[3]) };
 }
-
-#[inline]
-pub(super) fn split_block(block: &[u32; X128]) -> [&[u32; X64]; 2] {
-    let left: &[u32; X64] = (&block[..X64]).try_into().unwrap();
-    let right: &[u32; X64] = (&block[X64..]).try_into().unwrap();
-    [left, right]
-}

@@ -1,5 +1,6 @@
 mod core;
 pub mod uint32;
+mod util;
 
 pub use self::core::{CompressibleArray, CompressionDetails};
 

@@ -23,7 +23,7 @@ default = ["avx512", "avx2", "sse", "neon"]
 
 [[bench]]
 harness = false
-name = "decompress"
+name = "decompress" 
 
 [[bench]]
 harness = false

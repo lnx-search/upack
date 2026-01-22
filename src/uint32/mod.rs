@@ -1,5 +1,5 @@
 //! 32-bit integer bitpacking routines
-use crate::X128;
+use crate::{X128, X64};
 use crate::core::{CompressibleArray, CompressionDetails};
 
 #[cfg(target_endian = "big")]
@@ -172,6 +172,11 @@ impl CompressibleArray for [u32; X128] {
 
         bytes_read
     }
+}
+
+#[inline]
+pub(super) fn split_block(block: &[u32; X128]) -> [&[u32; X64]; 2] {
+    crate::util::split_slice::<_, X128, X64>(block)
 }
 
 #[cfg(test)]

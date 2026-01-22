@@ -4,7 +4,7 @@ use std::cmp;
 use super::data::*;
 use super::utils::*;
 use crate::X128;
-use crate::uint32::X128_MAX_OUTPUT_LEN;
+use crate::uint32::{split_block, X128_MAX_OUTPUT_LEN};
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to `nbits` sized elements.
@@ -509,8 +509,32 @@ pub unsafe fn to_u17(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u18(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u18(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u2_registers(out.add(offset), hi_bits, pack_n) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -519,8 +543,32 @@ pub unsafe fn to_u18(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u19(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u19(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u3_registers(out.add(offset), hi_bits, pack_n) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -529,8 +577,32 @@ pub unsafe fn to_u19(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u20(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u20(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u4_registers(out.add(offset), hi_bits) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -539,8 +611,32 @@ pub unsafe fn to_u20(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u21(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u21(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u5_registers(out.add(offset), hi_bits, pack_n) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -549,8 +645,32 @@ pub unsafe fn to_u21(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u22(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u22(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u6_registers(out.add(offset), hi_bits, pack_n) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -559,8 +679,32 @@ pub unsafe fn to_u22(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// # Safety
 /// - The CPU features required must be met.
 /// - The provided `pack_n` must also be between `0..=128`.
-pub unsafe fn to_u23(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
+pub unsafe fn to_u23(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+    let out = out.as_mut_ptr();
+
+    let [left, right] = split_block(block);
+    let left = load_u32x64(left);
+    unsafe { store_lo_u16_registers(out.add(0), left) };
+
+    let hi_bits_left = srli_epi32::<16, 8>(left);
+    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+
+    let right = load_u32x64(right);
+    unsafe { store_lo_u16_registers(out.add(128), right) };
+
+    let hi_bits_right = srli_epi32::<16, 8>(right);
+    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+
+    let hi_bits = [
+        hi_bits_left[0],
+        hi_bits_left[1],
+        hi_bits_right[0],
+        hi_bits_right[1],
+    ];
+
+    let offset = pack_n * 2;
+    unsafe { pack_u7_registers(out.add(offset), hi_bits, pack_n) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -571,6 +715,16 @@ pub unsafe fn to_u23(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 /// - The provided `pack_n` must also be between `0..=128`.
 pub unsafe fn to_u24(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128], pack_n: usize) {
     debug_assert!(pack_n <= 128, "pack_n must be less than or equal to 128");
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack eight registers containing 16 32-bit elements each into a 24-bit
+/// compressed block and write to `out`.
+unsafe fn pack_u24_registers(out: *mut u8, data: [__m256i; 16], pack_n: usize) {
+    // unsafe { store_lo_u16_registers(out.add(0), left) };
+    // unsafe { store_lo_u16_registers(out.add(128), right) };
+
+
 }
 
 #[target_feature(enable = "avx2")]
