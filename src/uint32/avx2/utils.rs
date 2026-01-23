@@ -16,7 +16,7 @@ pub const fn _mm_shuffle(z: u32, y: u32, x: u32, w: u32) -> i32 {
 /// This routine produces garbage results if the input elements are beyond the maximum value
 /// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
 /// invalid data.
-pub(super) fn pack_u32_u8_x8(data: [__m256i; 8]) -> [__m256i; 2] {
+pub(super) fn pack_u32_to_u8_ordered(data: [__m256i; 8]) -> [__m256i; 2] {
     let permute_mask = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
 
     let pack_block = |a, b, c, d| {
@@ -35,6 +35,29 @@ pub(super) fn pack_u32_u8_x8(data: [__m256i; 8]) -> [__m256i; 2] {
 }
 
 #[target_feature(enable = "avx2")]
+/// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
+/// 8-bit elements.
+///
+/// The order of elements are _not_ maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u8_unordered(data: [__m256i; 8]) -> [__m256i; 2] {
+    let pack_block = |a, b, c, d| {
+        let p1 = _mm256_packus_epi32(a, b);
+        let p2 = _mm256_packus_epi32(c, d);
+        _mm256_packus_epi16(p1, p2)
+    };
+
+    [
+        pack_block(data[0], data[1], data[2], data[3]),
+        pack_block(data[4], data[5], data[6], data[7]),
+    ]
+}
+
+#[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 4 registers holding
 /// 16-bit elements.
 ///
@@ -44,7 +67,7 @@ pub(super) fn pack_u32_u8_x8(data: [__m256i; 8]) -> [__m256i; 2] {
 /// This routine produces garbage results if the input elements are beyond the maximum value
 /// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
 /// invalid data.
-pub(super) fn pack_u32_u16_x8(data: [__m256i; 8]) -> [__m256i; 4] {
+pub(super) fn pack_u32_to_u16_ordered(data: [__m256i; 8]) -> [__m256i; 4] {
     let pack_block = |a, b| {
         let packed = _mm256_packus_epi32(a, b);
         _mm256_permute4x64_epi64::<0xD8>(packed)
@@ -55,6 +78,25 @@ pub(super) fn pack_u32_u16_x8(data: [__m256i; 8]) -> [__m256i; 4] {
         pack_block(data[2], data[3]),
         pack_block(data[4], data[5]),
         pack_block(data[6], data[7]),
+    ]
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack 8 sets of registers containing 32-bit elements and produce 4 registers holding
+/// 16-bit elements.
+///
+/// The order of elements are _not_ maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_unordered(data: [__m256i; 8]) -> [__m256i; 4] {
+    [
+        _mm256_packus_epi32(data[0], data[1]),
+        _mm256_packus_epi32(data[2], data[3]),
+        _mm256_packus_epi32(data[4], data[5]),
+        _mm256_packus_epi32(data[6], data[7]),
     ]
 }
 
@@ -89,7 +131,7 @@ pub(super) fn pack_u16_u8_x8(data: [__m256i; 4]) -> [__m256i; 2] {
 /// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
 /// invalid data.
 pub(super) fn pack_u32_u16_split_x8(data: [__m256i; 8]) -> ([__m256i; 2], [__m256i; 2]) {
-    let packed_u16 = pack_u32_u16_x8(data);
+    let packed_u16 = pack_u32_to_u16_ordered(data);
 
     let mask = _mm256_set1_epi16(0x00FF);
     let lo_8bits = and_si256(packed_u16, mask);

@@ -1,6 +1,6 @@
 //! 32-bit integer bitpacking routines
-use crate::{X128, X64};
 use crate::core::{CompressibleArray, CompressionDetails};
+use crate::{X64, X128};
 
 #[cfg(target_endian = "big")]
 compile_error!("big endian machines are not supported");

@@ -4,7 +4,7 @@ use std::cmp;
 use super::data::*;
 use super::utils::*;
 use crate::X128;
-use crate::uint32::{split_block, X128_MAX_OUTPUT_LEN};
+use crate::uint32::{X128_MAX_OUTPUT_LEN, split_block};
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to `nbits` sized elements.
@@ -453,11 +453,11 @@ pub unsafe fn to_u16(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 
     let [left, right] = split_block(block);
     let left = load_u32x64(left);
-    let left_packed = pack_u32_u16_x8(left);
+    let left_packed = pack_u32_to_u16_ordered(left);
     unsafe { store_si256x4(out.add(0), left_packed) };
 
     let right = load_u32x64(right);
-    let right_packed = pack_u32_u16_x8(right);
+    let right_packed = pack_u32_to_u16_ordered(right);
     unsafe { store_si256x4(out.add(128), right_packed) };
 }
 
@@ -465,7 +465,7 @@ pub unsafe fn to_u16(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
 unsafe fn store_lo_u16_registers(out: *mut u8, data: [__m256i; 8]) {
     let mask = _mm256_set1_epi32(0xFFFF);
     let shifted = and_si256(data, mask);
-    let packed = pack_u32_u16_x8(shifted);
+    let packed = pack_u32_to_u16_ordered(shifted);
     unsafe { store_si256x4(out, packed) };
 }
 
@@ -484,13 +484,13 @@ pub unsafe fn to_u17(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     unsafe { store_lo_u16_registers(out.add(0), left) };
 
     let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+    let hi_bits_left = pack_u32_to_u8_ordered(hi_bits_left);
 
     let right = load_u32x64(right);
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
     let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_bits_right = pack_u32_to_u8_ordered(hi_bits_right);
 
     let hi_bits = [
         hi_bits_left[0],
@@ -518,13 +518,13 @@ pub unsafe fn to_u18(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     unsafe { store_lo_u16_registers(out.add(0), left) };
 
     let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+    let hi_bits_left = pack_u32_to_u8_ordered(hi_bits_left);
 
     let right = load_u32x64(right);
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
     let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_bits_right = pack_u32_to_u8_ordered(hi_bits_right);
 
     let hi_bits = [
         hi_bits_left[0],
@@ -552,13 +552,13 @@ pub unsafe fn to_u19(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     unsafe { store_lo_u16_registers(out.add(0), left) };
 
     let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+    let hi_bits_left = pack_u32_to_u8_ordered(hi_bits_left);
 
     let right = load_u32x64(right);
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
     let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_bits_right = pack_u32_to_u8_ordered(hi_bits_right);
 
     let hi_bits = [
         hi_bits_left[0],
@@ -586,13 +586,13 @@ pub unsafe fn to_u20(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     unsafe { store_lo_u16_registers(out.add(0), left) };
 
     let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+    let hi_bits_left = pack_u32_to_u8_ordered(hi_bits_left);
 
     let right = load_u32x64(right);
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
     let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_bits_right = pack_u32_to_u8_ordered(hi_bits_right);
 
     let hi_bits = [
         hi_bits_left[0],
@@ -620,13 +620,13 @@ pub unsafe fn to_u21(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     unsafe { store_lo_u16_registers(out.add(0), left) };
 
     let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+    let hi_bits_left = pack_u32_to_u8_ordered(hi_bits_left);
 
     let right = load_u32x64(right);
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
     let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_bits_right = pack_u32_to_u8_ordered(hi_bits_right);
 
     let hi_bits = [
         hi_bits_left[0],
@@ -654,13 +654,13 @@ pub unsafe fn to_u22(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     unsafe { store_lo_u16_registers(out.add(0), left) };
 
     let hi_bits_left = srli_epi32::<16, 8>(left);
-    let hi_bits_left = pack_u32_u8_x8(hi_bits_left);
+    let hi_bits_left = pack_u32_to_u8_ordered(hi_bits_left);
 
     let right = load_u32x64(right);
     unsafe { store_lo_u16_registers(out.add(128), right) };
 
     let hi_bits_right = srli_epi32::<16, 8>(right);
-    let hi_bits_right = pack_u32_u8_x8(hi_bits_right);
+    let hi_bits_right = pack_u32_to_u8_ordered(hi_bits_right);
 
     let hi_bits = [
         hi_bits_left[0],
@@ -693,8 +693,8 @@ pub unsafe fn to_u23(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     let hi_left_bits = srli_epi32::<16, 8>(left);
     let hi_right_bits = srli_epi32::<16, 8>(right);
 
-    let packed_hi_left_8bits = pack_u32_u8_x8(hi_left_bits);
-    let packed_hi_right_8bits = pack_u32_u8_x8(hi_right_bits);
+    let packed_hi_left_8bits = pack_u32_to_u8_ordered(hi_left_bits);
+    let packed_hi_right_8bits = pack_u32_to_u8_ordered(hi_right_bits);
 
     let hi_bits = [
         packed_hi_left_8bits[0],
@@ -727,8 +727,8 @@ pub unsafe fn to_u24(out: &mut [u8; X128_MAX_OUTPUT_LEN], block: &[u32; X128], p
     let hi_left_bits = srli_epi32::<16, 8>(left);
     let hi_right_bits = srli_epi32::<16, 8>(right);
 
-    let packed_hi_left_8bits = pack_u32_u8_x8(hi_left_bits);
-    let packed_hi_right_8bits = pack_u32_u8_x8(hi_right_bits);
+    let packed_hi_left_8bits = pack_u32_to_u8_ordered(hi_left_bits);
+    let packed_hi_right_8bits = pack_u32_to_u8_ordered(hi_right_bits);
 
     let merged = [
         packed_hi_left_8bits[0],
@@ -825,9 +825,9 @@ pub unsafe fn to_u32(_out: &mut [u8; X128_MAX_OUTPUT_LEN], _block: &[u32; X128],
 fn pack_block_to_u8s(block: &[u32; X128]) -> [__m256i; 4] {
     let [left, right] = split_block(block);
     let left = load_u32x64(left);
-    let left_packed = pack_u32_u8_x8(left);
+    let left_packed = pack_u32_to_u8_ordered(left);
     let right = load_u32x64(right);
-    let right_packed = pack_u32_u8_x8(right);
+    let right_packed = pack_u32_to_u8_ordered(right);
     [
         left_packed[0],
         left_packed[1],
