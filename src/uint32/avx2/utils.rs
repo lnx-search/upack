@@ -35,6 +35,35 @@ pub(super) fn pack_u32_to_u8_ordered(data: [__m256i; 8]) -> [__m256i; 2] {
 }
 
 #[target_feature(enable = "avx2")]
+/// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u8_to_u32_ordered(data: [__m256i; 2]) -> [__m256i; 8] {
+    let inv_permute_mask = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
+    let zero = _mm256_setzero_si256();
+
+    let unpack_block = |packed: __m256i| -> [__m256i; 4] {
+        let unpermuted = _mm256_permutevar8x32_epi32(packed, inv_permute_mask);
+
+        let lo_16s = _mm256_unpacklo_epi8(unpermuted, zero);
+        let hi_16s = _mm256_unpackhi_epi8(unpermuted, zero);
+
+        [
+            _mm256_unpacklo_epi16(lo_16s, zero),
+            _mm256_unpackhi_epi16(lo_16s, zero),
+            _mm256_unpacklo_epi16(hi_16s, zero),
+            _mm256_unpackhi_epi16(hi_16s, zero),
+        ]
+    };
+
+    let block0 = unpack_block(data[0]);
+    let block1 = unpack_block(data[1]);
+
+    [
+        block0[0], block0[1], block0[2], block0[3], block1[0], block1[1], block1[2], block1[3],
+    ]
+}
+
+#[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
 /// 8-bit elements.
 ///
@@ -54,6 +83,32 @@ pub(super) fn pack_u32_to_u8_unordered(data: [__m256i; 8]) -> [__m256i; 2] {
     [
         pack_block(data[0], data[1], data[2], data[3]),
         pack_block(data[4], data[5], data[6], data[7]),
+    ]
+}
+
+#[target_feature(enable = "avx2")]
+/// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u8_to_u32_unordered(data: [__m256i; 2]) -> [__m256i; 8] {
+    let zero = _mm256_setzero_si256();
+
+    let unpack_block = |packed: __m256i| -> [__m256i; 4] {
+        let lo_16s = _mm256_unpacklo_epi8(packed, zero);
+        let hi_16s = _mm256_unpackhi_epi8(packed, zero);
+
+        [
+            _mm256_unpacklo_epi16(lo_16s, zero),
+            _mm256_unpackhi_epi16(lo_16s, zero),
+            _mm256_unpacklo_epi16(hi_16s, zero),
+            _mm256_unpackhi_epi16(hi_16s, zero),
+        ]
+    };
+
+    let block0 = unpack_block(data[0]);
+    let block1 = unpack_block(data[1]);
+
+    [
+        block0[0], block0[1], block0[2], block0[3], block1[0], block1[1], block1[2], block1[3],
     ]
 }
 
@@ -82,6 +137,30 @@ pub(super) fn pack_u32_to_u16_ordered(data: [__m256i; 8]) -> [__m256i; 4] {
 }
 
 #[target_feature(enable = "avx2")]
+/// Unpack 4 sets of registers containing 16-bit elements and produce 8 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u16_to_u32_ordered(data: [__m256i; 4]) -> [__m256i; 8] {
+    let zero = _mm256_setzero_si256();
+
+    let unpack_block = |packed| {
+        let unpermuted = _mm256_permute4x64_epi64::<0xD8>(packed);
+        [
+            _mm256_unpacklo_epi16(unpermuted, zero),
+            _mm256_unpackhi_epi16(unpermuted, zero),
+        ]
+    };
+
+    let block0 = unpack_block(data[0]);
+    let block1 = unpack_block(data[1]);
+    let block2 = unpack_block(data[2]);
+    let block3 = unpack_block(data[3]);
+
+    [
+        block0[0], block0[1], block1[0], block1[1], block2[0], block2[1], block3[0], block3[1],
+    ]
+}
+
+#[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 4 registers holding
 /// 16-bit elements.
 ///
@@ -97,6 +176,29 @@ pub(super) fn pack_u32_to_u16_unordered(data: [__m256i; 8]) -> [__m256i; 4] {
         _mm256_packus_epi32(data[2], data[3]),
         _mm256_packus_epi32(data[4], data[5]),
         _mm256_packus_epi32(data[6], data[7]),
+    ]
+}
+
+#[target_feature(enable = "avx2")]
+/// Unpack 4 sets of registers containing 16-bit elements and produce 8 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u16_to_u32_unordered(data: [__m256i; 4]) -> [__m256i; 8] {
+    let zero = _mm256_setzero_si256();
+
+    let unpack_block = |packed| {
+        [
+            _mm256_unpacklo_epi16(packed, zero),
+            _mm256_unpackhi_epi16(packed, zero),
+        ]
+    };
+
+    let block0 = unpack_block(data[0]);
+    let block1 = unpack_block(data[1]);
+    let block2 = unpack_block(data[2]);
+    let block3 = unpack_block(data[3]);
+
+    [
+        block0[0], block0[1], block1[0], block1[1], block2[0], block2[1], block3[0], block3[1],
     ]
 }
 
