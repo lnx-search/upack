@@ -1,5 +1,4 @@
 use std::arch::x86_64::*;
-use std::cmp;
 
 use super::data::*;
 use super::utils::*;
@@ -193,4 +192,262 @@ fn pack_block_to_u8_unordered(block: &[u32; X64]) -> [__m256i; 2] {
     let block = load_u32x64(block);
     let packed = pack_u32_to_u8_unordered(block);
     [packed[0], packed[1]]
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 9-bit elements.
+pub unsafe fn to_u9(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u1_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 10-bit elements.
+pub unsafe fn to_u10(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u2_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 11-bit elements.
+pub unsafe fn to_u11(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u3_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 12-bit elements.
+pub unsafe fn to_u12(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u4_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 13-bit elements.
+pub unsafe fn to_u13(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u5_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 14-bit elements.
+pub unsafe fn to_u14(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u6_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 15-bit elements.
+pub unsafe fn to_u15(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(block);
+    unsafe { store_si256x2(out.add(0), lo) };
+    unsafe { pack_u7_registers(out.add(64), hi) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 16-bit elements.
+pub unsafe fn to_u16(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    let packed = pack_u32_to_u16_unordered(block);
+    unsafe { store_si256x4(out, packed) };
+}
+
+#[target_feature(enable = "avx2")]
+unsafe fn store_lo_u16_registers(out: *mut u8, data: [__m256i; 8]) {
+    let mask = _mm256_set1_epi32(0xFFFF);
+    let shifted = and_si256(data, mask);
+    let packed = pack_u32_to_u16_ordered(shifted);
+    unsafe { store_si256x4(out, packed) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 17-bit elements.
+pub unsafe fn to_u17(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u1_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 18-bit elements.
+pub unsafe fn to_u18(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u2_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 19-bit elements.
+pub unsafe fn to_u19(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u3_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 20-bit elements.
+pub unsafe fn to_u20(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u4_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 21-bit elements.
+pub unsafe fn to_u21(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u5_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 22-bit elements.
+pub unsafe fn to_u22(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u6_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 23-bit elements.
+pub unsafe fn to_u23(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { pack_u7_registers(out.add(128), hi_bits) }
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 24-bit elements.
+pub unsafe fn to_u24(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_bits = srli_epi32::<16, 8>(block);
+    let hi_bits = pack_u32_to_u8_unordered(hi_bits);
+    unsafe { store_si256x2(out.add(128), hi_bits) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 25-bit elements.
+pub unsafe fn to_u25(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u1_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 26-bit elements.
+pub unsafe fn to_u26(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u2_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 27-bit elements.
+pub unsafe fn to_u27(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u3_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 28-bit elements.
+pub unsafe fn to_u28(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u4_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 29-bit elements.
+pub unsafe fn to_u29(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u5_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 30-bit elements.
+pub unsafe fn to_u30(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u6_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 31-bit elements.
+pub unsafe fn to_u31(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_lo_u16_registers(out.add(0), block) };
+
+    let hi_half = srli_epi32::<16, 8>(block);
+    let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
+    unsafe { store_si256x2(out.add(128), lo) };
+    unsafe { pack_u7_registers(out.add(192), hi) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 32-bit elements.
+pub unsafe fn to_u32(out: *mut u8, block: &[u32; X64]) {
+    let block = load_u32x64(block);
+    unsafe { store_si256x8(out, block) };
 }

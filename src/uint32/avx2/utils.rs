@@ -110,7 +110,24 @@ pub(super) fn pack_u32_to_u16_unordered(data: [__m256i; 8]) -> [__m256i; 4] {
 /// This routine produces garbage results if the input elements are beyond the maximum value
 /// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
 /// invalid data.
-pub(super) fn pack_u16_u8_x8(data: [__m256i; 4]) -> [__m256i; 2] {
+pub(super) fn pack_u16_to_u8_unordered(data: [__m256i; 4]) -> [__m256i; 2] {
+    [
+        _mm256_packus_epi16(data[0], data[1]),
+        _mm256_packus_epi16(data[2], data[3]),
+    ]
+}
+
+#[target_feature(enable = "avx2")]
+/// Pack 4 sets of registers containing 16-bit elements and produce 2 registers holding
+/// 8-bit elements.
+///
+/// The order of elements is maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
+/// invalid data.
+pub(super) fn pack_u16_to_u8_ordered(data: [__m256i; 4]) -> [__m256i; 2] {
     let pack_block = |a, b| {
         let packed = _mm256_packus_epi16(a, b);
         _mm256_permute4x64_epi64::<0xD8>(packed)
@@ -130,15 +147,39 @@ pub(super) fn pack_u16_u8_x8(data: [__m256i; 4]) -> [__m256i; 2] {
 /// This routine produces garbage results if the input elements are beyond the maximum value
 /// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
 /// invalid data.
-pub(super) fn pack_u32_u16_split_x8(data: [__m256i; 8]) -> ([__m256i; 2], [__m256i; 2]) {
+pub(super) fn pack_u32_to_u16_split_ordered(data: [__m256i; 8]) -> ([__m256i; 2], [__m256i; 2]) {
     let packed_u16 = pack_u32_to_u16_ordered(data);
 
     let mask = _mm256_set1_epi16(0x00FF);
     let lo_8bits = and_si256(packed_u16, mask);
     let hi_8bits = srli_epi16::<8, 4>(packed_u16);
 
-    let packed_lo_8bits = pack_u16_u8_x8(lo_8bits);
-    let packed_hi_8bits = pack_u16_u8_x8(hi_8bits);
+    let packed_lo_8bits = pack_u16_to_u8_ordered(lo_8bits);
+    let packed_hi_8bits = pack_u16_to_u8_ordered(hi_8bits);
+
+    (packed_hi_8bits, packed_lo_8bits)
+}
+
+#[target_feature(enable = "avx2")]
+/// Given 8 sets of 32-bit registers, pack them into 4 sets of 16-bit registers, then
+/// split each 16-bit element into a high and low halves, returning the 8-bit halves in separate
+/// registers in their high and low forms respectively.
+///
+/// The order of elements are not maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_split_unordered(data: [__m256i; 8]) -> ([__m256i; 2], [__m256i; 2]) {
+    let packed_u16 = pack_u32_to_u16_unordered(data);
+
+    let mask = _mm256_set1_epi16(0x00FF);
+    let lo_8bits = and_si256(packed_u16, mask);
+    let hi_8bits = srli_epi16::<8, 4>(packed_u16);
+
+    let packed_lo_8bits = pack_u16_to_u8_unordered(lo_8bits);
+    let packed_hi_8bits = pack_u16_to_u8_unordered(hi_8bits);
 
     (packed_hi_8bits, packed_lo_8bits)
 }

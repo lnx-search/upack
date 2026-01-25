@@ -840,9 +840,9 @@ fn pack_block_to_u8s(block: &[u32; X128]) -> [__m256i; 4] {
 fn pack_block_to_u16_split(block: &[u32; X128]) -> ([__m256i; 4], [__m256i; 4]) {
     let [left, right] = split_block(block);
     let left = load_u32x64(left);
-    let (left_hi, left_lo) = pack_u32_u16_split_x8(left);
+    let (left_hi, left_lo) = pack_u32_to_u16_split_unordered(left);
     let right = load_u32x64(right);
-    let (right_hi, right_lo) = pack_u32_u16_split_x8(right);
+    let (right_hi, right_lo) = pack_u32_to_u16_split_unordered(right);
 
     let hi = [left_hi[0], left_hi[1], right_hi[0], right_hi[1]];
     let lo = [left_lo[0], left_lo[1], right_lo[0], right_lo[1]];
