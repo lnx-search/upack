@@ -28,7 +28,12 @@ pub const X128_MAX_OUTPUT_LEN: usize = <[u32; X128] as CompressibleArray>::MAX_O
 /// Returns the number of bytes that will be been written for a given bit length and number
 /// of elements that were packed when using the bitpacking functions.
 pub const fn max_compressed_size<const BLOCK_SIZE: usize>(bit_length: usize) -> usize {
-    const { assert!(BLOCK_SIZE == X128, "BLOCK_SIZE must be either X128 or X256") };
+    const {
+        assert!(
+            BLOCK_SIZE == X128 || BLOCK_SIZE == X64,
+            "BLOCK_SIZE must be either X128 or X256"
+        )
+    };
     compressed_size(bit_length, BLOCK_SIZE)
 }
 

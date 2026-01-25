@@ -136,7 +136,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 2]) {
     unsafe { pack_u4_registers(out, masked) };
 
     // 4bit * 64 / 8-bits per byte.
-    let remaining = andnot_si256(data, mask);
+    let remaining = srli_epi16::<4, 2>(data);
     unsafe { pack_u1_registers(out.add(32), remaining) };
 }
 
@@ -156,7 +156,7 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [__m256i; 2]) {
     unsafe { pack_u4_registers(out, masked) };
 
     // 4bit * 64 / 8-bits per byte.
-    let remaining = andnot_si256(data, mask);
+    let remaining = srli_epi16::<4, 2>(data);
     unsafe { pack_u2_registers(out.add(32), remaining) };
 }
 
@@ -176,7 +176,7 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [__m256i; 2]) {
     unsafe { pack_u4_registers(out, masked) };
 
     // 4bit * 64 / 8-bits per byte.
-    let remaining = andnot_si256(data, mask);
+    let remaining = srli_epi16::<4, 2>(data);
     unsafe { pack_u3_registers(out.add(32), remaining) };
 }
 
@@ -450,4 +450,57 @@ pub unsafe fn to_u31(out: *mut u8, block: &[u32; X64]) {
 pub unsafe fn to_u32(out: *mut u8, block: &[u32; X64]) {
     let block = load_u32x64(block);
     unsafe { store_si256x8(out, block) };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::uint32::{X128_MAX_OUTPUT_LEN, max_compressed_size};
+
+    #[rstest::rstest]
+    #[case(1, to_u1)]
+    #[case(2, to_u2)]
+    #[case(3, to_u3)]
+    #[case(4, to_u4)]
+    #[case(5, to_u5)]
+    #[case(6, to_u6)]
+    #[case(7, to_u7)]
+    #[case(8, to_u8)]
+    #[case(9, to_u9)]
+    #[case(10, to_u10)]
+    #[case(11, to_u11)]
+    #[case(12, to_u12)]
+    #[case(13, to_u13)]
+    #[case(14, to_u14)]
+    #[case(15, to_u15)]
+    #[case(16, to_u16)]
+    #[case(17, to_u17)]
+    #[case(18, to_u18)]
+    #[case(19, to_u19)]
+    #[case(20, to_u20)]
+    #[case(21, to_u21)]
+    #[case(22, to_u22)]
+    #[case(23, to_u23)]
+    #[case(24, to_u24)]
+    #[case(25, to_u25)]
+    #[case(26, to_u26)]
+    #[case(27, to_u27)]
+    #[case(28, to_u28)]
+    #[case(29, to_u29)]
+    #[case(30, to_u30)]
+    #[case(31, to_u31)]
+    #[case(32, to_u32)]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_saturation(#[case] bit_len: u8, #[case] packer: unsafe fn(*mut u8, &[u32; X64])) {
+        let pack_value = (2u64.pow(bit_len as u32) - 1) as u32;
+
+        let values = [pack_value; X64];
+        let mut output = [0; X128_MAX_OUTPUT_LEN / 2];
+        unsafe { packer(output.as_mut_ptr(), &values) };
+        assert!(
+            output[..max_compressed_size::<X64>(bit_len as usize)]
+                .iter()
+                .all(|b| *b == u8::MAX)
+        );
+    }
 }
