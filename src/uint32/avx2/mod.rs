@@ -4,6 +4,8 @@ pub mod pack_x128;
 pub mod pack_x64_full;
 pub mod pack_x64_partial;
 pub mod unpack_x128;
+pub mod unpack_x64_full;
+pub mod unpack_x64_partial;
 mod utils;
 
 #[inline]

@@ -7,6 +7,54 @@ pub const fn _mm_shuffle(z: u32, y: u32, x: u32, w: u32) -> i32 {
 }
 
 #[target_feature(enable = "avx2")]
+/// Expand the provided bitmask to a 256-bit register.
+pub(super) fn expand_mask_epi8(mask: __mmask32) -> __m256i {
+    #[rustfmt::skip]
+    let powers = _mm256_setr_epi8(
+        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80u8 as i8,
+        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80u8 as i8,
+        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80u8 as i8,
+        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80u8 as i8,
+    );
+
+    let v_mask = _mm256_set1_epi32(mask as i32);
+    #[rustfmt::skip]
+    let shuffle_mask = _mm256_setr_epi8(
+        0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1,
+        2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3
+    );
+    let bytes_broadcast = _mm256_shuffle_epi8(v_mask, shuffle_mask);
+    let isolated = _mm256_and_si256(bytes_broadcast, powers);
+
+    _mm256_cmpeq_epi8(isolated, powers)
+}
+
+#[target_feature(enable = "avx2")]
+/// Expand the provided bitmask to a 256-bit register.
+pub(super) fn expand_mask_epi16(mask: __mmask16) -> __m256i {
+    #[rustfmt::skip]
+    let powers = _mm256_setr_epi16(
+        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+        0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000u16 as i16,
+    );
+
+    let v_mask = _mm256_set1_epi16(mask as i16);
+    let isolated = _mm256_and_si256(v_mask, powers);
+
+    _mm256_cmpeq_epi16(isolated, powers)
+}
+
+#[target_feature(enable = "avx2")]
+/// Expand the provided bitmask to a 256-bit register.
+pub(super) fn expand_mask_epi32(mask: __mmask8) -> __m256i {
+    let powers = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);
+    let v_mask = _mm256_set1_epi32(mask as i32);
+    let isolated = _mm256_and_si256(v_mask, powers);
+
+    _mm256_cmpeq_epi32(isolated, powers)
+}
+
+#[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
 /// 8-bit elements.
 ///
@@ -110,6 +158,25 @@ pub(super) fn unpack_u8_to_u32_unordered(data: [__m256i; 2]) -> [__m256i; 8] {
     [
         block0[0], block0[1], block0[2], block0[3], block1[0], block1[1], block1[2], block1[3],
     ]
+}
+
+#[target_feature(enable = "avx2")]
+/// Unpack 2 sets of registers containing 16-bit elements and produce 4 registers holding
+/// 16-bit elements.
+pub(super) fn unpack_u8_to_u16_unordered(data: [__m256i; 2]) -> [__m256i; 4] {
+    let zero = _mm256_setzero_si256();
+
+    let unpack_block = |packed: __m256i| -> [__m256i; 2] {
+        [
+            _mm256_unpacklo_epi8(packed, zero),
+            _mm256_unpackhi_epi8(packed, zero),
+        ]
+    };
+
+    let block0 = unpack_block(data[0]);
+    let block1 = unpack_block(data[1]);
+
+    [block0[0], block0[1], block1[0], block1[1]]
 }
 
 #[target_feature(enable = "avx2")]
@@ -348,6 +415,17 @@ pub(super) fn slli_epi16<const IMM8: i32, const N: usize>(mut data: [__m256i; N]
     let mut i = 0;
     while i < N {
         data[i] = _mm256_slli_epi16::<IMM8>(data[i]);
+        i += 1;
+    }
+    data
+}
+
+#[target_feature(enable = "avx2")]
+/// Shift all registers right by [IMM8] in 32-bit lanes.
+pub(super) fn slli_epi32<const IMM8: i32, const N: usize>(mut data: [__m256i; N]) -> [__m256i; N] {
+    let mut i = 0;
+    while i < N {
+        data[i] = _mm256_slli_epi32::<IMM8>(data[i]);
         i += 1;
     }
     data
