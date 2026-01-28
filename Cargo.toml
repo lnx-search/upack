@@ -25,9 +25,5 @@ default = ["avx512", "avx2", "sse", "neon"]
 harness = false
 name = "decompress" 
 
-[[bench]]
-harness = false
-name = "pack"
-
 [profile.bench]
 debug = true

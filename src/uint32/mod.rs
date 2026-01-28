@@ -9,16 +9,6 @@ compile_error!("big endian machines are not supported");
 pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
 pub mod avx512;
-#[cfg(all(
-    any(target_arch = "x86_64", target_arch = "aarch64"),
-    any(feature = "sse", feature = "neon")
-))]
-mod dual_128;
-#[cfg(all(
-    any(target_arch = "x86_64", target_arch = "aarch64"),
-    any(feature = "sse", feature = "neon")
-))]
-mod polyfill;
 mod scalar;
 
 /// The maximum output size of a compressed buffer for a [X128] block, assuming worst case compression.
@@ -37,11 +27,20 @@ pub const fn max_compressed_size<const BLOCK_SIZE: usize>(bit_length: usize) -> 
     compressed_size(bit_length, BLOCK_SIZE)
 }
 
+#[inline]
 #[track_caller]
 /// Returns the number of bytes that will be been written for a given bit length and number
 /// of elements that were packed when using the bitpacking functions.
 pub const fn compressed_size(bit_length: usize, num_elements: usize) -> usize {
     assert!(bit_length <= 32, "bit length must be between 0 and 32");
+    if num_elements > 64 {
+        block_bytes(bit_length, 64) + block_bytes(bit_length, num_elements - 64)
+    } else {
+        block_bytes(bit_length, num_elements)
+    }
+}
+
+const fn block_bytes(bit_length: usize, num_elements: usize) -> usize {
     let quotient = bit_length / 4;
     let remainder = bit_length % 4;
     let remainder_bytes = num_elements.div_ceil(8) * remainder;
@@ -64,7 +63,7 @@ unsafe fn pack_to_bits(
     #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
     if avx2::can_use() {
         // SAFETY: The runtime CPU supports the required features.
-        unsafe { avx2::pack_x128::to_nbits(output, nbits, input, n) };
+        // unsafe { avx2::pack_x128::to_nbits(output, nbits, input, n) };
         return;
     }
 }

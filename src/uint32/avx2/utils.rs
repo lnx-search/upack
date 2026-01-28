@@ -29,30 +29,30 @@ pub(super) fn expand_mask_epi8(mask: __mmask32) -> __m256i {
     _mm256_cmpeq_epi8(isolated, powers)
 }
 
-#[target_feature(enable = "avx2")]
-/// Expand the provided bitmask to a 256-bit register.
-pub(super) fn expand_mask_epi16(mask: __mmask16) -> __m256i {
-    #[rustfmt::skip]
-    let powers = _mm256_setr_epi16(
-        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
-        0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000u16 as i16,
-    );
-
-    let v_mask = _mm256_set1_epi16(mask as i16);
-    let isolated = _mm256_and_si256(v_mask, powers);
-
-    _mm256_cmpeq_epi16(isolated, powers)
-}
-
-#[target_feature(enable = "avx2")]
-/// Expand the provided bitmask to a 256-bit register.
-pub(super) fn expand_mask_epi32(mask: __mmask8) -> __m256i {
-    let powers = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);
-    let v_mask = _mm256_set1_epi32(mask as i32);
-    let isolated = _mm256_and_si256(v_mask, powers);
-
-    _mm256_cmpeq_epi32(isolated, powers)
-}
+// #[target_feature(enable = "avx2")]
+// /// Expand the provided bitmask to a 256-bit register.
+// pub(super) fn expand_mask_epi16(mask: __mmask16) -> __m256i {
+//     #[rustfmt::skip]
+//     let powers = _mm256_setr_epi16(
+//         0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+//         0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000u16 as i16,
+//     );
+//
+//     let v_mask = _mm256_set1_epi16(mask as i16);
+//     let isolated = _mm256_and_si256(v_mask, powers);
+//
+//     _mm256_cmpeq_epi16(isolated, powers)
+// }
+//
+// #[target_feature(enable = "avx2")]
+// /// Expand the provided bitmask to a 256-bit register.
+// pub(super) fn expand_mask_epi32(mask: __mmask8) -> __m256i {
+//     let powers = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);
+//     let v_mask = _mm256_set1_epi32(mask as i32);
+//     let isolated = _mm256_and_si256(v_mask, powers);
+//
+//     _mm256_cmpeq_epi32(isolated, powers)
+// }
 
 #[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
@@ -380,18 +380,6 @@ pub(super) fn and_si256<const N: usize>(mut data: [__m256i; N], mask: __m256i) -
     let mut i = 0;
     while i < N {
         data[i] = _mm256_and_si256(data[i], mask);
-        i += 1;
-    }
-    data
-}
-
-#[target_feature(enable = "avx2")]
-/// Perform a bitwise AND on all provided registers with another broadcast register _after_
-/// performing a bitwise NOT of the broadcast register.
-pub(super) fn andnot_si256<const N: usize>(mut data: [__m256i; N], mask: __m256i) -> [__m256i; N] {
-    let mut i = 0;
-    while i < N {
-        data[i] = _mm256_andnot_si256(mask, data[i]);
         i += 1;
     }
     data

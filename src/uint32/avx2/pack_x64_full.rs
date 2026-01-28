@@ -4,6 +4,32 @@ use super::data::*;
 use super::utils::*;
 
 #[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to `nbits` bit length  elements.
+///
+/// # Safety
+/// - `out` must be safe to write `max_compressed_size::<X64>(nbits)` bytes to.
+/// - The runtime CPU must support the `avx2` instructions.
+/// - `nbits` must be between 0 and 32.
+pub unsafe fn to_nbits(nbits: usize, out: *mut u8, block: [__m256i; 8]) {
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
+
+    const LUT: [unsafe fn(out: *mut u8, [__m256i; 8]); 33] = [
+        to_u0, to_u1, to_u2, to_u3, to_u4, to_u5, to_u6, to_u7, to_u8, to_u9, to_u10, to_u11,
+        to_u12, to_u13, to_u14, to_u15, to_u16, to_u17, to_u18, to_u19, to_u20, to_u21, to_u22,
+        to_u23, to_u24, to_u25, to_u26, to_u27, to_u28, to_u29, to_u30, to_u31, to_u32,
+    ];
+    let func = unsafe { LUT.get_unchecked(nbits) };
+    unsafe { func(out, block) };
+}
+
+#[target_feature(enable = "avx2")]
+/// Bitpack the provided block of integers to 0-bit elements.
+///
+/// # Safety
+/// - The runtime CPU must support the `avx2` instructions.
+pub unsafe fn to_u0(_out: *mut u8, _block: [__m256i; 8]) {}
+
+#[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 1-bit elements.
 ///
 /// # Safety
