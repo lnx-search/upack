@@ -112,6 +112,30 @@ pub(super) fn unpack_u8_to_u32_ordered(data: [__m256i; 2]) -> [__m256i; 8] {
 }
 
 #[target_feature(enable = "avx2")]
+/// Unpack 2 sets of registers containing 8-bit elements and produce 4 registers holding
+/// 16-bit elements.
+pub(super) fn unpack_u8_to_u16_ordered(data: [__m256i; 2]) -> [__m256i; 4] {
+    let zero = _mm256_setzero_si256();
+
+    let unpack_block = |packed: __m256i| -> [__m256i; 2] {
+        let unpermuted = _mm256_permute4x64_epi64::<0xD8>(packed);
+
+        [
+            _mm256_unpacklo_epi8(unpermuted, zero),
+            _mm256_unpackhi_epi8(unpermuted, zero),
+        ]
+    };
+
+    let block0 = unpack_block(data[0]);
+    let block1 = unpack_block(data[1]);
+
+    [
+        block0[0], block0[1],
+        block1[0], block1[1],
+    ]
+}
+
+#[target_feature(enable = "avx2")]
 /// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
 /// 8-bit elements.
 ///
@@ -437,7 +461,7 @@ mod tests {
 
     use super::*;
     use crate::X64;
-    use crate::uint32::avx2::data::load_u32x64;
+    use crate::uint32::avx2::data::{load_si256x4, load_u32x64};
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
@@ -582,6 +606,40 @@ mod tests {
         let unpacked = unsafe { unpack_u8_to_u32_unordered(packed) };
 
         let view = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(unpacked) };
+        assert_eq!(view, input);
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_unpack_u8_u16_unordered() {
+        let mut input = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            input[i] = i as u16;
+        }
+
+        let data = unsafe { load_si256x4(input.as_ptr().cast()) };
+        let packed = unsafe { pack_u16_to_u8_unordered(data) };
+        let unpacked = unsafe { unpack_u8_to_u16_unordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
+        assert_eq!(view, input);
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_unpack_u8_u16_ordered() {
+        let mut input = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            input[i] = i as u16;
+        }
+
+        let data = unsafe { load_si256x4(input.as_ptr().cast()) };
+        let packed = unsafe { pack_u16_to_u8_ordered(data) };
+        let unpacked = unsafe { unpack_u8_to_u16_ordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
         assert_eq!(view, input);
     }
 }

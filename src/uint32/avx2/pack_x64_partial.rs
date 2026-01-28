@@ -19,18 +19,15 @@ pub unsafe fn to_u1(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
 unsafe fn pack_u1_registers(out: *mut u8, data: [__m256i; 2]) {
     let [d1, d2] = data;
 
-    // TODO: Bugged, needs to be a shift rather than cmp.
-    let zeroes = _mm256_setzero_si256();
-    let cmp1 = _mm256_cmpeq_epi8(d1, zeroes);
-    let cmp2 = _mm256_cmpeq_epi8(d2, zeroes);
+    let cmp1 = _mm256_slli_epi16::<7>(d1);
+    let cmp2 = _mm256_slli_epi16::<7>(d2);
 
-    let mask1 = !_mm256_movemask_epi8(cmp1);
-    let mask2 = !_mm256_movemask_epi8(cmp2);
+    let mask1 = _mm256_movemask_epi8(cmp1) as u32;
+    let mask2 = _mm256_movemask_epi8(cmp2) as u32;
 
-    // We assume LE endianness, so we know `mask2`, etc... can only ever be non-zero
-    // when we have more than 32 elements in `pack_n`.
-    unsafe { std::ptr::write_unaligned(out.add(0).cast(), mask1) };
-    unsafe { std::ptr::write_unaligned(out.add(4).cast(), mask2) };
+    let merged_mask = ((mask2 as u64) << 32) | mask1 as u64;
+    // We assume LE endianness
+    unsafe { std::ptr::write_unaligned(out.cast(), merged_mask) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -119,8 +116,9 @@ unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 2]) {
     let nibbles1 = _mm256_maddubs_epi16(d1, madd_multiplier);
     let nibbles2 = _mm256_maddubs_epi16(d2, madd_multiplier);
     let interleaved = _mm256_packus_epi16(nibbles1, nibbles2);
+    let ordered = _mm256_permute4x64_epi64::<0xD8>(interleaved);
 
-    unsafe { _mm256_storeu_si256(out.add(0).cast(), interleaved) };
+    unsafe { _mm256_storeu_si256(out.add(0).cast(), ordered) };
 }
 
 #[target_feature(enable = "avx2")]
@@ -140,7 +138,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
-    let remaining = andnot_si256(data, mask);
+    let remaining = srli_epi16::<4, 2>(data);
     unsafe { pack_u1_registers(out.add(offset), remaining) };
 }
 

@@ -2,7 +2,6 @@ use std::arch::x86_64::*;
 
 use super::data::*;
 use super::utils::*;
-use crate::X64;
 
 #[target_feature(enable = "avx2")]
 /// Unpack the 1-bit integers from the input pointer and return the result registers.
@@ -669,6 +668,7 @@ mod tests {
     use super::*;
     use crate::uint32::X128_MAX_OUTPUT_LEN;
     use crate::uint32::avx2::pack_x64_full::*;
+    use crate::X64;
 
     #[rstest::rstest]
     #[case(1, from_u1)]
@@ -750,7 +750,7 @@ mod tests {
     #[case(30, to_u30, from_u30)]
     #[case(31, to_u31, from_u31)]
     #[case(32, to_u32, from_u32)]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
     fn test_pack_unpack(
         #[case] bit_len: u8,
         #[case] packer: unsafe fn(*mut u8, [__m256i; 8]),
