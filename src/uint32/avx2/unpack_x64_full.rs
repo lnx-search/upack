@@ -666,9 +666,9 @@ pub unsafe fn from_u32(input: *const u8) -> [__m256i; 8] {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::X64;
     use crate::uint32::X128_MAX_OUTPUT_LEN;
     use crate::uint32::avx2::pack_x64_full::*;
-    use crate::X64;
 
     #[rstest::rstest]
     #[case(1, from_u1)]

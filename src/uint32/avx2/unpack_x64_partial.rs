@@ -87,7 +87,7 @@ pub unsafe fn from_u3(input: *const u8, read_n: usize) -> [__m256i; 8] {
 /// by `input`.
 unsafe fn unpack_u3_registers(input: *const u8, read_n: usize) -> [__m256i; 2] {
     let step = read_n.div_ceil(8);
-    
+
     let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
     let mask2: u64 = unsafe { std::ptr::read_unaligned(input.add(step).cast()) };
     let mask3: u64 = unsafe { std::ptr::read_unaligned(input.add(step * 2).cast()) };
@@ -764,10 +764,10 @@ pub unsafe fn from_u32(input: *const u8, read_n: usize) -> [__m256i; 8] {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::uint32::{max_compressed_size, X128_MAX_OUTPUT_LEN};
-    use crate::uint32::avx2::pack_x64_partial::*;
     use crate::X64;
-    
+    use crate::uint32::avx2::pack_x64_partial::*;
+    use crate::uint32::{X128_MAX_OUTPUT_LEN, max_compressed_size};
+
     #[rstest::rstest]
     #[case(1, from_u1)]
     #[case(2, from_u2)]

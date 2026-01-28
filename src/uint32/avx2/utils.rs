@@ -129,10 +129,7 @@ pub(super) fn unpack_u8_to_u16_ordered(data: [__m256i; 2]) -> [__m256i; 4] {
     let block0 = unpack_block(data[0]);
     let block1 = unpack_block(data[1]);
 
-    [
-        block0[0], block0[1],
-        block1[0], block1[1],
-    ]
+    [block0[0], block0[1], block1[0], block1[1]]
 }
 
 #[target_feature(enable = "avx2")]
