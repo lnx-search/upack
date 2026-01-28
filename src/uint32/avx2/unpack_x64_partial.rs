@@ -351,7 +351,7 @@ pub unsafe fn from_u14(input: *const u8, read_n: usize) -> [__m256i; 8] {
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
-    let hi_bits = unsafe { unpack_u6_registers(input.add(64), offset) };
+    let hi_bits = unsafe { unpack_u6_registers(input.add(offset), read_n) };
     let mut hi_bits = unpack_u8_to_u16_ordered(hi_bits);
     hi_bits = slli_epi16::<8, 4>(hi_bits);
 
@@ -372,7 +372,7 @@ pub unsafe fn from_u15(input: *const u8, read_n: usize) -> [__m256i; 8] {
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
-    let hi_bits = unsafe { unpack_u7_registers(input.add(64), offset) };
+    let hi_bits = unsafe { unpack_u7_registers(input.add(offset), read_n) };
     let mut hi_bits = unpack_u8_to_u16_ordered(hi_bits);
     hi_bits = slli_epi16::<8, 4>(hi_bits);
 
