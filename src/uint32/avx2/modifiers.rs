@@ -72,16 +72,14 @@ pub(super) fn delta_encode_x64(mut previous_value: __m256i, block: [__m256i; 8])
 ///
 /// # Safety
 /// The caller must ensure that the runtime CPU must support the required CPU features.
-pub(super) fn delta_decode_x64(mut previous_value: __m256i, block: [__m256i; 8]) -> [__m256i; 8] {
+fn delta_decode_x64(mut previous_value: __m256i, block: [__m256i; 8]) -> [__m256i; 8] {
     todo!()
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::X64;
     use super::*;
-
+    use crate::X64;
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
