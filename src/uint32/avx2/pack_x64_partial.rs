@@ -1,8 +1,9 @@
 use std::arch::x86_64::*;
-
+use std::hint::unreachable_unchecked;
 use super::data::*;
 use super::utils::*;
 
+#[inline]
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to `nbits` bit length  elements.
 ///
