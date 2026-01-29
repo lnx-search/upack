@@ -1,13 +1,13 @@
 use crate::uint32::{X128_MAX_OUTPUT_LEN, compressed_size};
-use crate::{CompressionDetails, X64, X128};
+use crate::{CompressionDetails, X128};
 
 mod data;
 pub mod modifiers;
 mod pack_x128;
-pub mod pack_x64_full;
-pub mod pack_x64_partial;
-pub mod unpack_x64_full;
-pub mod unpack_x64_partial;
+mod pack_x64_full;
+mod pack_x64_partial;
+mod unpack_x64_full;
+mod unpack_x64_partial;
 mod utils;
 
 #[inline]
@@ -16,7 +16,7 @@ pub fn can_use() -> bool {
     std::arch::is_x86_feature_detected!("avx2")
 }
 
-#[target_feature(enable = "avx2", enable = "popcnt")]
+#[target_feature(enable = "avx2")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
