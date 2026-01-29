@@ -1,6 +1,4 @@
-use std::hint::black_box;
-
-use crate::uint32::{X128_MAX_OUTPUT_LEN, compressed_size, max_compressed_size, split_block};
+use crate::uint32::{X128_MAX_OUTPUT_LEN, compressed_size};
 use crate::{CompressionDetails, X64, X128};
 
 mod data;
@@ -49,26 +47,17 @@ pub unsafe fn pack_x128(
 /// - `n` must be less than or equal to 128.
 pub unsafe fn pack_delta_x128(
     out: &mut [u8; X128_MAX_OUTPUT_LEN],
-    block: &[u32; X128],
+    block: &mut [u32; X128],
     pack_n: usize,
-    last_value: u32,
+    mut last_value: u32,
 ) -> CompressionDetails {
-    let mut max = 0;
-    let mut tmp_last_value = last_value;
-    for v in block.iter() {
-        max = max.max(*v - tmp_last_value);
-        tmp_last_value = *v;
+    for v in block.iter_mut() {
+        let value = *v;
+        *v = value - last_value;
+        last_value = value;
     }
-    let nbits = 32 - max.leading_zeros();
 
-    unsafe {
-        pack_x128::to_nbits_delta(nbits as usize, out.as_mut_ptr(), block, pack_n, last_value)
-    };
-
-    CompressionDetails {
-        compressed_bit_length: nbits as u8,
-        bytes_written: compressed_size(nbits as usize, pack_n),
-    }
+    unsafe { pack_x128(out, block, pack_n) }
 }
 
 #[target_feature(enable = "avx2")]
@@ -80,24 +69,15 @@ pub unsafe fn pack_delta_x128(
 /// - `n` must be less than or equal to 128.
 pub unsafe fn pack_delta1_x128(
     out: &mut [u8; X128_MAX_OUTPUT_LEN],
-    block: &[u32; X128],
+    block: &mut [u32; X128],
     pack_n: usize,
-    last_value: u32,
+    mut last_value: u32,
 ) -> CompressionDetails {
-    let mut max = 0;
-    let mut tmp_last_value = last_value;
-    for v in block.iter() {
-        max = max.max((*v - tmp_last_value) - 1);
-        tmp_last_value = *v;
+    for v in block.iter_mut() {
+        let value = *v;
+        *v = (value - last_value) - 1;
+        last_value = value;
     }
-    let nbits = 32 - max.leading_zeros();
 
-    unsafe {
-        pack_x128::to_nbits_delta1(nbits as usize, out.as_mut_ptr(), block, pack_n, last_value)
-    };
-
-    CompressionDetails {
-        compressed_bit_length: nbits as u8,
-        bytes_written: compressed_size(nbits as usize, pack_n),
-    }
+    unsafe { pack_x128(out, block, pack_n) }
 }
