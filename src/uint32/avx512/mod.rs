@@ -1,7 +1,10 @@
 mod data;
-pub mod modifiers;
-pub mod pack_x128;
-pub mod unpack_x128;
+mod pack_x128;
+mod pack_x64_full;
+mod pack_x64_partial;
+mod unpack_x128;
+mod unpack_x64_full;
+mod unpack_x64_partial;
 mod utils;
 
 #[inline]
