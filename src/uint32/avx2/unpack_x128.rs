@@ -170,7 +170,7 @@ macro_rules! define_x128_unpacker {
             if read_n <= 64 {
                 let unpacked = unsafe { unpack_x64_partial::$func_name(input.add(0), read_n) };
                 store_u32x64(left, unpacked);
-            } else {
+            } else if read_n < 128 {
                 let unpacked = unsafe { unpack_x64_full::$func_name(input.add(0)) };
                 store_u32x64(left, unpacked);
                 let unpacked = unsafe {
@@ -178,6 +178,13 @@ macro_rules! define_x128_unpacker {
                         input.add(max_compressed_size::<X64>($bit_length)),
                         read_n - X64,
                     )
+                };
+                store_u32x64(right, unpacked);
+            } else {
+                let unpacked = unsafe { unpack_x64_full::$func_name(input.add(0)) };
+                store_u32x64(left, unpacked);
+                let unpacked = unsafe {
+                    unpack_x64_full::$func_name(input.add(max_compressed_size::<X64>($bit_length)))
                 };
                 store_u32x64(right, unpacked);
             }
@@ -203,7 +210,7 @@ macro_rules! define_x128_unpacker_delta {
                     unsafe { unpack_x64_partial::$unpack_func_name(input.add(0), read_n) };
                 $delta_func_name(last_value, &mut unpacked);
                 store_u32x64(left, unpacked);
-            } else {
+            } else if read_n < 128 {
                 let mut unpacked = unsafe { unpack_x64_full::$unpack_func_name(input.add(0)) };
                 last_value = $delta_func_name(last_value, &mut unpacked);
                 store_u32x64(left, unpacked);
@@ -212,6 +219,18 @@ macro_rules! define_x128_unpacker_delta {
                     unpack_x64_partial::$unpack_func_name(
                         input.add(max_compressed_size::<X64>($bit_length)),
                         read_n - X64,
+                    )
+                };
+                $delta_func_name(last_value, &mut unpacked);
+                store_u32x64(right, unpacked);
+            } else {
+                let mut unpacked = unsafe { unpack_x64_full::$unpack_func_name(input.add(0)) };
+                last_value = $delta_func_name(last_value, &mut unpacked);
+                store_u32x64(left, unpacked);
+
+                unpacked = unsafe {
+                    unpack_x64_full::$unpack_func_name(
+                        input.add(max_compressed_size::<X64>($bit_length)),
                     )
                 };
                 $delta_func_name(last_value, &mut unpacked);

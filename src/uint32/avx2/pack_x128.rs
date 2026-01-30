@@ -37,7 +37,7 @@ macro_rules! define_x128_packer {
             let left = load_u32x64(left);
             if pack_n <= 64 {
                 unsafe { pack_x64_partial::$func_name(out.add(0), left, pack_n) };
-            } else {
+            } else if pack_n < 128 {
                 unsafe { pack_x64_full::$func_name(out.add(0), left) };
                 let right = load_u32x64(right);
                 unsafe {
@@ -46,7 +46,16 @@ macro_rules! define_x128_packer {
                         right,
                         pack_n - X64,
                     )
-                };
+                }
+            } else {
+                unsafe { pack_x64_full::$func_name(out.add(0), left) };
+                let right = load_u32x64(right);
+                unsafe {
+                    pack_x64_full::$func_name(
+                        out.add(max_compressed_size::<X64>($bit_length)),
+                        right,
+                    )
+                }
             }
         }
     };
