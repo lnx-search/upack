@@ -1,6 +1,6 @@
 use std::arch::x86_64::*;
 
-use crate::{X64, X128};
+use crate::X64;
 
 #[target_feature(enable = "avx2")]
 /// Load 8, 256 bit registers holding 64 32-bit elements.

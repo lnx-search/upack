@@ -1,5 +1,5 @@
+use super::data::load_u32x64;
 use super::{pack_x64_full, pack_x64_partial};
-use crate::uint32::avx2::data::load_u32x64;
 use crate::uint32::{max_compressed_size, split_block};
 use crate::{X64, X128};
 

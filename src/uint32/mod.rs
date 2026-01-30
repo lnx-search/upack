@@ -183,6 +183,11 @@ pub(super) fn split_block(block: &[u32; X128]) -> [&[u32; X64]; 2] {
     crate::util::split_slice::<_, X128, X64>(block)
 }
 
+#[inline]
+pub(super) fn split_block_mut(block: &mut [u32; X128]) -> [&mut [u32; X64]; 2] {
+    crate::util::split_slice_mut::<_, X128, X64>(block)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

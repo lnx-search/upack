@@ -40,10 +40,10 @@ fn bench_upack_compress_delta_x128(bencher: Bencher) {
             for block in sample_data.iter_mut() {
                 unsafe {
                     upack::uint32::avx2::pack_delta_x128(
+                        0,
                         black_box(&mut out),
                         black_box(block),
                         X128,
-                        0,
                     )
                 };
             }
@@ -62,10 +62,10 @@ fn bench_upack_compress_delta1_x128(bencher: Bencher) {
             for block in sample_data.iter_mut() {
                 unsafe {
                     upack::uint32::avx2::pack_delta1_x128(
+                        0,
                         black_box(&mut out),
                         black_box(block),
                         X128,
-                        0,
                     )
                 };
             }

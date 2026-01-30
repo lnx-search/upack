@@ -1,10 +1,7 @@
-use std::arch::x86_64::*;
-
 use crate::uint32::{X128_MAX_OUTPUT_LEN, compressed_size};
 use crate::{CompressionDetails, X128};
 
 mod data;
-mod modifiers;
 mod pack_x128;
 mod pack_x64_full;
 mod pack_x64_partial;
@@ -123,9 +120,10 @@ pub unsafe fn unpack_delta_x128(
     block: &mut [u32; X128],
     read_n: usize,
 ) -> usize {
-    let bytes_read = unsafe { unpack_x128(nbits, input, block, read_n) };
-    decode_delta(last_value, block);
-    bytes_read
+    unsafe {
+        unpack_x128::from_nbits_delta(nbits as usize, last_value, input.as_ptr(), block, read_n)
+    };
+    compressed_size(nbits as usize, read_n)
 }
 
 #[track_caller]
@@ -146,7 +144,8 @@ pub unsafe fn unpack_delta1_x128(
     block: &mut [u32; X128],
     read_n: usize,
 ) -> usize {
-    let bytes_read = unsafe { unpack_x128(nbits, input, block, read_n) };
-    decode_delta1(last_value, block);
-    bytes_read
+    unsafe {
+        unpack_x128::from_nbits_delta1(nbits as usize, last_value, input.as_ptr(), block, read_n)
+    };
+    compressed_size(nbits as usize, read_n)
 }
