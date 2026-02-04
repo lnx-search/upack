@@ -65,7 +65,7 @@ pub(super) fn expand_mask_epi8(mask: __mmask32) -> __m256i {
 /// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
 /// invalid data.
 pub(super) fn pack_u32_to_u8_ordered(data: [__m256i; 8]) -> [__m256i; 2] {
-    let permute_mask = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+    let permute_idx = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
 
     let pack_block = |a, b, c, d| {
         let p1 = _mm256_packus_epi32(a, b);
@@ -73,7 +73,7 @@ pub(super) fn pack_u32_to_u8_ordered(data: [__m256i; 8]) -> [__m256i; 2] {
 
         let packed = _mm256_packus_epi16(p1, p2);
 
-        _mm256_permutevar8x32_epi32(packed, permute_mask)
+        _mm256_permutevar8x32_epi32(packed, permute_idx)
     };
 
     [
@@ -86,20 +86,20 @@ pub(super) fn pack_u32_to_u8_ordered(data: [__m256i; 8]) -> [__m256i; 2] {
 /// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u8_to_u32_ordered(data: [__m256i; 2]) -> [__m256i; 8] {
-    let inv_permute_mask = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
-    let zero = _mm256_setzero_si256();
+    let permute_idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
+    let zeroes = _mm256_setzero_si256();
 
     let unpack_block = |packed: __m256i| -> [__m256i; 4] {
-        let unpermuted = _mm256_permutevar8x32_epi32(packed, inv_permute_mask);
+        let unpermuted = _mm256_permutevar8x32_epi32(packed, permute_idx);
 
-        let lo_16s = _mm256_unpacklo_epi8(unpermuted, zero);
-        let hi_16s = _mm256_unpackhi_epi8(unpermuted, zero);
+        let lo_16s = _mm256_unpacklo_epi8(unpermuted, zeroes);
+        let hi_16s = _mm256_unpackhi_epi8(unpermuted, zeroes);
 
         [
-            _mm256_unpacklo_epi16(lo_16s, zero),
-            _mm256_unpackhi_epi16(lo_16s, zero),
-            _mm256_unpacklo_epi16(hi_16s, zero),
-            _mm256_unpackhi_epi16(hi_16s, zero),
+            _mm256_unpacklo_epi16(lo_16s, zeroes),
+            _mm256_unpackhi_epi16(lo_16s, zeroes),
+            _mm256_unpacklo_epi16(hi_16s, zeroes),
+            _mm256_unpackhi_epi16(hi_16s, zeroes),
         ]
     };
 
