@@ -189,6 +189,54 @@ pub(super) fn pack_u16_to_u8_unordered(data: [__m512i; 2]) -> __m512i {
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Given 8 sets of 32-bit registers, pack them into 2 sets of 16-bit registers, then
+/// split each 16-bit element into a high and low halves, returning the 8-bit halves in separate
+/// registers in their high and low forms respectively.
+///
+/// The order of elements are maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_split_ordered(data: [__m512i; 4]) -> (__m512i, __m512i) {
+    let packed_u16 = pack_u32_to_u16_ordered(data);
+
+    let mask = _mm512_set1_epi16(0x00FF);
+    let lo_8bits = and_si512(packed_u16, mask);
+    let hi_8bits = srli_epi16::<8, 2>(packed_u16);
+
+    let packed_lo_8bits = pack_u16_to_u8_ordered(lo_8bits);
+    let packed_hi_8bits = pack_u16_to_u8_ordered(hi_8bits);
+
+    (packed_hi_8bits, packed_lo_8bits)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Given 8 sets of 32-bit registers, pack them into 2 sets of 16-bit registers, then
+/// split each 16-bit element into a high and low halves, returning the 8-bit halves in separate
+/// registers in their high and low forms respectively.
+///
+/// The order of elements are not maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_split_unordered(data: [__m512i; 4]) -> (__m512i, __m512i) {
+    let packed_u16 = pack_u32_to_u16_unordered(data);
+
+    let mask = _mm512_set1_epi16(0x00FF);
+    let lo_8bits = and_si512(packed_u16, mask);
+    let hi_8bits = srli_epi16::<8, 2>(packed_u16);
+
+    let packed_lo_8bits = pack_u16_to_u8_unordered(lo_8bits);
+    let packed_hi_8bits = pack_u16_to_u8_unordered(hi_8bits);
+
+    (packed_hi_8bits, packed_lo_8bits)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
 /// Unpack 1 register containing 8-bit elements and produce 2 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u8_to_u16_unordered(data: __m512i) -> [__m512i; 2] {
