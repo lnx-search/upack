@@ -20,8 +20,8 @@ pub(super) unsafe fn to_u1(out: *mut u8, block: [__m512i; 4]) {
 ///
 /// Any non-zero value will be treated as a set bit.
 unsafe fn pack_u1_registers(out: *mut u8, data: __m512i) {
-    let zeroed = _mm512_setzero_si512();
-    let mask = _mm512_cmpneq_epi8_mask(data, zeroed);
+    let bits = _mm512_slli_epi16::<7>(data);
+    let mask = _mm512_movepi8_mask(bits);
     unsafe { std::ptr::write_unaligned(out.add(0).cast(), mask) };
 }
 
@@ -129,7 +129,7 @@ pub(super) unsafe fn to_u5(out: *mut u8, block: [__m512i; 4]) {
 unsafe fn pack_u5_registers(out: *mut u8, data: __m512i) {
     let mask = _mm512_set1_epi8(0b1111);
     let masked = _mm512_and_si512(data, mask);
-    unsafe { pack_u4_registers(out, masked) };
+    unsafe { pack_u4_registers(out.add(0), masked) };
 
     // 4bit * 64 / 8-bits per byte.
     let remaining = _mm512_srli_epi16::<4>(data);
