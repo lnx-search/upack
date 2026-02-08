@@ -31,8 +31,8 @@ pub(crate) fn store_u32x128(block: &mut [u32; X64], data: [__m512i; 4]) {
 ///
 /// # Safety
 /// The provided `out` pointer must be safe to read 128 bytes from.
-pub(crate) unsafe fn load_si512x2(out: *const u8) -> [__m512i; 2] {
-    let ptr: *const __m512i = out.cast();
+pub(crate) unsafe fn load_si512x2(input: *const u8) -> [__m512i; 2] {
+    let ptr: *const __m512i = input.cast();
     let d1 = unsafe { _mm512_loadu_si512(ptr.add(0)) };
     let d2 = unsafe { _mm512_loadu_si512(ptr.add(1)) };
     [d1, d2]
@@ -54,8 +54,8 @@ pub(crate) unsafe fn store_si512x2(out: *mut u8, data: [__m512i; 2]) {
 ///
 /// # Safety
 /// The provided `out` pointer must be safe to read 256 bytes from.
-pub(crate) unsafe fn load_si512x4(out: *const u8) -> [__m512i; 4] {
-    let ptr: *const __m512i = out.cast();
+pub(crate) unsafe fn load_si512x4(input: *const u8) -> [__m512i; 4] {
+    let ptr: *const __m512i = input.cast();
     let d1 = unsafe { _mm512_loadu_si512(ptr.add(0)) };
     let d2 = unsafe { _mm512_loadu_si512(ptr.add(1)) };
     let d3 = unsafe { _mm512_loadu_si512(ptr.add(2)) };
@@ -81,8 +81,8 @@ pub(crate) unsafe fn store_si512x4(out: *mut u8, data: [__m512i; 4]) {
 ///
 /// # Safety
 /// The provided `out` pointer must be safe to read 512 bytes from.
-pub(crate) unsafe fn load_si512x8(out: *const u8) -> [__m512i; 8] {
-    let ptr: *const __m512i = out.cast();
+pub(crate) unsafe fn load_si512x8(input: *const u8) -> [__m512i; 8] {
+    let ptr: *const __m512i = input.cast();
     let d1 = unsafe { _mm512_loadu_si512(ptr.add(0)) };
     let d2 = unsafe { _mm512_loadu_si512(ptr.add(1)) };
     let d3 = unsafe { _mm512_loadu_si512(ptr.add(2)) };

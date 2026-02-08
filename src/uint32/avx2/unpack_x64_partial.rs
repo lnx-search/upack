@@ -134,7 +134,7 @@ pub unsafe fn from_u4(input: *const u8, read_n: usize) -> [__m256i; 8] {
 #[target_feature(enable = "avx2")]
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
-unsafe fn unpack_u4_registers(input: *const u8) -> [__m256i; 2] {
+pub(super) unsafe fn unpack_u4_registers(input: *const u8) -> [__m256i; 2] {
     let ordered = unsafe { _mm256_loadu_si256(input.cast()) };
     let interleaved = _mm256_permute4x64_epi64::<0xD8>(ordered);
 

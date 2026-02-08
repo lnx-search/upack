@@ -100,7 +100,7 @@ pub(super) unsafe fn to_u4(out: *mut u8, block: [__m512i; 4], _pack_n: usize) {
 /// bitmap and write to `out`.
 ///
 /// Any non-zero value will be treated as a set bit.
-unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
+pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
     let madd_multiplier = _mm512_set1_epi16(0x1001);
     let nibbles = _mm512_maddubs_epi16(data, madd_multiplier);
     let ordered = _mm512_cvtepi16_epi8(nibbles);

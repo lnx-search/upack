@@ -45,8 +45,8 @@ unsafe fn pack_u2_registers(out: *mut u8, data: __m512i) {
     let lo_bits = _mm512_slli_epi16::<7>(data);
     let hi_bits = _mm512_slli_epi16::<6>(data);
 
-    let lo_mask = _mm512_movepi8_mask(hi_bits);
-    let hi_mask = _mm512_movepi8_mask(lo_bits);
+    let lo_mask = _mm512_movepi8_mask(lo_bits);
+    let hi_mask = _mm512_movepi8_mask(hi_bits);
 
     unsafe { std::ptr::write_unaligned(out.add(0).cast(), lo_mask) };
     unsafe { std::ptr::write_unaligned(out.add(8).cast(), hi_mask) };
@@ -99,15 +99,7 @@ pub(super) unsafe fn to_u4(out: *mut u8, block: [__m512i; 4]) {
 ///
 /// Any non-zero value will be treated as a set bit.
 unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
-    let madd_multiplier = _mm512_set1_epi16(0x1001);
-    let nibbles = _mm512_maddubs_epi16(data, madd_multiplier);
-
-    // Has to mirror avx2
-    let d1 = _mm512_castsi512_si256(nibbles);
-    let d2 = _mm512_extracti64x4_epi64(nibbles, 1);
-    let interleaved = _mm256_packus_epi16(d1, d2);
-
-    unsafe { _mm256_storeu_epi8(out.cast(), interleaved) };
+    unsafe { super::pack_x64_partial::pack_u4_registers(out, data) }
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]

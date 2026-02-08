@@ -15,7 +15,7 @@ pub unsafe fn from_u1(input: *const u8) -> [__m256i; 8] {
 }
 
 #[target_feature(enable = "avx2")]
-/// Unpack eight registers containing 8 32-bit elements from a 1-bit bitmap provided
+/// Unpack eight registers containing 64 8-bit elements from a 1-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u1_registers(input: *const u8) -> [__m256i; 2] {
     let mask: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
@@ -41,7 +41,7 @@ pub unsafe fn from_u2(input: *const u8) -> [__m256i; 8] {
 }
 
 #[target_feature(enable = "avx2")]
-/// Unpack eight registers containing 8 32-bit elements from a 2-bit bitmap provided
+/// Unpack eight registers containing 64 8-bit elements from a 2-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u2_registers(input: *const u8) -> [__m256i; 2] {
     let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
@@ -77,7 +77,7 @@ pub unsafe fn from_u3(input: *const u8) -> [__m256i; 8] {
 }
 
 #[target_feature(enable = "avx2")]
-/// Unpack eight registers containing 8 32-bit elements from a 3-bit bitmap provided
+/// Unpack eight registers containing 64 8-bit elements from a 3-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u3_registers(input: *const u8) -> [__m256i; 2] {
     let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
@@ -125,16 +125,7 @@ pub unsafe fn from_u4(input: *const u8) -> [__m256i; 8] {
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
 unsafe fn unpack_u4_registers(input: *const u8) -> [__m256i; 2] {
-    let interleaved = unsafe { _mm256_loadu_si256(input.cast()) };
-
-    let low_mask = _mm256_set1_epi8(0x0F);
-    let low_nibbles = _mm256_and_si256(interleaved, low_mask);
-    let high_nibbles = _mm256_and_si256(_mm256_srli_epi16(interleaved, 4), low_mask);
-
-    let d1 = _mm256_unpacklo_epi8(low_nibbles, high_nibbles);
-    let d2 = _mm256_unpackhi_epi8(low_nibbles, high_nibbles);
-
-    [d1, d2]
+    unsafe { super::unpack_x64_partial::unpack_u4_registers(input) }
 }
 
 #[target_feature(enable = "avx2")]

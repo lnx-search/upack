@@ -122,15 +122,7 @@ pub(super) unsafe fn to_u4(out: *mut u8, block: [__m256i; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 2]) {
-    let [d1, d2] = data;
-
-    let madd_multiplier = _mm256_set1_epi16(0x1001);
-
-    let nibbles1 = _mm256_maddubs_epi16(d1, madd_multiplier);
-    let nibbles2 = _mm256_maddubs_epi16(d2, madd_multiplier);
-    let interleaved = _mm256_packus_epi16(nibbles1, nibbles2);
-
-    unsafe { _mm256_storeu_si256(out.add(0).cast(), interleaved) };
+    unsafe { super::pack_x64_partial::pack_u4_registers(out.add(0).cast(), data) };
 }
 
 #[target_feature(enable = "avx2")]

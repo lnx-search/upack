@@ -306,6 +306,18 @@ pub(super) fn srli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]
     data
 }
 
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Shift all registers right by [IMM8] in 16-bit lanes.
+pub(super) fn srli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
+    let mut i = 0;
+    while i < N {
+        data[i] = _mm512_srli_epi16::<IMM8>(data[i]);
+        i += 1;
+    }
+    data
+}
+
+
 #[target_feature(enable = "avx512f")]
 /// Shift all registers left by [IMM8] in 32-bit lanes.
 pub(super) fn slli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
@@ -318,11 +330,11 @@ pub(super) fn slli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Shift all registers right by [IMM8] in 16-bit lanes.
-pub(super) fn srli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
+/// Shift all registers left by [IMM8] in 32-bit lanes.
+pub(super) fn slli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
     let mut i = 0;
     while i < N {
-        data[i] = _mm512_srli_epi16::<IMM8>(data[i]);
+        data[i] = _mm512_slli_epi16::<IMM8>(data[i]);
         i += 1;
     }
     data

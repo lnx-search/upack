@@ -107,7 +107,7 @@ pub(super) unsafe fn to_u4(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
 #[target_feature(enable = "avx2")]
 /// Pack four registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 2]) {
+pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 2]) {
     let [d1, d2] = data;
 
     let madd_multiplier = _mm256_set1_epi16(0x1001);
