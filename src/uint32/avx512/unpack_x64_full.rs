@@ -323,7 +323,7 @@ pub(super) unsafe fn from_u17(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u1_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -340,7 +340,7 @@ pub(super) unsafe fn from_u18(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u2_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -357,7 +357,7 @@ pub(super) unsafe fn from_u19(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u3_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -374,7 +374,7 @@ pub(super) unsafe fn from_u20(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u4_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -391,7 +391,7 @@ pub(super) unsafe fn from_u21(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u5_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -408,7 +408,7 @@ pub(super) unsafe fn from_u22(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u6_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -425,7 +425,7 @@ pub(super) unsafe fn from_u23(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { unpack_u7_registers(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -442,7 +442,7 @@ pub(super) unsafe fn from_u24(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = unsafe { _mm512_loadu_epi8(input.add(128).cast()) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -466,7 +466,7 @@ pub(super) unsafe fn from_u25(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -490,7 +490,7 @@ pub(super) unsafe fn from_u26(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -514,7 +514,7 @@ pub(super) unsafe fn from_u27(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -538,7 +538,7 @@ pub(super) unsafe fn from_u28(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -562,7 +562,7 @@ pub(super) unsafe fn from_u29(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -586,7 +586,7 @@ pub(super) unsafe fn from_u30(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
@@ -610,7 +610,7 @@ pub(super) unsafe fn from_u31(input: *const u8) -> [__m512i; 4] {
 
     let hi_bits = or_si512_all(hi_1bits, hi_8bits);
     let mut hi_bits = unpack_u16_to_u32_unordered(hi_bits);
-    hi_bits = slli_epi16::<16, 4>(hi_bits);
+    hi_bits = slli_epi32::<16, 4>(hi_bits);
 
     or_si512_all(hi_bits, lo_bits)
 }
