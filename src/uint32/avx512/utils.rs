@@ -131,10 +131,10 @@ pub(super) fn pack_u32_to_u8_unordered(data: [__m512i; 4]) -> __m512i {
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
 /// Unpack 1 register containing 8-bit elements and produce 4 registers holding
 /// 32-bit elements.
-pub(super) fn unpack_u8_to_u32_unordered(data: __m512i) -> [__m512i; 4] {
+pub(super) fn unpack_u8_to_u32_unordered(packed: __m512i) -> [__m512i; 4] {
     let zeroes = _mm512_setzero_si512();
-    let lo_16s = _mm512_unpacklo_epi8(data, zeroes);
-    let hi_16s = _mm512_unpackhi_epi8(data, zeroes);
+    let lo_16s = _mm512_unpacklo_epi8(packed, zeroes);
+    let hi_16s = _mm512_unpackhi_epi8(packed, zeroes);
 
     [
         _mm512_unpacklo_epi16(lo_16s, zeroes),
