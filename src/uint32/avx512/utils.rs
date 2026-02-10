@@ -123,9 +123,8 @@ pub(super) fn unpack_u8_to_u16_ordered(data: __m512i) -> [__m512i; 2] {
 /// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
 /// invalid data.
 pub(super) fn pack_u32_to_u8_unordered(data: [__m512i; 4]) -> __m512i {
-    let p1 = _mm512_packus_epi32(data[0], data[1]);
-    let p2 = _mm512_packus_epi32(data[2], data[3]);
-    _mm512_packus_epi16(p1, p2)
+    let packed = pack_u32_to_u16_unordered(data);
+    pack_u16_to_u8_unordered(packed)
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
@@ -317,7 +316,6 @@ pub(super) fn srli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]
     data
 }
 
-
 #[target_feature(enable = "avx512f")]
 /// Shift all registers left by [IMM8] in 32-bit lanes.
 pub(super) fn slli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
@@ -340,16 +338,6 @@ pub(super) fn slli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]
     data
 }
 
-#[target_feature(enable = "avx512f")]
-fn convert_lower_x16_u8_epi32(reg: __m512i) -> __m512i {
-    _mm512_cvtepu8_epi32(_mm512_castsi512_si128(reg))
-}
-
-#[target_feature(enable = "avx512f")]
-fn convert_lower_x16_u16_epi32(reg: __m512i) -> __m512i {
-    _mm512_cvtepu16_epi32(_mm512_castsi512_si256(reg))
-}
-
 #[cfg(test)]
 mod tests {
     use std::cmp;
@@ -357,6 +345,7 @@ mod tests {
     use super::*;
     use crate::X64;
     use crate::uint32::avx512::data::{load_si512x2, load_u32x64};
+    use crate::uint32::test_util::*;
 
     #[test]
     #[cfg_attr(
@@ -578,5 +567,50 @@ mod tests {
 
         let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(unpacked) };
         assert_eq!(view, input);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u16_to_u8_unordered_layout() {
+        let input: [u16; X64] = std::array::from_fn(|i| i as u16);
+
+        let data = unsafe { load_si512x2(input.as_ptr().cast()) };
+        let packed = unsafe { pack_u16_to_u8_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
+        assert_eq!(view, PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_to_u16_unordered_layout() {
+        let input: [u32; X64] = std::array::from_fn(|i| i as u32);
+
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u16_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(packed) };
+        assert_eq!(view, PACK_U32_TO_U16_EXPECTED_UNORDERED_LAYOUT,);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_to_u8_unordered_layout() {
+        let input: [u32; X64] = std::array::from_fn(|i| i as u32);
+
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u8_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
+        assert_eq!(view, PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
     }
 }

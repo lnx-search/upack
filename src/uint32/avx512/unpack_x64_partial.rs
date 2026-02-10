@@ -629,7 +629,6 @@ pub(super) unsafe fn from_u32(input: *const u8) -> [__m512i; 4] {
     unsafe { load_si512x4(input) }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -670,7 +669,10 @@ mod tests {
     #[case(30, from_u30)]
     #[case(31, from_u31)]
     #[case(32, from_u32)]
-    #[cfg_attr(not(all(target_feature = "avx512f", target_feature = "avx512bw")), ignore)]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
     fn test_saturated_unpack(
         #[case] bit_len: u8,
         #[case] unpacker: unsafe fn(*const u8) -> [__m512i; 4],
@@ -717,7 +719,10 @@ mod tests {
     #[case(30, to_u30, from_u30)]
     #[case(31, to_u31, from_u31)]
     #[case(32, to_u32, from_u32)]
-    #[cfg_attr(not(all(target_feature = "avx512f", target_feature = "avx512bw")), ignore)]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
     fn test_pack_unpack(
         #[case] bit_len: u8,
         #[case] packer: unsafe fn(*mut u8, [__m512i; 4]),

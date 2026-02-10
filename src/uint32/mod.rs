@@ -10,6 +10,8 @@ pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
 pub mod avx512;
 mod scalar;
+#[cfg(test)]
+mod test_util;
 
 /// The maximum output size of a compressed buffer for a [X128] block, assuming worst case compression.
 pub const X128_MAX_OUTPUT_LEN: usize = <[u32; X128] as CompressibleArray>::MAX_OUTPUT_SIZE;
