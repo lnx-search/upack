@@ -629,8 +629,10 @@ pub(super) unsafe fn from_u32(input: *const u8) -> [__m512i; 4] {
 mod tests {
     use super::*;
     use crate::X64;
+    use crate::uint32::X128_MAX_OUTPUT_LEN;
+    #[cfg(feature = "avx2")]
+    use crate::uint32::avx2;
     use crate::uint32::avx512::pack_x64_full::*;
-    use crate::uint32::{X128_MAX_OUTPUT_LEN, avx2};
 
     #[rstest::rstest]
     #[case(1, from_u1)]
@@ -742,6 +744,7 @@ mod tests {
         assert_eq!(unpacked, values);
     }
 
+    #[cfg(feature = "avx2")]
     #[rstest::rstest]
     #[case(1, avx2::pack_x64_full::to_u1, from_u1)]
     #[case(2, avx2::pack_x64_full::to_u2, from_u2)]
@@ -776,7 +779,7 @@ mod tests {
     #[case(31, avx2::pack_x64_full::to_u31, from_u31)]
     #[case(32, avx2::pack_x64_full::to_u32, from_u32)]
     #[cfg_attr(
-        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        not(all(target_feature = "avx512f", target_feature = "avx512bw",)),
         ignore
     )]
     fn test_unpack_avx2_packed(

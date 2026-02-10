@@ -9,7 +9,7 @@ use super::utils::*;
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(1)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u1(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u1(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u1_registers(out, partially_packed) };
 }
@@ -31,7 +31,7 @@ unsafe fn pack_u1_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(2)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u2(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u2(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u2_registers(out, partially_packed) };
 }
@@ -58,7 +58,7 @@ unsafe fn pack_u2_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(3)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u3(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u3(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u3_registers(out, partially_packed) };
 }
@@ -88,7 +88,7 @@ unsafe fn pack_u3_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(4)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u4(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u4(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u4_registers(out, partially_packed) };
 }
@@ -108,7 +108,7 @@ unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(5)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u5(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u5(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u5_registers(out, partially_packed) };
 }
@@ -134,7 +134,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(6)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u6(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u6(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u6_registers(out, partially_packed) };
 }
@@ -160,7 +160,7 @@ unsafe fn pack_u6_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(7)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u7(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u7(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u7_registers(out, partially_packed) };
 }
@@ -186,7 +186,7 @@ unsafe fn pack_u7_registers(out: *mut u8, data: __m512i) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(8)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u8(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u8(out: *mut u8, block: [__m512i; 4]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { _mm512_storeu_epi8(out.cast(), partially_packed) };
 }
@@ -197,7 +197,7 @@ pub(super) unsafe fn to_u8(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(9)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u9(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u9(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u1_registers(out.add(64), hi) };
@@ -209,7 +209,7 @@ pub(super) unsafe fn to_u9(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(10)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u10(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u10(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u2_registers(out.add(64), hi) };
@@ -221,7 +221,7 @@ pub(super) unsafe fn to_u10(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(11)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u11(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u11(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u3_registers(out.add(64), hi) };
@@ -233,7 +233,7 @@ pub(super) unsafe fn to_u11(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(12)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u12(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u12(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u4_registers(out.add(64), hi) };
@@ -245,7 +245,7 @@ pub(super) unsafe fn to_u12(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(13)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u13(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u13(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u5_registers(out.add(64), hi) };
@@ -257,7 +257,7 @@ pub(super) unsafe fn to_u13(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(14)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u14(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u14(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u6_registers(out.add(64), hi) };
@@ -269,7 +269,7 @@ pub(super) unsafe fn to_u14(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(15)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u15(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u15(out: *mut u8, block: [__m512i; 4]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { _mm512_storeu_epi8(out.add(0).cast(), lo) };
     unsafe { pack_u7_registers(out.add(64), hi) };
@@ -281,7 +281,7 @@ pub(super) unsafe fn to_u15(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(16)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u16(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u16(out: *mut u8, block: [__m512i; 4]) {
     let packed = pack_u32_to_u16_unordered(block);
     unsafe { store_si512x2(out, packed) };
 }
@@ -300,7 +300,7 @@ unsafe fn store_lo_u16_registers(out: *mut u8, data: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(17)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u17(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u17(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -314,7 +314,7 @@ pub(super) unsafe fn to_u17(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(18)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u18(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u18(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -328,7 +328,7 @@ pub(super) unsafe fn to_u18(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(19)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u19(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u19(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -342,7 +342,7 @@ pub(super) unsafe fn to_u19(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(20)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u20(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u20(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -356,7 +356,7 @@ pub(super) unsafe fn to_u20(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(21)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u21(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u21(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -370,7 +370,7 @@ pub(super) unsafe fn to_u21(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(22)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u22(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u22(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -384,7 +384,7 @@ pub(super) unsafe fn to_u22(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(23)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u23(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u23(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -398,7 +398,7 @@ pub(super) unsafe fn to_u23(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(24)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u24(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u24(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 4>(block);
@@ -412,7 +412,7 @@ pub(super) unsafe fn to_u24(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(25)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u25(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u25(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -427,7 +427,7 @@ pub(super) unsafe fn to_u25(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(26)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u26(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u26(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -442,7 +442,7 @@ pub(super) unsafe fn to_u26(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(27)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u27(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u27(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -457,7 +457,7 @@ pub(super) unsafe fn to_u27(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(28)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u28(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u28(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -472,7 +472,7 @@ pub(super) unsafe fn to_u28(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(29)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u29(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u29(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -487,7 +487,7 @@ pub(super) unsafe fn to_u29(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(30)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u30(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u30(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -502,7 +502,7 @@ pub(super) unsafe fn to_u30(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(31)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u31(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u31(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
@@ -517,7 +517,7 @@ pub(super) unsafe fn to_u31(out: *mut u8, block: [__m512i; 4]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(32)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn to_u32(out: *mut u8, block: [__m512i; 4]) {
+pub(crate) unsafe fn to_u32(out: *mut u8, block: [__m512i; 4]) {
     unsafe { store_si512x4(out, block) }
 }
 
