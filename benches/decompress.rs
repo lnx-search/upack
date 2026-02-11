@@ -32,14 +32,7 @@ fn bench_upack_decompress_x128(bencher: Bencher) {
             let mut offset = 0;
             for bit_length in bit_lengths.iter().copied() {
                 let data = &buffer[offset..];
-                offset += unsafe {
-                    upack::uint32::avx2::unpack_x128(
-                        bit_length,
-                        black_box(data),
-                        black_box(&mut out),
-                        X128,
-                    )
-                };
+                offset += upack::decompress(X128, bit_length, black_box(data), black_box(&mut out));
             }
         });
 }
@@ -65,15 +58,13 @@ fn bench_upack_decompress_delta_x128(bencher: Bencher) {
             let mut offset = 0;
             for bit_length in bit_lengths.iter().copied() {
                 let data = &buffer[offset..];
-                offset += unsafe {
-                    upack::uint32::avx2::unpack_delta_x128(
-                        bit_length,
-                        0,
-                        black_box(data),
-                        black_box(&mut out),
-                        X128,
-                    )
-                };
+                offset += upack::decompress_delta(
+                    0,
+                    X128,
+                    bit_length,
+                    black_box(data),
+                    black_box(&mut out),
+                );
             }
         });
 }
@@ -99,15 +90,13 @@ fn bench_upack_decompress_delta1_x128(bencher: Bencher) {
             let mut offset = 0;
             for bit_length in bit_lengths.iter().copied() {
                 let data = &buffer[offset..];
-                offset += unsafe {
-                    upack::uint32::avx2::unpack_delta1_x128(
-                        bit_length,
-                        0,
-                        black_box(data),
-                        black_box(&mut out),
-                        X128,
-                    )
-                };
+                offset += upack::decompress_delta1(
+                    0,
+                    X128,
+                    bit_length,
+                    black_box(data),
+                    black_box(&mut out),
+                );
             }
         });
 }
