@@ -505,6 +505,36 @@ pub(crate) fn _scalar_extract_u8x32<const HALF: usize>(a: u8x32) -> u8x16 {
     out
 }
 
+// Unlike the other scalar functions, this implementation requires some specialisation
+// because the codegen is really bad due to https://github.com/llvm/llvm-project/issues/96395
+#[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
+/// Return a bitmask taking the most significant bit from each lane in the register
+/// of `u8` values.
+pub(crate) fn _scalar_movmask_u8x32(a: u8x32) -> u32 {
+    use std::arch::x86_64::*;
+    let lo = _scalar_extract_u8x32::<0>(a);
+    let hi = _scalar_extract_u8x32::<1>(a);
+
+    let lo_reg = unsafe { std::mem::transmute::<u8x16, __m128i>(lo) };
+    let hi_reg = unsafe { std::mem::transmute::<u8x16, __m128i>(hi) };
+
+    // SAFETY: SSE2 is assumed by LLVM by default, but just in case we only enable via the cfg.
+    let lo_mask = unsafe { _mm_movemask_epi8(lo_reg) } as u32;
+    let hi_mask = unsafe { _mm_movemask_epi8(hi_reg) } as u32;
+    (hi_mask << 16) | lo_mask
+}
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "sse2")))]
+/// Return a bitmask taking the most significant bit from each lane in the register
+/// of `u8` values.
+pub(crate) fn _scalar_movmask_u8x32(a: u8x32) -> u32 {
+    let mut mask: u32 = 0;
+    for i in 0..32 {
+        mask |= ((a[i] >> 7) as u32) << i;
+    }
+    mask
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -630,5 +660,16 @@ mod tests {
 
         let result = _scalar_extract_u8x32::<1>(a);
         assert_eq!(result.0, [2; 16]);
+    }
+
+    #[test]
+    fn test_movmask_u8x32() {
+        let a = _scalar_set1_u8(1);
+        let result = _scalar_movmask_u8x32(a);
+        assert_eq!(result, 0);
+
+        let a = _scalar_set1_u8(u8::MAX);
+        let result = _scalar_movmask_u8x32(a);
+        assert_eq!(result, u32::MAX);
     }
 }
