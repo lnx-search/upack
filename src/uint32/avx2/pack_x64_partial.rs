@@ -5,7 +5,7 @@ use super::utils::*;
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 1-bit elements.
-pub(super) unsafe fn to_u1(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
+pub(crate) unsafe fn to_u1(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u1_registers(out, partially_packed) }
 }
@@ -31,7 +31,7 @@ unsafe fn pack_u1_registers(out: *mut u8, data: [__m256i; 2]) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 2-bit elements.
-pub(super) unsafe fn to_u2(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u2(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u2_registers(out, partially_packed, pack_n) }
 }
@@ -62,7 +62,7 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 3-bit elements.
-pub(super) unsafe fn to_u3(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u3(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u3_registers(out, partially_packed, pack_n) }
 }
@@ -99,7 +99,7 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 4-bit elements.
-pub(super) unsafe fn to_u4(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
+pub(crate) unsafe fn to_u4(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u4_registers(out, partially_packed) }
 }
@@ -122,7 +122,7 @@ pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 2]) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 5-bit elements.
-pub(super) unsafe fn to_u5(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u5(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u5_registers(out, partially_packed, pack_n) }
 }
@@ -143,7 +143,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 6-bit elements.
-pub(super) unsafe fn to_u6(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u6(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u6_registers(out, partially_packed, pack_n) }
 }
@@ -164,7 +164,7 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 7-bit elements.
-pub(super) unsafe fn to_u7(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u7(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { pack_u7_registers(out, partially_packed, pack_n) }
 }
@@ -185,14 +185,14 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 8-bit elements.
-pub(super) unsafe fn to_u8(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
+pub(crate) unsafe fn to_u8(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
     let partially_packed = pack_u32_to_u8_ordered(block);
     unsafe { store_si256x2(out, partially_packed) }
 }
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 9-bit elements.
-pub(super) unsafe fn to_u9(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u9(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u1_registers(out.add(pack_n), hi) }
@@ -200,7 +200,7 @@ pub(super) unsafe fn to_u9(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 10-bit elements.
-pub(super) unsafe fn to_u10(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u10(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u2_registers(out.add(pack_n), hi, pack_n) }
@@ -208,7 +208,7 @@ pub(super) unsafe fn to_u10(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 11-bit elements.
-pub(super) unsafe fn to_u11(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u11(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u3_registers(out.add(pack_n), hi, pack_n) }
@@ -216,7 +216,7 @@ pub(super) unsafe fn to_u11(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 12-bit elements.
-pub(super) unsafe fn to_u12(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u12(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u4_registers(out.add(pack_n), hi) }
@@ -224,7 +224,7 @@ pub(super) unsafe fn to_u12(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 13-bit elements.
-pub(super) unsafe fn to_u13(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u13(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u5_registers(out.add(pack_n), hi, pack_n) }
@@ -232,7 +232,7 @@ pub(super) unsafe fn to_u13(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 14-bit elements.
-pub(super) unsafe fn to_u14(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u14(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u6_registers(out.add(pack_n), hi, pack_n) }
@@ -240,7 +240,7 @@ pub(super) unsafe fn to_u14(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 15-bit elements.
-pub(super) unsafe fn to_u15(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u15(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     let (hi, lo) = pack_u32_to_u16_split_ordered(block);
     unsafe { store_si256x2(out.add(0), lo) };
     unsafe { pack_u7_registers(out.add(pack_n), hi, pack_n) }
@@ -248,7 +248,7 @@ pub(super) unsafe fn to_u15(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 16-bit elements.
-pub(super) unsafe fn to_u16(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
+pub(crate) unsafe fn to_u16(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
     let packed = pack_u32_to_u16_ordered(block);
     unsafe { store_si256x4(out, packed) };
 }
@@ -263,7 +263,7 @@ unsafe fn store_lo_u16_registers(out: *mut u8, data: [__m256i; 8]) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 17-bit elements.
-pub(super) unsafe fn to_u17(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u17(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -274,7 +274,7 @@ pub(super) unsafe fn to_u17(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 18-bit elements.
-pub(super) unsafe fn to_u18(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u18(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -285,7 +285,7 @@ pub(super) unsafe fn to_u18(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 19-bit elements.
-pub(super) unsafe fn to_u19(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u19(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -296,7 +296,7 @@ pub(super) unsafe fn to_u19(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 20-bit elements.
-pub(super) unsafe fn to_u20(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u20(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -307,7 +307,7 @@ pub(super) unsafe fn to_u20(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 21-bit elements.
-pub(super) unsafe fn to_u21(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u21(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -318,7 +318,7 @@ pub(super) unsafe fn to_u21(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 22-bit elements.
-pub(super) unsafe fn to_u22(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u22(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -329,7 +329,7 @@ pub(super) unsafe fn to_u22(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 23-bit elements.
-pub(super) unsafe fn to_u23(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u23(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -340,7 +340,7 @@ pub(super) unsafe fn to_u23(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 24-bit elements.
-pub(super) unsafe fn to_u24(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u24(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_bits = srli_epi32::<16, 8>(block);
@@ -351,7 +351,7 @@ pub(super) unsafe fn to_u24(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 25-bit elements.
-pub(super) unsafe fn to_u25(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u25(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -365,7 +365,7 @@ pub(super) unsafe fn to_u25(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 26-bit elements.
-pub(super) unsafe fn to_u26(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u26(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -379,7 +379,7 @@ pub(super) unsafe fn to_u26(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 27-bit elements.
-pub(super) unsafe fn to_u27(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u27(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -393,7 +393,7 @@ pub(super) unsafe fn to_u27(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 28-bit elements.
-pub(super) unsafe fn to_u28(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u28(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -407,7 +407,7 @@ pub(super) unsafe fn to_u28(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 29-bit elements.
-pub(super) unsafe fn to_u29(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u29(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -421,7 +421,7 @@ pub(super) unsafe fn to_u29(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 30-bit elements.
-pub(super) unsafe fn to_u30(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u30(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -435,7 +435,7 @@ pub(super) unsafe fn to_u30(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 31-bit elements.
-pub(super) unsafe fn to_u31(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
+pub(crate) unsafe fn to_u31(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 8>(block);
@@ -449,7 +449,7 @@ pub(super) unsafe fn to_u31(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 
 #[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to 32-bit elements.
-pub(super) unsafe fn to_u32(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
+pub(crate) unsafe fn to_u32(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
     unsafe { store_si256x8(out, block) };
 }
 
