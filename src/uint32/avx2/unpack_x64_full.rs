@@ -1,7 +1,7 @@
 use std::arch::x86_64::*;
 
 use super::data::*;
-use super::utils::*;
+use super::util::*;
 
 #[target_feature(enable = "avx2")]
 /// Unpack the 1-bit integers from the input pointer and return the result registers.
