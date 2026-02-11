@@ -257,38 +257,11 @@ pub(super) fn and_si512<const N: usize>(mut data: [__m512i; N], mask: __m512i) -
 }
 
 #[target_feature(enable = "avx512f")]
-/// Perform a bitwise AND on all provided registers with another broadcast register _after_
-/// performing a bitwise NOT of the broadcast register.
-pub(super) fn andnot_si512<const N: usize>(mut data: [__m512i; N], mask: __m512i) -> [__m512i; N] {
-    let mut i = 0;
-    while i < N {
-        data[i] = _mm512_andnot_si512(mask, data[i]);
-        i += 1;
-    }
-    data
-}
-
-#[target_feature(enable = "avx512f")]
 /// Perform a bitwise OR on the two sets of registers.
 pub(super) fn or_si512_all<const N: usize>(mut d1: [__m512i; N], d2: [__m512i; N]) -> [__m512i; N] {
     let mut i = 0;
     while i < N {
         d1[i] = _mm512_or_si512(d1[i], d2[i]);
-        i += 1;
-    }
-    d1
-}
-
-#[target_feature(enable = "avx512f")]
-/// Perform a bitwise OR on the two sets of registers.
-pub(super) fn ternary_epi32_all<const IMM8: i32, const N: usize>(
-    mut d1: [__m512i; N],
-    d2: [__m512i; N],
-    d3: [__m512i; N],
-) -> [__m512i; N] {
-    let mut i = 0;
-    while i < N {
-        d1[i] = _mm512_ternarylogic_epi32::<IMM8>(d1[i], d2[i], d3[i]);
         i += 1;
     }
     d1
