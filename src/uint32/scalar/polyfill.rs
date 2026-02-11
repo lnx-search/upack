@@ -6,6 +6,10 @@ use std::ops::{Index, IndexMut};
 /// A block of 8, 32-bit elements.
 pub(super) struct u32x8([u32; 8]);
 
+impl u32x8 {
+    pub const ZERO: Self = Self([0; 8]);
+}
+
 impl From<u16x16> for u32x8 {
     fn from(value: u16x16) -> Self {
         unsafe { std::mem::transmute(value) }
@@ -37,6 +41,10 @@ impl IndexMut<usize> for u32x8 {
 #[derive(Copy, Clone)]
 /// A block of 16, 16-bit elements.
 pub(super) struct u16x16([u16; 16]);
+
+impl u16x16 {
+    pub const ZERO: Self = Self([0; 16]);
+}
 
 impl From<u32x8> for u16x16 {
     fn from(value: u32x8) -> Self {
@@ -70,6 +78,10 @@ impl IndexMut<usize> for u16x16 {
 /// A block of 32, 8-bit elements.
 pub(super) struct u8x32([u8; 32]);
 
+impl u8x32 {
+    pub const ZERO: Self = Self([0; 32]);
+}
+
 impl From<u32x8> for u8x32 {
     fn from(value: u32x8) -> Self {
         unsafe { std::mem::transmute(value) }
@@ -101,6 +113,10 @@ impl IndexMut<usize> for u8x32 {
 #[derive(Copy, Clone)]
 /// A block of 4, 32-bit elements.
 pub(super) struct u32x4([u32; 4]);
+
+impl u32x4 {
+    pub const ZERO: Self = Self([0; 4]);
+}
 
 impl From<u16x8> for u32x4 {
     fn from(value: u16x8) -> Self {
@@ -134,6 +150,10 @@ impl IndexMut<usize> for u32x4 {
 /// A block of 8, 16-bit elements.
 pub(super) struct u16x8([u16; 8]);
 
+impl u16x8 {
+    pub const ZERO: Self = Self([0; 8]);
+}
+
 impl From<u32x4> for u16x8 {
     fn from(value: u32x4) -> Self {
         unsafe { std::mem::transmute(value) }
@@ -165,6 +185,10 @@ impl IndexMut<usize> for u16x8 {
 #[derive(Copy, Clone)]
 /// A block of 16, 8-bit elements.
 pub(super) struct u8x16([u8; 16]);
+
+impl u8x16 {
+    pub const ZERO: Self = Self([0; 16]);
+}
 
 impl From<u32x4> for u8x16 {
     fn from(value: u32x4) -> Self {
@@ -228,7 +252,7 @@ pub(crate) unsafe fn _scalar_load_u16x16(ptr: *const u16) -> u16x16 {
 /// # Safety
 /// The provided `ptr` must be safe to read `32` elements.
 pub(crate) unsafe fn _scalar_load_u8x32(ptr: *const u8) -> u8x32 {
-    let mut block = u8x32([0; 32]);
+    let mut block = u8x32::ZERO;
     unsafe { std::ptr::copy_nonoverlapping(ptr, block.0.as_mut_ptr(), 32) };
     block
 }
@@ -260,7 +284,7 @@ pub(crate) unsafe fn _scalar_store_u8x32(ptr: *mut u8, reg: u8x32) {
 /// Pack the two provide [u32x8] registers to unsigned 16-bit integers in blocks
 /// of 128-bits.
 pub(crate) fn _scalar_pack_u32x8(a: u32x8, b: u32x8) -> u16x16 {
-    let mut out = u16x16([0; 16]);
+    let mut out = u16x16::ZERO;
 
     // Note:
     // Mirrors the `packusdw` intel instruction in terms of layout, but the saturation
@@ -293,7 +317,7 @@ pub(crate) fn _scalar_pack_u32x8(a: u32x8, b: u32x8) -> u16x16 {
 /// Pack the two provide [u16x16] registers to unsigned 8-bit integers in blocks
 /// of 128-bits.
 pub(crate) fn _scalar_pack_u16x16(a: u16x16, b: u16x16) -> u8x32 {
-    let mut out = u8x32([0; 32]);
+    let mut out = u8x32::ZERO;
 
     // Note: See _scalar_pack_u32x8 on differences in saturation behaviour.
 
@@ -322,7 +346,7 @@ pub(crate) fn _scalar_pack_u16x16(a: u16x16, b: u16x16) -> u8x32 {
 
 /// Convert the provided 8-bit elements in register `a` to 16-bit integers via extension.
 pub(crate) fn _scalar_cvteu16_u8x16(a: u8x16) -> u16x16 {
-    let mut out = u16x16([0; 16]);
+    let mut out = u16x16::ZERO;
     for i in 0..16 {
         out[i] = a[i] as u16;
     }
@@ -331,7 +355,7 @@ pub(crate) fn _scalar_cvteu16_u8x16(a: u8x16) -> u16x16 {
 
 /// Convert the provided 16-bit elements in register `a` to 32-bit integers via extension.
 pub(crate) fn _scalar_cvteu32_u16x8(a: u16x8) -> u32x8 {
-    let mut out = u32x8([0; 8]);
+    let mut out = u32x8::ZERO;
     for i in 0..8 {
         out[i] = a[i] as u32;
     }
@@ -341,7 +365,7 @@ pub(crate) fn _scalar_cvteu32_u16x8(a: u16x8) -> u32x8 {
 /// Convert the provided [u32x8] register into a single [u16x8] register using
 /// truncation.
 pub(crate) fn _scalar_cvteu16_u32x8(a: u32x8) -> u16x8 {
-    let mut out = u16x8([0; 8]);
+    let mut out = u16x8::ZERO;
     for i in 0..8 {
         out[i] = a[i] as u16;
     }
@@ -351,7 +375,7 @@ pub(crate) fn _scalar_cvteu16_u32x8(a: u32x8) -> u16x8 {
 /// Convert the provided [u16x16] register into a single [u8x16] register using
 /// truncation.
 pub(crate) fn _scalar_cvteu8_u16x16(a: u16x16) -> u8x16 {
-    let mut out = u8x16([0; 16]);
+    let mut out = u8x16::ZERO;
     for i in 0..16 {
         out[i] = a[i] as u8;
     }
@@ -360,7 +384,7 @@ pub(crate) fn _scalar_cvteu8_u16x16(a: u16x16) -> u8x16 {
 
 /// Combine two [u32x4] registers via concatenation forming a [u32x8] register.
 pub(crate) fn _scalar_combine_u32x4(a: u32x4, b: u32x4) -> u32x8 {
-    let mut block = u32x8([0; 8]);
+    let mut block = u32x8::ZERO;
     let ptr = block.0.as_mut_ptr();
     unsafe { std::ptr::copy_nonoverlapping(a.0.as_ptr(), ptr.add(0), 4) };
     unsafe { std::ptr::copy_nonoverlapping(b.0.as_ptr(), ptr.add(4), 4) };
@@ -369,7 +393,7 @@ pub(crate) fn _scalar_combine_u32x4(a: u32x4, b: u32x4) -> u32x8 {
 
 /// Combine two [u16x8] registers via concatenation forming a [u16x16] register.
 pub(crate) fn _scalar_combine_u16x8(a: u16x8, b: u16x8) -> u16x16 {
-    let mut block = u16x16([0; 16]);
+    let mut block = u16x16::ZERO;
     let ptr = block.0.as_mut_ptr();
     unsafe { std::ptr::copy_nonoverlapping(a.0.as_ptr(), ptr.add(0), 8) };
     unsafe { std::ptr::copy_nonoverlapping(b.0.as_ptr(), ptr.add(8), 8) };
@@ -378,7 +402,7 @@ pub(crate) fn _scalar_combine_u16x8(a: u16x8, b: u16x8) -> u16x16 {
 
 /// Combine two [u8x16] registers via concatenation forming a [u8x32] register.
 pub(crate) fn _scalar_combine_u8x16(a: u8x16, b: u8x16) -> u8x32 {
-    let mut block = u8x32([0; 32]);
+    let mut block = u8x32::ZERO;
     let ptr = block.0.as_mut_ptr();
     unsafe { std::ptr::copy_nonoverlapping(a.0.as_ptr(), ptr.add(0), 16) };
     unsafe { std::ptr::copy_nonoverlapping(b.0.as_ptr(), ptr.add(16), 16) };
@@ -476,7 +500,7 @@ pub(crate) fn _scalar_extract_u32x8<const HALF: usize>(a: u32x8) -> u32x4 {
     const { assert!(HALF <= 1, "selector must be either 0 or 1") };
     let offset = HALF * 4;
     let ptr = unsafe { a.0.as_ptr().add(offset) };
-    let mut out = u32x4([0; 4]);
+    let mut out = u32x4::ZERO;
     unsafe { std::ptr::copy_nonoverlapping(ptr, out.0.as_mut_ptr(), 4) };
     out
 }
@@ -488,7 +512,7 @@ pub(crate) fn _scalar_extract_u16x16<const HALF: usize>(a: u16x16) -> u16x8 {
     const { assert!(HALF <= 1, "selector must be either 0 or 1") };
     let offset = HALF * 8;
     let ptr = unsafe { a.0.as_ptr().add(offset) };
-    let mut out = u16x8([0; 8]);
+    let mut out = u16x8::ZERO;
     unsafe { std::ptr::copy_nonoverlapping(ptr, out.0.as_mut_ptr(), 8) };
     out
 }
@@ -500,7 +524,7 @@ pub(crate) fn _scalar_extract_u8x32<const HALF: usize>(a: u8x32) -> u8x16 {
     const { assert!(HALF <= 1, "selector must be either 0 or 1") };
     let offset = HALF * 16;
     let ptr = unsafe { a.0.as_ptr().add(offset) };
-    let mut out = u8x16([0; 16]);
+    let mut out = u8x16::ZERO;
     unsafe { std::ptr::copy_nonoverlapping(ptr, out.0.as_mut_ptr(), 16) };
     out
 }
@@ -510,7 +534,7 @@ pub(crate) fn _scalar_extract_u8x32<const HALF: usize>(a: u8x32) -> u8x16 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 /// Return a bitmask taking the most significant bit from each lane in the register
 /// of `u8` values.
-pub(crate) fn _scalar_movmask_u8x32(a: u8x32) -> u32 {
+pub(crate) fn _scalar_mask_u8x32(a: u8x32) -> u32 {
     use std::arch::x86_64::*;
     let lo = _scalar_extract_u8x32::<0>(a);
     let hi = _scalar_extract_u8x32::<1>(a);
@@ -527,12 +551,26 @@ pub(crate) fn _scalar_movmask_u8x32(a: u8x32) -> u32 {
 #[cfg(not(all(target_arch = "x86_64", target_feature = "sse2")))]
 /// Return a bitmask taking the most significant bit from each lane in the register
 /// of `u8` values.
-pub(crate) fn _scalar_movmask_u8x32(a: u8x32) -> u32 {
+pub(crate) fn _scalar_mask_u8x32(a: u8x32) -> u32 {
     let mut mask: u32 = 0;
     for i in 0..32 {
         mask |= ((a[i] >> 7) as u32) << i;
     }
     mask
+}
+
+/// Selectively move elements from `a` into the output register based on the respective
+/// bit flag in `mask`.
+pub(crate) fn _scalar_mov_maskz_u8x32(mask: u32, a: u8x32) -> u8x32 {
+    let mut out = u8x32::ZERO;
+    for i in 0..32 {
+        if mask & (1 << i) != 0 {
+            out[i] = a[i];
+        } else {
+            out[i] = 0;
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -665,11 +703,22 @@ mod tests {
     #[test]
     fn test_movmask_u8x32() {
         let a = _scalar_set1_u8(1);
-        let result = _scalar_movmask_u8x32(a);
+        let result = _scalar_mask_u8x32(a);
         assert_eq!(result, 0);
 
         let a = _scalar_set1_u8(u8::MAX);
-        let result = _scalar_movmask_u8x32(a);
+        let result = _scalar_mask_u8x32(a);
         assert_eq!(result, u32::MAX);
+    }
+
+    #[test]
+    fn test_mov_maskz_u8x32() {
+        let a = _scalar_set1_u8(2);
+        let result = _scalar_mov_maskz_u8x32(u32::MAX, a);
+        assert_eq!(result.0, [2; 32]);
+
+        let a = _scalar_set1_u8(2);
+        let result = _scalar_mov_maskz_u8x32(0, a);
+        assert_eq!(result.0, [0; 32]);
     }
 }
