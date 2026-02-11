@@ -10,6 +10,8 @@ pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
 pub mod avx512;
 mod scalar;
+#[cfg(test)]
+mod test_util;
 
 /// The maximum output size of a compressed buffer for a [X128] block, assuming worst case compression.
 pub const X128_MAX_OUTPUT_LEN: usize = <[u32; X128] as CompressibleArray>::MAX_OUTPUT_SIZE;
@@ -47,44 +49,25 @@ const fn block_bytes(bit_length: usize, num_elements: usize) -> usize {
     (quotient * num_elements).div_ceil(2) + remainder_bytes
 }
 
-unsafe fn pack_to_bits(
-    n: usize,
-    nbits: u8,
-    input: &[u32; X128],
-    output: &mut [u8; X128_MAX_OUTPUT_LEN],
-) {
-    #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-    if avx512::can_use() {
-        // SAFETY: The runtime CPU supports the required features.
-        unsafe { avx512::pack_x128::to_nbits(output, nbits, input, n) };
-        return;
-    }
-
-    #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
-    if avx2::can_use() {
-        // SAFETY: The runtime CPU supports the required features.
-        // unsafe { avx2::pack_x128::to_nbits(output, nbits, input, n) };
-        return;
-    }
-}
-
 impl CompressibleArray for [u32; X128] {
     type CompressedBuffer = [u8; Self::MAX_OUTPUT_SIZE];
     type InitialValue = u32;
     const MAX_OUTPUT_SIZE: usize = X128 * size_of::<u32>();
 
     fn compress(n: usize, input: &Self, output: &mut Self::CompressedBuffer) -> CompressionDetails {
-        let max_value = input.iter().take(n).fold(0, |a, b| a | b);
-        let nbits = (32 - max_value.leading_zeros()) as u8;
+        assert!(n <= X128, "provided n is is greater than 128",);
 
-        // SAFETY: We know an u32 cannot have more than 32 leading zeroes, keeping it
-        //         within range of the packing functions.
-        unsafe { pack_to_bits(n, nbits, input, output) };
-
-        CompressionDetails {
-            bytes_written: compressed_size(nbits as usize, n),
-            compressed_bit_length: nbits,
+        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
+        if avx512::can_use() {
+            return unsafe { avx512::pack_x128(output, input, n) };
         }
+
+        #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+        if avx2::can_use() {
+            return unsafe { avx2::pack_x128(output, input, n) };
+        }
+
+        todo!()
     }
 
     fn compress_delta(
@@ -93,13 +76,19 @@ impl CompressibleArray for [u32; X128] {
         input: &mut Self,
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails {
+        assert!(n <= X128, "provided n is is greater than 128",);
+
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
-            // SAFETY: The runtime CPU supports the required features.
-            unsafe { avx512::modifiers::delta_encode_x128(initial_value, input) };
+            return unsafe { avx512::pack_delta_x128(initial_value, output, input, n) };
         }
 
-        Self::compress(n, input, output)
+        #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+        if avx2::can_use() {
+            return unsafe { avx2::pack_delta_x128(initial_value, output, input, n) };
+        }
+
+        todo!()
     }
 
     fn compress_delta1(
@@ -108,13 +97,19 @@ impl CompressibleArray for [u32; X128] {
         input: &mut Self,
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails {
+        assert!(n <= X128, "provided n is is greater than 128",);
+
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
-            // SAFETY: The runtime CPU supports the required features.
-            unsafe { avx512::modifiers::delta1_encode_x128(initial_value, input) };
+            return unsafe { avx512::pack_delta1_x128(initial_value, output, input, n) };
         }
 
-        Self::compress(n, input, output)
+        #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+        if avx2::can_use() {
+            return unsafe { avx2::pack_delta1_x128(initial_value, output, input, n) };
+        }
+
+        todo!()
     }
 
     fn decompress(n: usize, compressed_bit_length: u8, input: &[u8], output: &mut Self) -> usize {
@@ -126,19 +121,19 @@ impl CompressibleArray for [u32; X128] {
             input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
             "input buffer is too small/incorrectly padded to safely decompress",
         );
+        assert!(n <= X128, "provided n is is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
-            // SAFETY:
-            // - The runtime CPU supports the required features.
-            // - We have ensured the input buffer is correctly padded so the SIMD reads do
-            //   not go out of bounds.
-            unsafe {
-                avx512::unpack_x128::from_nbits(input.as_ptr(), compressed_bit_length, output, n)
-            };
+            return unsafe { avx512::unpack_x128(compressed_bit_length, input, output, n) };
         }
 
-        compressed_size(compressed_bit_length as usize, n)
+        #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+        if avx2::can_use() {
+            return unsafe { avx2::unpack_x128(compressed_bit_length, input, output, n) };
+        }
+
+        todo!()
     }
 
     fn decompress_delta(
@@ -148,15 +143,31 @@ impl CompressibleArray for [u32; X128] {
         input: &[u8],
         output: &mut Self,
     ) -> usize {
-        let bytes_read = Self::decompress(n, compressed_bit_length, input, output);
+        assert!(
+            compressed_bit_length <= 32,
+            "compressed bitlength must be no more than 32"
+        );
+        assert!(
+            input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
+            "input buffer is too small/incorrectly padded to safely decompress",
+        );
+        assert!(n <= X128, "provided n is is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
-            // SAFETY: The runtime CPU supports the required features.
-            unsafe { avx512::modifiers::delta_decode_x128(initial_value, output) };
+            return unsafe {
+                avx512::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n)
+            };
         }
 
-        bytes_read
+        #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+        if avx2::can_use() {
+            return unsafe {
+                avx2::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n)
+            };
+        }
+
+        todo!()
     }
 
     fn decompress_delta1(
@@ -166,21 +177,42 @@ impl CompressibleArray for [u32; X128] {
         input: &[u8],
         output: &mut Self,
     ) -> usize {
-        let bytes_read = Self::decompress(n, compressed_bit_length, input, output);
+        assert!(
+            compressed_bit_length <= 32,
+            "compressed bitlength must be no more than 32"
+        );
+        assert!(
+            input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
+            "input buffer is too small/incorrectly padded to safely decompress",
+        );
+        assert!(n <= X128, "provided n is is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
-            // SAFETY: The runtime CPU supports the required features.
-            unsafe { avx512::modifiers::delta1_decode_x128(initial_value, output) };
+            return unsafe {
+                avx512::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
+            };
         }
 
-        bytes_read
+        #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
+        if avx2::can_use() {
+            return unsafe {
+                avx2::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
+            };
+        }
+
+        todo!()
     }
 }
 
 #[inline]
 pub(super) fn split_block(block: &[u32; X128]) -> [&[u32; X64]; 2] {
     crate::util::split_slice::<_, X128, X64>(block)
+}
+
+#[inline]
+pub(super) fn split_block_mut(block: &mut [u32; X128]) -> [&mut [u32; X64]; 2] {
+    crate::util::split_slice_mut::<_, X128, X64>(block)
 }
 
 #[cfg(test)]

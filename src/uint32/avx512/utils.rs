@@ -5,60 +5,7 @@ pub const _MM_TERNLOG_B: i32 = 0xCC; // 11001100
 pub const _MM_TERNLOG_C: i32 = 0xAA; // 10101010
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Pack 8 sets of registers containing 32-bit elements and produce 4 registers holding
-/// 16-bit elements.
-///
-/// The order of elements is maintained.
-///
-/// # Important note on saturation
-/// This routine produces garbage results if the input elements are beyond the maximum value
-/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
-/// invalid data.
-pub(super) fn pack_u32_u16_x8(data: [__m512i; 8]) -> [__m512i; 4] {
-    let permute_mask = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
-
-    let unordered1 = _mm512_packus_epi32(data[0], data[1]);
-    let unordered2 = _mm512_packus_epi32(data[2], data[3]);
-    let unordered3 = _mm512_packus_epi32(data[4], data[5]);
-    let unordered4 = _mm512_packus_epi32(data[6], data[7]);
-
-    let ordered1 = _mm512_permutexvar_epi64(permute_mask, unordered1);
-    let ordered2 = _mm512_permutexvar_epi64(permute_mask, unordered2);
-    let ordered3 = _mm512_permutexvar_epi64(permute_mask, unordered3);
-    let ordered4 = _mm512_permutexvar_epi64(permute_mask, unordered4);
-
-    [ordered1, ordered2, ordered3, ordered4]
-}
-
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Unpack 4 sets of registers containing 16-bit elements and produce 8 registers holding
-/// 32-bit elements.
-///
-/// This is the inverse of [pack_u32_u16_x8].
-pub(super) fn unpack_u16_u32_x8(data: [__m512i; 4]) -> [__m512i; 8] {
-    let [packed1, packed2, packed3, packed4] = data;
-
-    let tmp = _mm512_alignr_epi32::<8>(packed1, packed1);
-    let d1 = convert_lower_x16_u16_epi32(packed1);
-    let d2 = convert_lower_x16_u16_epi32(tmp);
-
-    let tmp = _mm512_alignr_epi32::<8>(packed2, packed2);
-    let d3 = convert_lower_x16_u16_epi32(packed2);
-    let d4 = convert_lower_x16_u16_epi32(tmp);
-
-    let tmp = _mm512_alignr_epi32::<8>(packed3, packed3);
-    let d5 = convert_lower_x16_u16_epi32(packed3);
-    let d6 = convert_lower_x16_u16_epi32(tmp);
-
-    let tmp = _mm512_alignr_epi32::<8>(packed4, packed4);
-    let d7 = convert_lower_x16_u16_epi32(packed4);
-    let d8 = convert_lower_x16_u16_epi32(tmp);
-
-    [d1, d2, d3, d4, d5, d6, d7, d8]
-}
-
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Pack 8 sets of registers containing 32-bit elements and produce 2 registers holding
+/// Pack 4 sets of registers containing 32-bit elements and produce 1 register holding
 /// 8-bit elements.
 ///
 /// The order of elements is maintained.
@@ -67,61 +14,38 @@ pub(super) fn unpack_u16_u32_x8(data: [__m512i; 4]) -> [__m512i; 8] {
 /// This routine produces garbage results if the input elements are beyond the maximum value
 /// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
 /// invalid data.
-pub(super) fn pack_u32_u8_x8(data: [__m512i; 8]) -> [__m512i; 2] {
-    let permute_mask = _mm512_set_epi32(
-        15, 11, 7, 3, // D chunks
-        14, 10, 6, 2, // C chunks
-        13, 9, 5, 1, // B chunks
-        12, 8, 4, 0, // A chunks
-    );
+pub(super) fn pack_u32_to_u8_ordered(data: [__m512i; 4]) -> __m512i {
+    let p1 = _mm512_packus_epi32(data[0], data[1]);
+    let p2 = _mm512_packus_epi32(data[2], data[3]);
+    let packed = _mm512_packus_epi16(p1, p2);
 
-    let packed1 = _mm512_packus_epi32(data[0], data[1]);
-    let packed2 = _mm512_packus_epi32(data[2], data[3]);
-    let packed3 = _mm512_packus_epi32(data[4], data[5]);
-    let packed4 = _mm512_packus_epi32(data[6], data[7]);
+    let permute_mask = _mm512_setr_epi32(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
 
-    let unordered1 = _mm512_packus_epi16(packed1, packed2);
-    let unordered2 = _mm512_packus_epi16(packed3, packed4);
-
-    let ordered1 = _mm512_permutexvar_epi32(permute_mask, unordered1);
-    let ordered2 = _mm512_permutexvar_epi32(permute_mask, unordered2);
-
-    [ordered1, ordered2]
+    _mm512_permutexvar_epi32(permute_mask, packed)
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
+/// Unpack 1 register containing 8-bit elements and produce 4 registers holding
 /// 32-bit elements.
-///
-/// This is the inverse of [pack_u32_u8_x8].
-pub(super) fn unpack_u8_u32_x8(data: [__m512i; 2]) -> [__m512i; 8] {
-    let [packed1, packed2] = data;
+pub(super) fn unpack_u8_to_u32_ordered(data: __m512i) -> [__m512i; 4] {
+    let permute_mask = _mm512_setr_epi32(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+    let zeroes = _mm512_setzero_si512();
 
-    let tmp1 = _mm512_alignr_epi32::<4>(packed1, packed1);
-    let tmp2 = _mm512_alignr_epi32::<8>(packed1, packed1);
-    let tmp3 = _mm512_alignr_epi32::<12>(packed1, packed1);
+    let unpermuted = _mm512_permutexvar_epi32(permute_mask, data);
+    let lo_16s = _mm512_unpacklo_epi8(unpermuted, zeroes);
+    let hi_16s = _mm512_unpackhi_epi8(unpermuted, zeroes);
 
-    let d1 = convert_lower_x16_u8_epi32(packed1);
-    let d2 = convert_lower_x16_u8_epi32(tmp1);
-    let d3 = convert_lower_x16_u8_epi32(tmp2);
-    let d4 = convert_lower_x16_u8_epi32(tmp3);
-
-    let tmp4 = _mm512_alignr_epi32::<4>(packed2, packed2);
-    let tmp5 = _mm512_alignr_epi32::<8>(packed2, packed2);
-    let tmp6 = _mm512_alignr_epi32::<12>(packed2, packed2);
-
-    let d5 = convert_lower_x16_u8_epi32(packed2);
-    let d6 = convert_lower_x16_u8_epi32(tmp4);
-    let d7 = convert_lower_x16_u8_epi32(tmp5);
-    let d8 = convert_lower_x16_u8_epi32(tmp6);
-
-    [d1, d2, d3, d4, d5, d6, d7, d8]
+    [
+        _mm512_unpacklo_epi16(lo_16s, zeroes),
+        _mm512_unpackhi_epi16(lo_16s, zeroes),
+        _mm512_unpacklo_epi16(hi_16s, zeroes),
+        _mm512_unpackhi_epi16(hi_16s, zeroes),
+    ]
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
-/// Given 8 sets of 32-bit registers, pack them into 4 sets of 16-bit registers, then
-/// split each 16-bit element into a high and low halves, returning the 8-bit halves in separate
-/// registers in their high and low forms respectively.
+/// Pack 4 sets of registers containing 32-bit elements and produce 2 registers holding
+/// 16-bit elements.
 ///
 /// The order of elements is maintained.
 ///
@@ -129,35 +53,196 @@ pub(super) fn unpack_u8_u32_x8(data: [__m512i; 2]) -> [__m512i; 8] {
 /// This routine produces garbage results if the input elements are beyond the maximum value
 /// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
 /// invalid data.
-pub(super) fn pack_u32_u16_split_x8(data: [__m512i; 8]) -> ([__m512i; 2], [__m512i; 2]) {
-    let permute_mask = _mm512_set_epi32(
-        15, 11, 7, 3, // D chunks
-        14, 10, 6, 2, // C chunks
-        13, 9, 5, 1, // B chunks
-        12, 8, 4, 0, // A chunks
-    );
+pub(super) fn pack_u32_to_u16_ordered(data: [__m512i; 4]) -> [__m512i; 2] {
+    let p1 = _mm512_packus_epi32(data[0], data[1]);
+    let p2 = _mm512_packus_epi32(data[2], data[3]);
 
-    let packed1 = _mm512_packus_epi32(data[0], data[1]);
-    let packed2 = _mm512_packus_epi32(data[2], data[3]);
-    let packed3 = _mm512_packus_epi32(data[4], data[5]);
-    let packed4 = _mm512_packus_epi32(data[6], data[7]);
+    let permute_idx = _mm512_setr_epi64(0, 2, 4, 6, 1, 3, 5, 7);
 
-    let lo_mask = _mm512_set1_epi16(0b1111_1111);
-    let lo_bits = and_si512([packed1, packed2, packed3, packed4], lo_mask);
-    let lo_unordered1 = _mm512_packus_epi16(lo_bits[0], lo_bits[1]);
-    let lo_unordered2 = _mm512_packus_epi16(lo_bits[2], lo_bits[3]);
+    let lo = _mm512_permutexvar_epi64(permute_idx, p1);
+    let hi = _mm512_permutexvar_epi64(permute_idx, p2);
 
-    let hi_bits = srli_epi16::<8, 4>([packed1, packed2, packed3, packed4]);
-    let hi_unordered1 = _mm512_packus_epi16(hi_bits[0], hi_bits[1]);
-    let hi_unordered2 = _mm512_packus_epi16(hi_bits[2], hi_bits[3]);
+    [lo, hi]
+}
 
-    let lo_ordered1 = _mm512_permutexvar_epi32(permute_mask, lo_unordered1);
-    let lo_ordered2 = _mm512_permutexvar_epi32(permute_mask, lo_unordered2);
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Unpack 2 registers containing 16-bit elements and produce 4 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u16_to_u32_ordered(data: [__m512i; 2]) -> [__m512i; 4] {
+    let lo_p1 = _mm512_castsi512_si256(data[0]);
+    let lo_p2 = _mm512_extracti64x4_epi64(data[0], 1);
 
-    let hi_ordered1 = _mm512_permutexvar_epi32(permute_mask, hi_unordered1);
-    let hi_ordered2 = _mm512_permutexvar_epi32(permute_mask, hi_unordered2);
+    let hi_p1 = _mm512_castsi512_si256(data[1]);
+    let hi_p2 = _mm512_extracti64x4_epi64(data[1], 1);
 
-    ([hi_ordered1, hi_ordered2], [lo_ordered1, lo_ordered2])
+    [
+        _mm512_cvtepu16_epi32(lo_p1),
+        _mm512_cvtepu16_epi32(lo_p2),
+        _mm512_cvtepu16_epi32(hi_p1),
+        _mm512_cvtepu16_epi32(hi_p2),
+    ]
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Pack 2 sets of registers containing 16-bit elements and produce 1 register holding
+/// 8-bit elements.
+///
+/// The order of elements is **not** maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u16_to_u8_ordered(data: [__m512i; 2]) -> __m512i {
+    let permute_idx = _mm512_setr_epi64(0, 2, 4, 6, 1, 3, 5, 7);
+    let interleaved = _mm512_packus_epi16(data[0], data[1]);
+    _mm512_permutexvar_epi64(permute_idx, interleaved)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Unpack 1 register containing 8-bit elements and produce 2 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u8_to_u16_ordered(data: __m512i) -> [__m512i; 2] {
+    let lo_256 = _mm512_castsi512_si256(data);
+    let hi_256 = _mm512_extracti64x4_epi64(data, 1);
+
+    let lo = _mm512_cvtepu8_epi16(lo_256);
+    let hi = _mm512_cvtepu8_epi16(hi_256);
+
+    [lo, hi]
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Pack 4 sets of registers containing 32-bit elements and produce 1 register holding
+/// 8-bit elements.
+///
+/// The order of elements is **not** maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u8_unordered(data: [__m512i; 4]) -> __m512i {
+    let packed = pack_u32_to_u16_unordered(data);
+    pack_u16_to_u8_unordered(packed)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Unpack 1 register containing 8-bit elements and produce 4 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u8_to_u32_unordered(packed: __m512i) -> [__m512i; 4] {
+    let zeroes = _mm512_setzero_si512();
+    let lo_16s = _mm512_unpacklo_epi8(packed, zeroes);
+    let hi_16s = _mm512_unpackhi_epi8(packed, zeroes);
+
+    [
+        _mm512_unpacklo_epi16(lo_16s, zeroes),
+        _mm512_unpackhi_epi16(lo_16s, zeroes),
+        _mm512_unpacklo_epi16(hi_16s, zeroes),
+        _mm512_unpackhi_epi16(hi_16s, zeroes),
+    ]
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Pack 4 sets of registers containing 32-bit elements and produce 2 registers holding
+/// 16-bit elements.
+///
+/// The order of elements is **not** maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_unordered(data: [__m512i; 4]) -> [__m512i; 2] {
+    let lo = _mm512_packus_epi32(data[0], data[1]);
+    let hi = _mm512_packus_epi32(data[2], data[3]);
+
+    [lo, hi]
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Unpack 2 registers containing 16-bit elements and produce 4 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u16_to_u32_unordered(data: [__m512i; 2]) -> [__m512i; 4] {
+    let zeroes = _mm512_setzero_si512();
+    [
+        _mm512_unpacklo_epi16(data[0], zeroes),
+        _mm512_unpackhi_epi16(data[0], zeroes),
+        _mm512_unpacklo_epi16(data[1], zeroes),
+        _mm512_unpackhi_epi16(data[1], zeroes),
+    ]
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Pack 2 sets of registers containing 16-bit elements and produce 1 register holding
+/// 8-bit elements.
+///
+/// The order of elements is **not** maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u16_to_u8_unordered(data: [__m512i; 2]) -> __m512i {
+    _mm512_packus_epi16(data[0], data[1])
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Given 8 sets of 32-bit registers, pack them into 2 sets of 16-bit registers, then
+/// split each 16-bit element into a high and low halves, returning the 8-bit halves in separate
+/// registers in their high and low forms respectively.
+///
+/// The order of elements are maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_split_ordered(data: [__m512i; 4]) -> (__m512i, __m512i) {
+    let packed_u16 = pack_u32_to_u16_ordered(data);
+
+    let mask = _mm512_set1_epi16(0x00FF);
+    let lo_8bits = and_si512(packed_u16, mask);
+    let hi_8bits = srli_epi16::<8, 2>(packed_u16);
+
+    let packed_lo_8bits = pack_u16_to_u8_ordered(lo_8bits);
+    let packed_hi_8bits = pack_u16_to_u8_ordered(hi_8bits);
+
+    (packed_hi_8bits, packed_lo_8bits)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Given 8 sets of 32-bit registers, pack them into 2 sets of 16-bit registers, then
+/// split each 16-bit element into a high and low halves, returning the 8-bit halves in separate
+/// registers in their high and low forms respectively.
+///
+/// The order of elements are not maintained.
+///
+/// # Important note on saturation
+/// This routine produces garbage results if the input elements are beyond the maximum value
+/// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
+/// invalid data.
+pub(super) fn pack_u32_to_u16_split_unordered(data: [__m512i; 4]) -> (__m512i, __m512i) {
+    let packed_u16 = pack_u32_to_u16_unordered(data);
+
+    let mask = _mm512_set1_epi16(0x00FF);
+    let lo_8bits = and_si512(packed_u16, mask);
+    let hi_8bits = srli_epi16::<8, 2>(packed_u16);
+
+    let packed_lo_8bits = pack_u16_to_u8_unordered(lo_8bits);
+    let packed_hi_8bits = pack_u16_to_u8_unordered(hi_8bits);
+
+    (packed_hi_8bits, packed_lo_8bits)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Unpack 1 register containing 8-bit elements and produce 2 registers holding
+/// 32-bit elements.
+pub(super) fn unpack_u8_to_u16_unordered(data: __m512i) -> [__m512i; 2] {
+    let zeroes = _mm512_setzero_si512();
+    let lo = _mm512_unpacklo_epi8(data, zeroes);
+    let hi = _mm512_unpackhi_epi8(data, zeroes);
+    [lo, hi]
 }
 
 #[target_feature(enable = "avx512f")]
@@ -166,18 +251,6 @@ pub(super) fn and_si512<const N: usize>(mut data: [__m512i; N], mask: __m512i) -
     let mut i = 0;
     while i < N {
         data[i] = _mm512_and_si512(data[i], mask);
-        i += 1;
-    }
-    data
-}
-
-#[target_feature(enable = "avx512f")]
-/// Perform a bitwise AND on all provided registers with another broadcast register _after_
-/// performing a bitwise NOT of the broadcast register.
-pub(super) fn andnot_si512<const N: usize>(mut data: [__m512i; N], mask: __m512i) -> [__m512i; N] {
-    let mut i = 0;
-    while i < N {
-        data[i] = _mm512_andnot_si512(mask, data[i]);
         i += 1;
     }
     data
@@ -195,37 +268,11 @@ pub(super) fn or_si512_all<const N: usize>(mut d1: [__m512i; N], d2: [__m512i; N
 }
 
 #[target_feature(enable = "avx512f")]
-/// Perform a bitwise OR on the two sets of registers.
-pub(super) fn ternary_epi32_all<const IMM8: i32, const N: usize>(
-    mut d1: [__m512i; N],
-    d2: [__m512i; N],
-    d3: [__m512i; N],
-) -> [__m512i; N] {
-    let mut i = 0;
-    while i < N {
-        d1[i] = _mm512_ternarylogic_epi32::<IMM8>(d1[i], d2[i], d3[i]);
-        i += 1;
-    }
-    d1
-}
-
-#[target_feature(enable = "avx512f")]
 /// Shift all registers right by [IMM8] in 32-bit lanes.
 pub(super) fn srli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
     let mut i = 0;
     while i < N {
         data[i] = _mm512_srli_epi32::<IMM8>(data[i]);
-        i += 1;
-    }
-    data
-}
-
-#[target_feature(enable = "avx512f")]
-/// Shift all registers left by [IMM8] in 32-bit lanes.
-pub(super) fn slli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
-    let mut i = 0;
-    while i < N {
-        data[i] = _mm512_slli_epi32::<IMM8>(data[i]);
         i += 1;
     }
     data
@@ -243,203 +290,300 @@ pub(super) fn srli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]
 }
 
 #[target_feature(enable = "avx512f")]
-fn convert_lower_x16_u8_epi32(reg: __m512i) -> __m512i {
-    _mm512_cvtepu8_epi32(_mm512_castsi512_si128(reg))
+/// Shift all registers left by [IMM8] in 32-bit lanes.
+pub(super) fn slli_epi32<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
+    let mut i = 0;
+    while i < N {
+        data[i] = _mm512_slli_epi32::<IMM8>(data[i]);
+        i += 1;
+    }
+    data
 }
 
-#[target_feature(enable = "avx512f")]
-fn convert_lower_x16_u16_epi32(reg: __m512i) -> __m512i {
-    _mm512_cvtepu16_epi32(_mm512_castsi512_si256(reg))
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+/// Shift all registers left by [IMM8] in 32-bit lanes.
+pub(super) fn slli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]) -> [__m512i; N] {
+    let mut i = 0;
+    while i < N {
+        data[i] = _mm512_slli_epi16::<IMM8>(data[i]);
+        i += 1;
+    }
+    data
 }
 
 #[cfg(test)]
 mod tests {
+    use std::cmp;
+
     use super::*;
-    use crate::X128;
-    use crate::uint32::avx512::data::load_u32x128;
+    use crate::X64;
+    use crate::uint32::avx512::data::{load_si512x2, load_u32x64};
+    use crate::uint32::test_util::*;
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_pack_u32_u16() {
-        let mut data = [0; X128];
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_u16_ordered() {
+        let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            data[i] = i as u32;
+        for i in 0..X64 {
+            input[i] = i as u32;
         }
 
-        let data = unsafe { load_u32x128(&data) };
-        let packed = unsafe { pack_u32_u16_x8(data) };
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u16_ordered(data) };
 
-        let mut expected = [0; X128];
+        let mut expected = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
+        for i in 0..X64 {
             expected[i] = i as u16;
         }
 
-        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u16; X128]>(packed) };
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(packed) };
         assert_eq!(view, expected);
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_pack_u32_u16_saturation() {
-        let data = [u16::MAX as u32 + 1; X128];
-        let data = unsafe { load_u32x128(&data) };
-        let packed = unsafe { pack_u32_u16_x8(data) };
-        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u16; X128]>(packed) };
-        assert_eq!(view, [u16::MAX; X128]);
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_u16_unordered() {
+        let mut input = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            input[i] = i as u32;
+        }
 
-        let data = [u16::MAX as u32; X128];
-        let data = unsafe { load_u32x128(&data) };
-        let packed = unsafe { pack_u32_u16_x8(data) };
-        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u16; X128]>(packed) };
-        assert_eq!(view, [u16::MAX; X128]);
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u16_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(packed) };
+        assert_eq!(
+            view[..16],
+            [0, 1, 2, 3, 16, 17, 18, 19, 4, 5, 6, 7, 20, 21, 22, 23]
+        );
+        assert_eq!(
+            view[16..][..16],
+            [8, 9, 10, 11, 24, 25, 26, 27, 12, 13, 14, 15, 28, 29, 30, 31]
+        );
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_pack_u32_u8() {
-        let mut data = [0; X128];
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u32_u16_ordered() {
+        let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            data[i] = i as u32;
+        for i in 0..X64 {
+            input[i] = i as u32;
         }
 
-        let data = unsafe { load_u32x128(&data) };
-        let packed = unsafe { pack_u32_u8_x8(data) };
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u16_ordered(data) };
+        let unpacked = unsafe { unpack_u16_to_u32_ordered(packed) };
 
-        let mut expected = [0; X128];
+        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u32; X64]>(unpacked) };
+        assert_eq!(view, input);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u32_u16_unordered() {
+        let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            expected[i] = i as u8;
+        for i in 0..X64 {
+            input[i] = i as u32;
         }
 
-        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(packed) };
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u16_unordered(data) };
+        let unpacked = unsafe { unpack_u16_to_u32_unordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u32; X64]>(unpacked) };
+        assert_eq!(view, input);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_u8_ordered() {
+        let mut input = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            input[i] = i as u32;
+        }
+
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u8_ordered(data) };
+
+        let mut expected = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            expected[i] = cmp::min(i as u8, u8::MAX);
+        }
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
         assert_eq!(view, expected);
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_pack_u32_u8_saturation() {
-        let data = [u8::MAX as u32 + 1; X128];
-        let data = unsafe { load_u32x128(&data) };
-        let packed = unsafe { pack_u32_u8_x8(data) };
-        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(packed) };
-        assert_eq!(view, [255; X128]); // Because of how the packs instruction saturates.
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_u8_unordered() {
+        let mut input = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            input[i] = i as u32;
+        }
 
-        let data = [u8::MAX as u32; X128];
-        let data = unsafe { load_u32x128(&data) };
-        let packed = unsafe { pack_u32_u8_x8(data) };
-        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(packed) };
-        assert_eq!(view, [255; X128]);
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u8_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
+        assert_eq!(
+            view[..16],
+            [0, 1, 2, 3, 16, 17, 18, 19, 32, 33, 34, 35, 48, 49, 50, 51]
+        );
+        assert_eq!(
+            view[16..][..16],
+            [4, 5, 6, 7, 20, 21, 22, 23, 36, 37, 38, 39, 52, 53, 54, 55]
+        );
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_unpack_u8_u32() {
-        let mut data: [u8; X128] = [0; X128];
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u32_u8_ordered() {
+        let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            data[i] = i as u8;
+        for i in 0..X64 {
+            input[i] = i as u32;
         }
 
-        let d1 = unsafe { _mm512_loadu_epi8(data.as_ptr().add(0).cast()) };
-        let d2 = unsafe { _mm512_loadu_epi8(data.as_ptr().add(64).cast()) };
-        let unpacked = unsafe { unpack_u8_u32_x8([d1, d2]) };
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u8_ordered(data) };
+        let unpacked = unsafe { unpack_u8_to_u32_ordered(packed) };
 
-        let mut expected = [0; X128];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            expected[i] = i as u32;
-        }
-
-        let view = unsafe { std::mem::transmute::<[__m512i; 8], [u32; X128]>(unpacked) };
-        assert_eq!(view, expected);
+        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u32; X64]>(unpacked) };
+        assert_eq!(view, input);
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_pack_u32_u16_split_x8() {
-        let mut data = [0; X128];
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u32_u8_unordered() {
+        let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            data[i] = i as u32 * 8;
+        for i in 0..X64 {
+            input[i] = i as u32;
         }
 
-        let data = unsafe { load_u32x128(&data) };
-        let (hi, lo) = unsafe { pack_u32_u16_split_x8(data) };
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u8_unordered(data) };
+        let unpacked = unsafe { unpack_u8_to_u32_unordered(packed) };
 
-        let lo = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(lo) };
-        let hi = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(hi) };
-        assert_eq!(lo[0..4], [0, 8, 16, 24]);
-        assert_eq!(hi[0..4], [0, 0, 0, 0]);
-
-        assert_eq!(lo[64], 0b0000_0000);
-        assert_eq!(hi[64], 0b0000_0010);
-
-        assert_eq!(lo[65], 0b0000_1000);
-        assert_eq!(hi[65], 0b0000_0010);
-
-        assert_eq!(lo[73], 0b0100_1000);
-        assert_eq!(hi[73], 0b0000_0010);
+        let view = unsafe { std::mem::transmute::<[__m512i; 4], [u32; X64]>(unpacked) };
+        assert_eq!(view, input);
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_pack_u32_u16_split_x8_saturation() {
-        let data = [(u16::MAX - 1) as u32; X128];
-        let data = unsafe { load_u32x128(&data) };
-        let (hi, lo) = unsafe { pack_u32_u16_split_x8(data) };
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u8_u16_unordered() {
+        let mut input = [0; X64];
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..X64 {
+            input[i] = i as u16;
+        }
 
-        let lo = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(lo) };
-        let hi = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(hi) };
-        assert_eq!(lo[64], 0b1111_1110);
-        assert_eq!(hi[64], 0b1111_1111);
+        let data = unsafe { load_si512x2(input.as_ptr().cast()) };
+        let packed = unsafe { pack_u16_to_u8_unordered(data) };
+        let unpacked = unsafe { unpack_u8_to_u16_unordered(packed) };
 
-        assert_eq!(lo[65], 0b1111_1110);
-        assert_eq!(hi[65], 0b1111_1111);
-
-        assert_eq!(lo[73], 0b1111_1110);
-        assert_eq!(hi[73], 0b1111_1111);
-
-        let data = [u16::MAX as u32; X128];
-        let data = unsafe { load_u32x128(&data) };
-        let (hi, lo) = unsafe { pack_u32_u16_split_x8(data) };
-
-        let lo = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(lo) };
-        let hi = unsafe { std::mem::transmute::<[__m512i; 2], [u8; X128]>(hi) };
-        assert_eq!(lo[64], 0b1111_1111);
-        assert_eq!(hi[64], 0b1111_1111);
-
-        assert_eq!(lo[65], 0b1111_1111);
-        assert_eq!(hi[65], 0b1111_1111);
-
-        assert_eq!(lo[73], 0b1111_1111);
-        assert_eq!(hi[73], 0b1111_1111);
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(unpacked) };
+        assert_eq!(view, input);
     }
 
     #[test]
-    #[cfg_attr(not(target_feature = "avx512f"), ignore)]
-    fn test_unpack_u16_u32() {
-        let mut data: [u16; X128] = [0; X128];
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u8_u16_ordered() {
+        let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            data[i] = i as u16;
+        for i in 0..X64 {
+            input[i] = i as u16;
         }
 
-        let d1 = unsafe { _mm512_loadu_epi16(data.as_ptr().add(0).cast()) };
-        let d2 = unsafe { _mm512_loadu_epi16(data.as_ptr().add(32).cast()) };
-        let d3 = unsafe { _mm512_loadu_epi16(data.as_ptr().add(64).cast()) };
-        let d4 = unsafe { _mm512_loadu_epi16(data.as_ptr().add(96).cast()) };
-        let unpacked = unsafe { unpack_u16_u32_x8([d1, d2, d3, d4]) };
+        let data = unsafe { load_si512x2(input.as_ptr().cast()) };
+        let packed = unsafe { pack_u16_to_u8_ordered(data) };
+        let unpacked = unsafe { unpack_u8_to_u16_ordered(packed) };
 
-        let mut expected = [0; X128];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X128 {
-            expected[i] = i as u32;
-        }
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(unpacked) };
+        assert_eq!(view, input);
+    }
 
-        let view = unsafe { std::mem::transmute::<[__m512i; 8], [u32; X128]>(unpacked) };
-        assert_eq!(view, expected);
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u16_to_u8_unordered_layout() {
+        let input: [u16; X64] = std::array::from_fn(|i| i as u16);
+
+        let data = unsafe { load_si512x2(input.as_ptr().cast()) };
+        let packed = unsafe { pack_u16_to_u8_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
+        assert_eq!(view, PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_to_u16_unordered_layout() {
+        let input: [u32; X64] = std::array::from_fn(|i| i as u32);
+
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u16_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(packed) };
+        assert_eq!(view, PACK_U32_TO_U16_EXPECTED_UNORDERED_LAYOUT,);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_pack_u32_to_u8_unordered_layout() {
+        let input: [u32; X64] = std::array::from_fn(|i| i as u32);
+
+        let data = unsafe { load_u32x64(&input) };
+        let packed = unsafe { pack_u32_to_u8_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
+        assert_eq!(view, PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
     }
 }

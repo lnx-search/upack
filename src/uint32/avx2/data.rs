@@ -1,10 +1,10 @@
 use std::arch::x86_64::*;
 
-use crate::{X64, X128};
+use crate::X64;
 
 #[target_feature(enable = "avx2")]
 /// Load 8, 256 bit registers holding 64 32-bit elements.
-pub(super) fn load_u32x64(block: &[u32; X64]) -> [__m256i; 8] {
+pub(crate) fn load_u32x64(block: &[u32; X64]) -> [__m256i; 8] {
     let ptr: *const __m256i = block.as_ptr().cast();
     let mut data = [_mm256_setzero_si256(); 8];
     for i in 0..8 {

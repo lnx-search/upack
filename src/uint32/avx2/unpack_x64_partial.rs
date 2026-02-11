@@ -134,7 +134,7 @@ pub unsafe fn from_u4(input: *const u8, read_n: usize) -> [__m256i; 8] {
 #[target_feature(enable = "avx2")]
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
-unsafe fn unpack_u4_registers(input: *const u8) -> [__m256i; 2] {
+pub(super) unsafe fn unpack_u4_registers(input: *const u8) -> [__m256i; 2] {
     let ordered = unsafe { _mm256_loadu_si256(input.cast()) };
     let interleaved = _mm256_permute4x64_epi64::<0xD8>(ordered);
 
@@ -766,6 +766,8 @@ mod tests {
     use super::*;
     use crate::X64;
     use crate::uint32::avx2::pack_x64_partial::*;
+    #[cfg(feature = "avx512")]
+    use crate::uint32::avx512;
     use crate::uint32::{X128_MAX_OUTPUT_LEN, max_compressed_size};
 
     #[rstest::rstest]
@@ -921,6 +923,70 @@ mod tests {
                 *value = fastrand::u32(0..max_value);
             }
             let data = unsafe { load_u32x64(&values) };
+
+            let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
+            unsafe { packer(packed.as_mut_ptr(), data, length) };
+            packed[max_compressed_size::<X64>(bit_len as usize)..].fill(0);
+
+            let unpacked = unsafe { unpacker(packed.as_ptr(), length) };
+            let unpacked = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(unpacked) };
+            assert_eq!(unpacked[..length], values[..length], "length:{length}");
+        }
+    }
+
+    #[cfg(feature = "avx512")]
+    #[rstest::rstest]
+    #[case(1, avx512::pack_x64_partial::to_u1, from_u1)]
+    #[case(2, avx512::pack_x64_partial::to_u2, from_u2)]
+    #[case(3, avx512::pack_x64_partial::to_u3, from_u3)]
+    #[case(4, avx512::pack_x64_partial::to_u4, from_u4)]
+    #[case(5, avx512::pack_x64_partial::to_u5, from_u5)]
+    #[case(6, avx512::pack_x64_partial::to_u6, from_u6)]
+    #[case(7, avx512::pack_x64_partial::to_u7, from_u7)]
+    #[case(8, avx512::pack_x64_partial::to_u8, from_u8)]
+    #[case(9, avx512::pack_x64_partial::to_u9, from_u9)]
+    #[case(10, avx512::pack_x64_partial::to_u10, from_u10)]
+    #[case(11, avx512::pack_x64_partial::to_u11, from_u11)]
+    #[case(12, avx512::pack_x64_partial::to_u12, from_u12)]
+    #[case(13, avx512::pack_x64_partial::to_u13, from_u13)]
+    #[case(14, avx512::pack_x64_partial::to_u14, from_u14)]
+    #[case(15, avx512::pack_x64_partial::to_u15, from_u15)]
+    #[case(16, avx512::pack_x64_partial::to_u16, from_u16)]
+    #[case(17, avx512::pack_x64_partial::to_u17, from_u17)]
+    #[case(18, avx512::pack_x64_partial::to_u18, from_u18)]
+    #[case(19, avx512::pack_x64_partial::to_u19, from_u19)]
+    #[case(20, avx512::pack_x64_partial::to_u20, from_u20)]
+    #[case(21, avx512::pack_x64_partial::to_u21, from_u21)]
+    #[case(22, avx512::pack_x64_partial::to_u22, from_u22)]
+    #[case(23, avx512::pack_x64_partial::to_u23, from_u23)]
+    #[case(24, avx512::pack_x64_partial::to_u24, from_u24)]
+    #[case(25, avx512::pack_x64_partial::to_u25, from_u25)]
+    #[case(26, avx512::pack_x64_partial::to_u26, from_u26)]
+    #[case(27, avx512::pack_x64_partial::to_u27, from_u27)]
+    #[case(28, avx512::pack_x64_partial::to_u28, from_u28)]
+    #[case(29, avx512::pack_x64_partial::to_u29, from_u29)]
+    #[case(30, avx512::pack_x64_partial::to_u30, from_u30)]
+    #[case(31, avx512::pack_x64_partial::to_u31, from_u31)]
+    #[case(32, avx512::pack_x64_partial::to_u32, from_u32)]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_avx512_packed(
+        #[case] bit_len: u8,
+        #[case] packer: unsafe fn(*mut u8, [__m512i; 4], usize),
+        #[case] unpacker: unsafe fn(*const u8, usize) -> [__m256i; 8],
+    ) {
+        fastrand::seed(5876358762523525);
+
+        let max_value = (2u64.pow(bit_len as u32) - 1) as u32;
+
+        for length in 0..X64 {
+            let mut values = [0; X64];
+            for value in values.iter_mut() {
+                *value = fastrand::u32(0..max_value);
+            }
+            let data = unsafe { avx512::data::load_u32x64(&values) };
 
             let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
             unsafe { packer(packed.as_mut_ptr(), data, length) };

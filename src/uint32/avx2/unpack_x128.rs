@@ -6,12 +6,12 @@ use crate::uint32::{max_compressed_size, split_block_mut};
 use crate::{X64, X128};
 
 #[inline]
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
+#[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to `nbits` bit length  elements.
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
-/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
+/// - The runtime CPU must support the `avx2` instructions.
 /// - `nbits` must be between 0 and 32.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits(nbits: usize, input: *const u8, out: &mut [u32; X128], read_n: usize) {
@@ -29,13 +29,13 @@ pub unsafe fn from_nbits(nbits: usize, input: *const u8, out: &mut [u32; X128], 
 }
 
 #[inline]
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
+#[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to `nbits` bit length elements which have
 /// been delta-encoded.
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
-/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
+/// - The runtime CPU must support the `avx2` instructions.
 /// - `nbits` must be between 0 and 32.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits_delta(
@@ -88,13 +88,13 @@ pub unsafe fn from_nbits_delta(
 }
 
 #[inline]
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
+#[target_feature(enable = "avx2")]
 /// Bitpack the provided block of integers to `nbits` bit length elements which have
 /// been delta-1-encoded.
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
-/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
+/// - The runtime CPU must support the `avx2` instructions.
 /// - `nbits` must be between 0 and 32.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits_delta1(
@@ -108,7 +108,7 @@ pub unsafe fn from_nbits_delta1(
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
     const LUT: [unsafe fn(u32, out: *const u8, &mut [u32; X128], usize); 33] = [
-        from_u0_delta1,
+        from_u0_delta,
         from_u1_delta1,
         from_u2_delta1,
         from_u3_delta1,
@@ -146,32 +146,24 @@ pub unsafe fn from_nbits_delta1(
     unsafe { func(last_value, input, out, read_n) };
 }
 
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
+#[target_feature(enable = "avx2")]
 unsafe fn from_u0(_input: *const u8, out: &mut [u32; X128], _read_n: usize) {
     out.fill(0);
 }
 
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
-unsafe fn from_u0_delta(last_value: u32, _input: *const u8, out: &mut [u32; X128], _read_n: usize) {
-    out.fill(last_value);
-}
-
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
-unsafe fn from_u0_delta1(
-    last_value: u32,
+#[target_feature(enable = "avx2")]
+unsafe fn from_u0_delta(
+    _last_value: u32,
     _input: *const u8,
     out: &mut [u32; X128],
     _read_n: usize,
 ) {
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..X128 {
-        out[i] = (i as u32).wrapping_add(last_value).wrapping_add(1);
-    }
+    out.fill(0);
 }
 
 macro_rules! define_x128_unpacker {
     ($func_name:ident, $bit_length:expr) => {
-        #[target_feature(enable = "avx512f", enable = "avx512bw")]
+        #[target_feature(enable = "avx2")]
         unsafe fn $func_name(input: *const u8, out: &mut [u32; X128], read_n: usize) {
             let [left, right] = split_block_mut(out);
 
@@ -202,7 +194,7 @@ macro_rules! define_x128_unpacker {
 
 macro_rules! define_x128_unpacker_delta {
     ($func_name:ident, $unpack_func_name:ident, $bit_length:expr, $delta_func_name:ident) => {
-        #[target_feature(enable = "avx512f", enable = "avx512bw")]
+        #[target_feature(enable = "avx2")]
         unsafe fn $func_name(
             last_value: u32,
             input: *const u8,
@@ -211,7 +203,7 @@ macro_rules! define_x128_unpacker_delta {
         ) {
             let [left, right] = split_block_mut(out);
 
-            let mut last_value = _mm512_set1_epi32(last_value as i32);
+            let mut last_value = _mm256_set1_epi32(last_value as i32);
 
             if read_n <= 64 {
                 let mut unpacked =
@@ -349,35 +341,62 @@ define_x128_unpacker_delta!(from_u30_delta1, from_u30, 30, decode_delta1);
 define_x128_unpacker_delta!(from_u31_delta1, from_u31, 31, decode_delta1);
 define_x128_unpacker_delta!(from_u32_delta1, from_u32, 32, decode_delta1);
 
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
-fn decode_delta(last_value: __m512i, block: &mut [__m512i; 4]) -> __m512i {
-    let zero = _mm512_setzero_si512();
-    let idx_last = _mm512_set1_epi32(15);
-
+#[target_feature(enable = "avx2")]
+fn decode_delta(mut last_value: __m256i, block: &mut [__m256i; 8]) -> __m256i {
     #[allow(clippy::needless_range_loop)]
-    for i in 0..4 {
-        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<15>(block[i], zero));
-        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<14>(block[i], zero));
-        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<12>(block[i], zero));
-        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<8>(block[i], zero));
+    for i in 0..8 {
+        let deltas = block[i];
+
+        let shift1 = _mm256_slli_si256(deltas, 4);
+        let sum1 = _mm256_add_epi32(deltas, shift1);
+
+        let shift2 = _mm256_slli_si256(sum1, 8);
+        let sum2 = _mm256_add_epi32(sum1, shift2);
+
+        let sum_low_lane = _mm256_shuffle_epi32(sum2, 0xFF);
+        let low_lane_broadcast = _mm256_permute2x128_si256(sum_low_lane, sum_low_lane, 0x00);
+        let cross_lane_add = _mm256_blend_epi32(_mm256_setzero_si256(), low_lane_broadcast, 0xF0);
+        let sum3 = _mm256_add_epi32(sum2, cross_lane_add);
+
+        let result = _mm256_add_epi32(sum3, last_value);
+
+        block[i] = result;
+
+        last_value = _mm256_permutevar8x32_epi32(result, _mm256_set1_epi32(7));
     }
 
-    block[0] = _mm512_add_epi32(block[0], last_value);
-    block[1] = _mm512_add_epi32(block[1], _mm512_permutexvar_epi32(idx_last, block[0]));
-    block[2] = _mm512_add_epi32(block[2], _mm512_permutexvar_epi32(idx_last, block[1]));
-    block[3] = _mm512_add_epi32(block[3], _mm512_permutexvar_epi32(idx_last, block[2]));
-
-    _mm512_permutexvar_epi32(idx_last, block[3])
+    last_value
 }
 
-#[target_feature(enable = "avx512f", enable = "avx512bw")]
-fn decode_delta1(last_value: __m512i, block: &mut [__m512i; 4]) -> __m512i {
-    let ones = _mm512_set1_epi32(1);
-    block[0] = _mm512_add_epi32(block[0], ones);
-    block[1] = _mm512_add_epi32(block[1], ones);
-    block[2] = _mm512_add_epi32(block[2], ones);
-    block[3] = _mm512_add_epi32(block[3], ones);
-    decode_delta(last_value, block)
+#[target_feature(enable = "avx2")]
+fn decode_delta1(mut last_value: __m256i, block: &mut [__m256i; 8]) -> __m256i {
+    let ones = _mm256_set1_epi32(1);
+
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..8 {
+        let deltas = block[i];
+
+        let deltas_plus_one = _mm256_add_epi32(deltas, ones);
+        let shift1 = _mm256_slli_si256(deltas_plus_one, 4);
+        let sum1 = _mm256_add_epi32(deltas_plus_one, shift1);
+
+        let shift2 = _mm256_slli_si256(sum1, 8);
+        let sum2 = _mm256_add_epi32(sum1, shift2);
+
+        let sum_low_lane = _mm256_shuffle_epi32(sum2, 0xFF);
+        let low_lane_broadcast = _mm256_permute2x128_si256(sum_low_lane, sum_low_lane, 0x00);
+
+        let cross_lane_add = _mm256_blend_epi32(_mm256_setzero_si256(), low_lane_broadcast, 0xF0);
+
+        let sum3 = _mm256_add_epi32(sum2, cross_lane_add);
+        let result = _mm256_add_epi32(sum3, last_value);
+
+        block[i] = result;
+
+        last_value = _mm256_permutevar8x32_epi32(result, _mm256_set1_epi32(7));
+    }
+
+    last_value
 }
 
 #[cfg(test)]
@@ -385,37 +404,31 @@ mod tests {
     use super::*;
 
     #[test]
-    #[cfg_attr(
-        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
-        ignore
-    )]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
     fn test_decode_delta() {
         let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32);
         let mut values = [1; X64];
         values[0] = 0;
 
-        let initial_value = unsafe { _mm512_set1_epi32(0) };
+        let initial_value = unsafe { _mm256_set1_epi32(0) };
         let mut block = unsafe { load_u32x64(&values) };
         unsafe { decode_delta(initial_value, &mut block) };
 
-        let result = unsafe { std::mem::transmute::<[__m512i; 4], [u32; X64]>(block) };
+        let result = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(block) };
         assert_eq!(result, expected_values);
     }
 
     #[test]
-    #[cfg_attr(
-        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
-        ignore
-    )]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
     fn test_decode_delta1() {
         let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32 + 1);
         let values = [0; X64];
 
-        let initial_value = unsafe { _mm512_set1_epi32(0) };
+        let initial_value = unsafe { _mm256_set1_epi32(0) };
         let mut block = unsafe { load_u32x64(&values) };
         unsafe { decode_delta1(initial_value, &mut block) };
 
-        let result = unsafe { std::mem::transmute::<[__m512i; 4], [u32; X64]>(block) };
+        let result = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(block) };
         assert_eq!(result, expected_values);
     }
 }
