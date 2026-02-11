@@ -53,7 +53,7 @@ pub unsafe fn pack_delta_x128(
 ) -> CompressionDetails {
     for v in block.iter_mut() {
         let value = *v;
-        *v = value - last_value;
+        *v = value.wrapping_sub(last_value);
         last_value = value;
     }
 
@@ -75,14 +75,13 @@ pub unsafe fn pack_delta1_x128(
 ) -> CompressionDetails {
     for v in block.iter_mut() {
         let value = *v;
-        *v = (value - last_value) - 1;
+        *v = value.wrapping_sub(last_value).wrapping_sub(1);
         last_value = value;
     }
 
     unsafe { pack_x128(out, block, pack_n) }
 }
 
-#[track_caller]
 #[target_feature(enable = "avx2")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out`.
 ///
@@ -102,7 +101,6 @@ pub unsafe fn unpack_x128(
     compressed_size(nbits as usize, read_n)
 }
 
-#[track_caller]
 #[target_feature(enable = "avx2")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out` after
 /// applying Delta encoding.
@@ -126,7 +124,6 @@ pub unsafe fn unpack_delta_x128(
     compressed_size(nbits as usize, read_n)
 }
 
-#[track_caller]
 #[target_feature(enable = "avx2")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out` after
 /// applying Delta-1 encoding.

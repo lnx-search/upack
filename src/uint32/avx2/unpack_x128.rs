@@ -15,7 +15,7 @@ use crate::{X64, X128};
 /// - `nbits` must be between 0 and 32.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits(nbits: usize, input: *const u8, out: &mut [u32; X128], read_n: usize) {
-    debug_assert!(read_n <= 32, "BUG: invalid nbits provided: {nbits}");
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
     const LUT: [unsafe fn(out: *const u8, &mut [u32; X128], usize); 33] = [
@@ -45,7 +45,7 @@ pub unsafe fn from_nbits_delta(
     out: &mut [u32; X128],
     read_n: usize,
 ) {
-    debug_assert!(read_n <= 32, "BUG: invalid nbits provided: {nbits}");
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
     const LUT: [unsafe fn(u32, out: *const u8, &mut [u32; X128], usize); 33] = [
@@ -104,7 +104,7 @@ pub unsafe fn from_nbits_delta1(
     out: &mut [u32; X128],
     read_n: usize,
 ) {
-    debug_assert!(read_n <= 32, "BUG: invalid nbits provided: {nbits}");
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
     const LUT: [unsafe fn(u32, out: *const u8, &mut [u32; X128], usize); 33] = [
@@ -397,4 +397,38 @@ fn decode_delta1(mut last_value: __m256i, block: &mut [__m256i; 8]) -> __m256i {
     }
 
     last_value
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_decode_delta() {
+        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32);
+        let mut values = [1; X64];
+        values[0] = 0;
+
+        let initial_value = unsafe { _mm256_set1_epi32(0) };
+        let mut block = unsafe { load_u32x64(&values) };
+        unsafe { decode_delta(initial_value, &mut block) };
+
+        let result = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(block) };
+        assert_eq!(result, expected_values);
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_decode_delta1() {
+        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32 + 1);
+        let values = [0; X64];
+
+        let initial_value = unsafe { _mm256_set1_epi32(0) };
+        let mut block = unsafe { load_u32x64(&values) };
+        unsafe { decode_delta1(initial_value, &mut block) };
+
+        let result = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(block) };
+        assert_eq!(result, expected_values);
+    }
 }

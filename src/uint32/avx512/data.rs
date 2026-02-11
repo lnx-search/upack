@@ -16,8 +16,8 @@ pub(crate) fn load_u32x64(block: &[u32; X64]) -> [__m512i; 4] {
 }
 
 #[target_feature(enable = "avx512f")]
-/// Store 8, 512 bit registers holding 128 32-bit elements.
-pub(crate) fn store_u32x128(block: &mut [u32; X64], data: [__m512i; 4]) {
+/// Store 4, 512 bit registers holding 64 32-bit elements.
+pub(crate) fn store_u32x64(block: &mut [u32; X64], data: [__m512i; 4]) {
     let ptr: *mut __m512i = block.as_mut_ptr().cast();
 
     unsafe { _mm512_storeu_si512(ptr.add(0), data[0]) };
