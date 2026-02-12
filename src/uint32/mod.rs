@@ -9,7 +9,7 @@ compile_error!("big endian machines are not supported");
 pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
 pub mod avx512;
-mod scalar;
+pub mod scalar;
 #[cfg(test)]
 mod test_util;
 
