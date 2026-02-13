@@ -573,6 +573,16 @@ pub(crate) fn _scalar_mov_maskz_u8x32(mask: u32, a: u8x32) -> u8x32 {
     out
 }
 
+pub(crate) fn _scalar_maddubs_u8x32(a: u8x32, b: u8x32) -> u16x16 {
+    let mut out = u16x16::ZERO;
+    for i in 0..16 {
+        let intermediate1 = a[i + 0] as u16 * b[i + 0] as u16;
+        let intermediate2 = a[i + 1] as u16 * b[i + 1] as u16;
+        out[i] = intermediate1 + intermediate2;
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
