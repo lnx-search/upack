@@ -104,7 +104,7 @@ pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
     let madd_multiplier = _mm512_set1_epi16(0x1001);
     let nibbles = _mm512_maddubs_epi16(data, madd_multiplier);
     let ordered = _mm512_cvtepi16_epi8(nibbles);
-    unsafe { _mm256_storeu_epi8(out.cast(), ordered) };
+    unsafe { _mm256_storeu_si256(out.cast(), ordered) };
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
@@ -500,7 +500,7 @@ pub(crate) unsafe fn to_u28(out: *mut u8, block: [__m512i; 4], pack_n: usize) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(29)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(crate) unsafe fn to_u29(out: *mut u8, block: [__m512i; 4], pack_n: usize) {
+pub unsafe fn to_u29(out: *mut u8, block: [__m512i; 4], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
