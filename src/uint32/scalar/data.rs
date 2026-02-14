@@ -46,3 +46,41 @@ pub(crate) unsafe fn store_u32x8x8(out: *mut u8, data: [u32x8; 8]) {
     unsafe { _scalar_store_u8x32(out.add(192), data[6].into()) };
     unsafe { _scalar_store_u8x32(out.add(224), data[7].into()) };
 }
+
+/// Load 2, 256 bit registers holding 64 8-bit elements.
+pub(crate) unsafe fn load_u8x32x2(out: *const u8) -> [u8x32; 2] {
+    unsafe {
+        [
+            _scalar_load_u8x32(out.add(0)),
+            _scalar_load_u8x32(out.add(32)),
+        ]
+    }
+}
+
+/// Load 4, 256 bit registers holding 64 16-bit elements.
+pub(crate) unsafe fn load_u16x16x4(out: *const u8) -> [u16x16; 4] {
+    unsafe {
+        [
+            _scalar_load_u8x32(out.add(0)).into(),
+            _scalar_load_u8x32(out.add(32)).into(),
+            _scalar_load_u8x32(out.add(64)).into(),
+            _scalar_load_u8x32(out.add(96)).into(),
+        ]
+    }
+}
+
+/// Load 8, 256 bit registers holding 64 32-bit elements.
+pub(crate) unsafe fn load_u32x8x8(out: *const u8) -> [u32x8; 8] {
+    unsafe {
+        [
+            _scalar_load_u8x32(out.add(0)).into(),
+            _scalar_load_u8x32(out.add(32)).into(),
+            _scalar_load_u8x32(out.add(64)).into(),
+            _scalar_load_u8x32(out.add(96)).into(),
+            _scalar_load_u8x32(out.add(128)).into(),
+            _scalar_load_u8x32(out.add(160)).into(),
+            _scalar_load_u8x32(out.add(192)).into(),
+            _scalar_load_u8x32(out.add(224)).into(),
+        ]
+    }
+}

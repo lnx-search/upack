@@ -260,7 +260,7 @@ pub(super) fn pack_u32_to_u16_split_ordered(data: [u32x8; 8]) -> ([u8x32; 2], [u
 ///
 /// The order of elements are not maintained.
 pub(super) fn pack_u32_to_u16_split_unordered(data: [u32x8; 8]) -> ([u8x32; 2], [u8x32; 2]) {
-    let packed_u16 = pack_u32_to_u16_ordered(data);
+    let packed_u16 = pack_u32_to_u16_unordered(data);
 
     let mask = _scalar_set1_u16(0x00FF);
     let lo_8bits = and_u16x16(packed_u16, mask);
@@ -296,12 +296,36 @@ pub(super) fn and_u8x32<const N: usize>(mut data: [u8x32; N], mask: u8x32) -> [u
     data
 }
 
-/// Perform a bitwise AND on all provided registers with another broadcast register.
+/// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u32x8<const N: usize>(mut data: [u32x8; N], mask: u32x8) -> [u32x8; N] {
     for i in 0..N {
         data[i] = _scalar_or_u32x8(data[i], mask);
     }
     data
+}
+
+/// Perform a bitwise OR on all provided registers with another broadcast register.
+pub(super) fn or_u32x8_all<const N: usize>(mut a: [u32x8; N], b: [u32x8; N]) -> [u32x8; N] {
+    for i in 0..N {
+        a[i] = _scalar_or_u32x8(a[i], b[i]);
+    }
+    a
+}
+
+/// Perform a bitwise OR on all provided registers with another broadcast register.
+pub(super) fn or_u16x16_all<const N: usize>(mut a: [u16x16; N], b: [u16x16; N]) -> [u16x16; N] {
+    for i in 0..N {
+        a[i] = _scalar_or_u16x16(a[i], b[i]);
+    }
+    a
+}
+
+/// Perform a bitwise OR on all provided registers with another broadcast register.
+pub(super) fn or_u8x32_all<const N: usize>(mut a: [u8x32; N], b: [u8x32; N]) -> [u8x32; N] {
+    for i in 0..N {
+        a[i] = _scalar_or_u8x32(a[i], b[i]);
+    }
+    a
 }
 
 /// Shift all registers right by [IMM8] in 8-bit lanes.
@@ -331,7 +355,7 @@ pub(super) fn srli_u32x8<const IMM8: u32, const N: usize>(mut data: [u32x8; N]) 
 /// Shift all registers left by [IMM8] in 8-bit lanes.
 pub(super) fn slli_u8x32<const IMM8: u32, const N: usize>(mut data: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
-        data[i] = _scalar_srli_u8x32::<IMM8>(data[i]);
+        data[i] = _scalar_slli_u8x32::<IMM8>(data[i]);
     }
     data
 }

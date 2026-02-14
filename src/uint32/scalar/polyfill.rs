@@ -4,7 +4,7 @@ use std::ops::{Index, IndexMut};
 #[repr(align(32))]
 #[derive(Copy, Clone)]
 /// A block of 8, 32-bit elements.
-pub(super) struct u32x8([u32; 8]);
+pub(crate) struct u32x8([u32; 8]);
 
 impl u32x8 {
     pub const ZERO: Self = Self([0; 8]);
@@ -40,7 +40,7 @@ impl IndexMut<usize> for u32x8 {
 #[repr(align(32))]
 #[derive(Copy, Clone)]
 /// A block of 16, 16-bit elements.
-pub(super) struct u16x16([u16; 16]);
+pub(crate) struct u16x16([u16; 16]);
 
 impl u16x16 {
     pub const ZERO: Self = Self([0; 16]);
@@ -76,7 +76,7 @@ impl IndexMut<usize> for u16x16 {
 #[repr(align(32))]
 #[derive(Copy, Clone)]
 /// A block of 32, 8-bit elements.
-pub(super) struct u8x32([u8; 32]);
+pub(crate) struct u8x32([u8; 32]);
 
 impl u8x32 {
     pub const ZERO: Self = Self([0; 32]);
@@ -112,7 +112,7 @@ impl IndexMut<usize> for u8x32 {
 #[repr(align(16))]
 #[derive(Copy, Clone)]
 /// A block of 4, 32-bit elements.
-pub(super) struct u32x4([u32; 4]);
+pub(crate) struct u32x4([u32; 4]);
 
 impl u32x4 {
     pub const ZERO: Self = Self([0; 4]);
@@ -148,7 +148,7 @@ impl IndexMut<usize> for u32x4 {
 #[repr(align(16))]
 #[derive(Copy, Clone)]
 /// A block of 8, 16-bit elements.
-pub(super) struct u16x8([u16; 8]);
+pub(crate) struct u16x8([u16; 8]);
 
 impl u16x8 {
     pub const ZERO: Self = Self([0; 8]);
@@ -184,7 +184,7 @@ impl IndexMut<usize> for u16x8 {
 #[repr(align(16))]
 #[derive(Copy, Clone)]
 /// A block of 16, 8-bit elements.
-pub(super) struct u8x16([u8; 16]);
+pub(crate) struct u8x16([u8; 16]);
 
 impl u8x16 {
     pub const ZERO: Self = Self([0; 16]);
