@@ -4,7 +4,7 @@ use crate::{CompressionDetails, X128};
 pub(super) mod data;
 mod pack_x128;
 pub(super) mod pack_x64_full;
-pub mod pack_x64_partial;
+pub(super) mod pack_x64_partial;
 mod unpack_x128;
 pub(super) mod unpack_x64_full;
 pub(super) mod unpack_x64_partial;

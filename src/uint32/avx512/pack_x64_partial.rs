@@ -500,7 +500,7 @@ pub(crate) unsafe fn to_u28(out: *mut u8, block: [__m512i; 4], pack_n: usize) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(29)` bytes to.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub unsafe fn to_u29(out: *mut u8, block: [__m512i; 4], pack_n: usize) {
+pub(crate) unsafe fn to_u29(out: *mut u8, block: [__m512i; 4], pack_n: usize) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
     let hi_half = srli_epi32::<16, 4>(block);
