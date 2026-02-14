@@ -1,7 +1,7 @@
-mod data;
+pub(super) mod data;
 mod pack_x128;
-mod pack_x64_full;
-mod pack_x64_partial;
+pub mod pack_x64_full;
+pub mod pack_x64_partial;
 mod polyfill;
 mod unpack_x128;
 mod unpack_x64_full;

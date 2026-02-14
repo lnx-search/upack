@@ -427,7 +427,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 2) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u1(out.as_mut_ptr(), data, 64) };
@@ -441,7 +441,7 @@ mod tests {
         data[4] = 1;
         data[8] = 1;
         data[9] = 1;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u1(out.as_mut_ptr(), data, 10) };
@@ -456,7 +456,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 3) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u2(out.as_mut_ptr(), data, 64) };
@@ -475,7 +475,7 @@ mod tests {
         data[4] = 1;
         data[8] = 1;
         data[9] = 2;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u2(out.as_mut_ptr(), data, 10) };
@@ -495,7 +495,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 4) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u3(out.as_mut_ptr(), data, 64) };
@@ -516,7 +516,7 @@ mod tests {
         data[4] = 1;
         data[8] = 5;
         data[9] = 2;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u3(out.as_mut_ptr(), data, 10) };
@@ -537,7 +537,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 16) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u4(out.as_mut_ptr(), data, 64) };
@@ -555,7 +555,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 15;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u4(out.as_mut_ptr(), data, 15) };
@@ -573,7 +573,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 32) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u5(out.as_mut_ptr(), data, 64) };
@@ -592,7 +592,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 17;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u5(out.as_mut_ptr(), data, 15) };
@@ -612,7 +612,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 64) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u6(out.as_mut_ptr(), data, 64) };
@@ -632,7 +632,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 59;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u6(out.as_mut_ptr(), data, 15) };
@@ -654,7 +654,7 @@ mod tests {
         for i in 0..X64 {
             data[i] = (i % 64) as u32;
         }
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u7(out.as_mut_ptr(), data, 64) };
@@ -675,7 +675,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 127;
-        let data = unsafe { load_u32x64(&data) };
+        let data = load_u32x64(&data);
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u7(out.as_mut_ptr(), data, 15) };
@@ -729,7 +729,7 @@ mod tests {
         let pack_value = (2u64.pow(bit_len as u32) - 1) as u32;
 
         let values = [pack_value; X64];
-        let data = unsafe { load_u32x64(&values) };
+        let data = load_u32x64(&values);
 
         let mut output = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { packer(output.as_mut_ptr(), data, X64) };
