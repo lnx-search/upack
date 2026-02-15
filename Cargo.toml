@@ -17,9 +17,8 @@ bitpacking = "0.9"
 [features]
 avx512 = []
 avx2 = []
-sse = []
 neon = []
-default = ["avx512", "avx2", "sse", "neon"]
+default = ["avx512", "avx2", "neon"]
 
 [[bench]]
 harness = false
