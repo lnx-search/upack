@@ -13,7 +13,7 @@ pub unsafe fn from_u1(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 1-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u1_registers(input: *const u8) -> [u8x32; 2] {
@@ -37,7 +37,7 @@ pub unsafe fn from_u2(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 2-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u2_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
@@ -68,7 +68,7 @@ pub unsafe fn from_u3(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 3-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u3_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
@@ -109,7 +109,7 @@ pub unsafe fn from_u4(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
 pub(super) unsafe fn unpack_u4_registers(input: *const u8) -> [u8x32; 2] {
@@ -142,7 +142,7 @@ pub unsafe fn from_u5(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 5-bit integers provided
 /// by `input`.
 unsafe fn unpack_u5_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
@@ -164,7 +164,7 @@ pub unsafe fn from_u6(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 6-bit integers provided
 /// by `input`.
 unsafe fn unpack_u6_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
@@ -186,7 +186,7 @@ pub unsafe fn from_u7(input: *const u8, read_n: usize) -> [u32x8; 8] {
     unpack_u8_to_u32_ordered(packed)
 }
 
-#[inline(always)]
+#[inline]
 /// Unpack eight registers containing 8 32-bit elements from a 7-bit integers provided
 /// by `input`.
 unsafe fn unpack_u7_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {

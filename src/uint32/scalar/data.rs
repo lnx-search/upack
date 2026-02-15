@@ -47,6 +47,7 @@ pub(crate) unsafe fn store_u32x8x8(out: *mut u8, data: [u32x8; 8]) {
     unsafe { _scalar_store_u8x32(out.add(224), data[7].into()) };
 }
 
+#[inline(never)]
 /// Load 2, 256 bit registers holding 64 8-bit elements.
 pub(crate) unsafe fn load_u8x32x2(out: *const u8) -> [u8x32; 2] {
     unsafe {

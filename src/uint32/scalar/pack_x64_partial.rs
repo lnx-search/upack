@@ -8,7 +8,7 @@ pub(crate) unsafe fn to_u1(out: *mut u8, block: [u32x8; 8], _pack_n: usize) {
     unsafe { pack_u1_registers(out, partially_packed) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 1-bit
 /// bitmap and write to `out`.
 ///
@@ -33,7 +33,7 @@ pub(crate) unsafe fn to_u2(out: *mut u8, block: [u32x8; 8], pack_n: usize) {
     unsafe { pack_u2_registers(out, partially_packed, pack_n) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 2-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {
@@ -63,7 +63,7 @@ pub(crate) unsafe fn to_u3(out: *mut u8, block: [u32x8; 8], pack_n: usize) {
     unsafe { pack_u3_registers(out, partially_packed, pack_n) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 3-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {
@@ -99,7 +99,7 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8], _pack_n: usize) {
     unsafe { pack_u4_registers(out, partially_packed) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
 pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
@@ -123,7 +123,7 @@ pub(crate) unsafe fn to_u5(out: *mut u8, block: [u32x8; 8], pack_n: usize) {
     unsafe { pack_u5_registers(out, partially_packed, pack_n) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 5-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u5_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {
@@ -143,7 +143,7 @@ pub(crate) unsafe fn to_u6(out: *mut u8, block: [u32x8; 8], pack_n: usize) {
     unsafe { pack_u6_registers(out, partially_packed, pack_n) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 6-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {
@@ -163,7 +163,7 @@ pub(crate) unsafe fn to_u7(out: *mut u8, block: [u32x8; 8], pack_n: usize) {
     unsafe { pack_u7_registers(out, partially_packed, pack_n) }
 }
 
-#[inline(always)]
+#[inline]
 /// Pack four registers containing 32 8-bit elements each into a 7-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u7_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {

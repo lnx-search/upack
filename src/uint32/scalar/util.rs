@@ -144,6 +144,7 @@ pub(super) fn unpack_u8_to_u32_unordered(data: [u8x32; 2]) -> [u32x8; 8] {
     unpack_u16_to_u32_unordered(partially_unpacked)
 }
 
+#[inline]
 /// Unpack 2 sets of registers containing 8-bit elements and produce 4 registers holding
 /// 16-bit elements.
 pub(super) fn unpack_u8_to_u16_unordered(data: [u8x32; 2]) -> [u16x16; 4] {
@@ -180,6 +181,7 @@ pub(super) fn unpack_u8_to_u16_unordered(data: [u8x32; 2]) -> [u16x16; 4] {
     ]
 }
 
+#[inline]
 /// Unpack 4 sets of registers containing 16-bit elements and produce 8 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u16_to_u32_unordered(data: [u16x16; 4]) -> [u32x8; 8] {
@@ -272,7 +274,7 @@ pub(super) fn pack_u32_to_u16_split_unordered(data: [u32x8; 8]) -> ([u8x32; 2], 
     (packed_hi_8bits, packed_lo_8bits)
 }
 
-#[inline(always)]
+#[inline]
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_u32x8<const N: usize>(mut data: [u32x8; N], mask: u32x8) -> [u32x8; N] {
     for i in 0..N {
@@ -281,7 +283,7 @@ pub(super) fn and_u32x8<const N: usize>(mut data: [u32x8; N], mask: u32x8) -> [u
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_u16x16<const N: usize>(mut data: [u16x16; N], mask: u16x16) -> [u16x16; N] {
     for i in 0..N {
@@ -290,7 +292,7 @@ pub(super) fn and_u16x16<const N: usize>(mut data: [u16x16; N], mask: u16x16) ->
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_u8x32<const N: usize>(mut data: [u8x32; N], mask: u8x32) -> [u8x32; N] {
     for i in 0..N {
@@ -299,7 +301,7 @@ pub(super) fn and_u8x32<const N: usize>(mut data: [u8x32; N], mask: u8x32) -> [u
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u32x8_all<const N: usize>(mut a: [u32x8; N], b: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
@@ -308,7 +310,7 @@ pub(super) fn or_u32x8_all<const N: usize>(mut a: [u32x8; N], b: [u32x8; N]) -> 
     a
 }
 
-#[inline(always)]
+#[inline]
 /// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u16x16_all<const N: usize>(mut a: [u16x16; N], b: [u16x16; N]) -> [u16x16; N] {
     for i in 0..N {
@@ -317,7 +319,7 @@ pub(super) fn or_u16x16_all<const N: usize>(mut a: [u16x16; N], b: [u16x16; N]) 
     a
 }
 
-#[inline(always)]
+#[inline]
 /// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u8x32_all<const N: usize>(mut a: [u8x32; N], b: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
@@ -326,7 +328,7 @@ pub(super) fn or_u8x32_all<const N: usize>(mut a: [u8x32; N], b: [u8x32; N]) -> 
     a
 }
 
-#[inline(always)]
+#[inline]
 /// Shift all registers right by [IMM8] in 8-bit lanes.
 pub(super) fn srli_u8x32<const IMM8: u32, const N: usize>(mut data: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
@@ -335,7 +337,7 @@ pub(super) fn srli_u8x32<const IMM8: u32, const N: usize>(mut data: [u8x32; N]) 
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Shift all registers right by [IMM8] in 16-bit lanes.
 pub(super) fn srli_u16x16<const IMM8: u32, const N: usize>(mut data: [u16x16; N]) -> [u16x16; N] {
     for i in 0..N {
@@ -344,7 +346,7 @@ pub(super) fn srli_u16x16<const IMM8: u32, const N: usize>(mut data: [u16x16; N]
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Shift all registers right by [IMM8] in 32-bit lanes.
 pub(super) fn srli_u32x8<const IMM8: u32, const N: usize>(mut data: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
@@ -353,7 +355,7 @@ pub(super) fn srli_u32x8<const IMM8: u32, const N: usize>(mut data: [u32x8; N]) 
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Shift all registers left by [IMM8] in 8-bit lanes.
 pub(super) fn slli_u8x32<const IMM8: u32, const N: usize>(mut data: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
@@ -362,7 +364,7 @@ pub(super) fn slli_u8x32<const IMM8: u32, const N: usize>(mut data: [u8x32; N]) 
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Shift all registers left by [IMM8] in 16-bit lanes.
 pub(super) fn slli_u16x16<const IMM8: u32, const N: usize>(mut data: [u16x16; N]) -> [u16x16; N] {
     for i in 0..N {
@@ -371,7 +373,7 @@ pub(super) fn slli_u16x16<const IMM8: u32, const N: usize>(mut data: [u16x16; N]
     data
 }
 
-#[inline(always)]
+#[inline]
 /// Shift all registers left by [IMM8] in 32-bit lanes.
 pub(super) fn slli_u32x8<const IMM8: u32, const N: usize>(mut data: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
