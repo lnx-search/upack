@@ -108,7 +108,7 @@ pub(super) unsafe fn from_u4(input: *const u8, read_n: usize) -> [__m512i; 4] {
 /// Unpack eight registers containing 64 8-bit elements from a 4-bit nibbles provided
 /// by `input`.
 pub(super) unsafe fn unpack_u4_registers(input: *const u8) -> __m512i {
-    let packed = unsafe { _mm256_loadu_epi8(input.cast()) };
+    let packed = unsafe { _mm256_loadu_si256(input.cast()) };
     let wide = _mm512_cvtepu8_epi16(packed);
     let lo = _mm512_and_si512(wide, _mm512_set1_epi16(0x000F));
     let hi = _mm512_slli_epi16(_mm512_srli_epi16(wide, 4), 8);
