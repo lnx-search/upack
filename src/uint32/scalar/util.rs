@@ -297,14 +297,6 @@ pub(super) fn and_u8x32<const N: usize>(mut data: [u8x32; N], mask: u8x32) -> [u
 }
 
 /// Perform a bitwise OR on all provided registers with another broadcast register.
-pub(super) fn or_u32x8<const N: usize>(mut data: [u32x8; N], mask: u32x8) -> [u32x8; N] {
-    for i in 0..N {
-        data[i] = _scalar_or_u32x8(data[i], mask);
-    }
-    data
-}
-
-/// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u32x8_all<const N: usize>(mut a: [u32x8; N], b: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
         a[i] = _scalar_or_u32x8(a[i], b[i]);

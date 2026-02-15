@@ -70,3 +70,62 @@ pub unsafe fn pack_delta1_x128(
 
     unsafe { pack_x128(out, block, pack_n) }
 }
+
+/// Pack a block of 128 32-bit integers and write the compressed block to `out`.
+///
+/// # Safety
+/// - `read_n` must be less than or equal to 128.
+/// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
+///   a given bit length.
+/// - `nbits` must be no greater than `32`.
+pub unsafe fn unpack_x128(
+    nbits: u8,
+    input: &[u8],
+    block: &mut [u32; X128],
+    read_n: usize,
+) -> usize {
+    unsafe { unpack_x128::from_nbits(nbits as usize, input.as_ptr(), block, read_n) };
+    compressed_size(nbits as usize, read_n)
+}
+
+/// Pack a block of 128 32-bit integers and write the compressed block to `out` after
+/// applying Delta encoding.
+///
+/// # Safety
+/// - `read_n` must be less than or equal to 128.
+/// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
+///   a given bit length.
+/// - `nbits` must be no greater than `32`.
+pub unsafe fn unpack_delta_x128(
+    nbits: u8,
+    last_value: u32,
+    input: &[u8],
+    block: &mut [u32; X128],
+    read_n: usize,
+) -> usize {
+    unsafe {
+        unpack_x128::from_nbits_delta(nbits as usize, last_value, input.as_ptr(), block, read_n)
+    };
+    compressed_size(nbits as usize, read_n)
+}
+
+/// Pack a block of 128 32-bit integers and write the compressed block to `out` after
+/// applying Delta-1 encoding.
+///
+/// # Safety
+/// - `read_n` must be less than or equal to 128.
+/// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
+///   a given bit length.
+/// - `nbits` must be no greater than `32`.
+pub unsafe fn unpack_delta1_x128(
+    nbits: u8,
+    last_value: u32,
+    input: &[u8],
+    block: &mut [u32; X128],
+    read_n: usize,
+) -> usize {
+    unsafe {
+        unpack_x128::from_nbits_delta1(nbits as usize, last_value, input.as_ptr(), block, read_n)
+    };
+    compressed_size(nbits as usize, read_n)
+}

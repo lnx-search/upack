@@ -133,7 +133,7 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::unpack_x128(compressed_bit_length, input, output, n) };
         }
 
-        todo!()
+        unsafe { scalar::unpack_x128(compressed_bit_length, input, output, n) }
     }
 
     fn decompress_delta(
@@ -167,7 +167,7 @@ impl CompressibleArray for [u32; X128] {
             };
         }
 
-        todo!()
+        unsafe { scalar::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n) }
     }
 
     fn decompress_delta1(
@@ -201,7 +201,9 @@ impl CompressibleArray for [u32; X128] {
             };
         }
 
-        todo!()
+        unsafe {
+            scalar::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
+        }
     }
 }
 
