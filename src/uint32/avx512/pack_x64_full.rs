@@ -1,7 +1,7 @@
 use std::arch::x86_64::*;
 
 use super::data::*;
-use super::utils::*;
+use super::util::*;
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
 /// Bitpack the provided block of integers to 1-bit elements.

@@ -8,7 +8,7 @@ pub(super) mod pack_x64_partial;
 mod unpack_x128;
 pub(super) mod unpack_x64_full;
 pub(super) mod unpack_x64_partial;
-mod utils;
+mod util;
 
 #[inline]
 /// Returns `true` if the runtime CPU can safely execute the AVX2 backed implementation.

@@ -1,7 +1,7 @@
 use std::arch::x86_64::*;
 
 use super::data::*;
-use super::utils::*;
+use super::util::*;
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
 /// Bitpack the provided block of integers to 1-bit elements.
@@ -104,7 +104,7 @@ pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
     let madd_multiplier = _mm512_set1_epi16(0x1001);
     let nibbles = _mm512_maddubs_epi16(data, madd_multiplier);
     let ordered = _mm512_cvtepi16_epi8(nibbles);
-    unsafe { _mm256_storeu_epi8(out.cast(), ordered) };
+    unsafe { _mm256_storeu_si256(out.cast(), ordered) };
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]

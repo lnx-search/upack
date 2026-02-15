@@ -9,7 +9,7 @@ compile_error!("big endian machines are not supported");
 pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
 pub mod avx512;
-mod scalar;
+pub mod scalar;
 #[cfg(test)]
 mod test_util;
 
@@ -67,7 +67,7 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::pack_x128(output, input, n) };
         }
 
-        todo!()
+        unsafe { scalar::pack_x128(output, input, n) }
     }
 
     fn compress_delta(
@@ -88,7 +88,7 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::pack_delta_x128(initial_value, output, input, n) };
         }
 
-        todo!()
+        unsafe { scalar::pack_delta_x128(initial_value, output, input, n) }
     }
 
     fn compress_delta1(
@@ -109,7 +109,7 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::pack_delta1_x128(initial_value, output, input, n) };
         }
 
-        todo!()
+        unsafe { scalar::pack_delta1_x128(initial_value, output, input, n) }
     }
 
     fn decompress(n: usize, compressed_bit_length: u8, input: &[u8], output: &mut Self) -> usize {
@@ -133,7 +133,7 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::unpack_x128(compressed_bit_length, input, output, n) };
         }
 
-        todo!()
+        unsafe { scalar::unpack_x128(compressed_bit_length, input, output, n) }
     }
 
     fn decompress_delta(
@@ -167,7 +167,7 @@ impl CompressibleArray for [u32; X128] {
             };
         }
 
-        todo!()
+        unsafe { scalar::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n) }
     }
 
     fn decompress_delta1(
@@ -201,7 +201,9 @@ impl CompressibleArray for [u32; X128] {
             };
         }
 
-        todo!()
+        unsafe {
+            scalar::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
+        }
     }
 }
 
