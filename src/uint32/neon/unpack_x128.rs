@@ -1,3 +1,6 @@
+use std::arch::aarch64::*;
+
+use super::polyfill::*;
 use super::data::*;
 use super::{unpack_x64_full, unpack_x64_partial};
 use crate::uint32::{max_compressed_size, split_block_mut};
@@ -32,6 +35,7 @@ pub unsafe fn from_nbits(nbits: usize, input: *const u8, out: &mut [u32; X128], 
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
+/// - The runtime CPU must support the `neon` instructions.
 /// - `nbits` must be between 0 and 32.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits_delta(
@@ -41,8 +45,46 @@ pub unsafe fn from_nbits_delta(
     out: &mut [u32; X128],
     read_n: usize,
 ) {
-    unsafe { from_nbits(nbits, input, out, read_n) };
-    decode_delta(last_value, out);
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
+    debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
+    #[allow(clippy::type_complexity)]
+    const LUT: [unsafe fn(u32, out: *const u8, &mut [u32; X128], usize); 33] = [
+        from_u0_delta,
+        from_u1_delta,
+        from_u2_delta,
+        from_u3_delta,
+        from_u4_delta,
+        from_u5_delta,
+        from_u6_delta,
+        from_u7_delta,
+        from_u8_delta,
+        from_u9_delta,
+        from_u10_delta,
+        from_u11_delta,
+        from_u12_delta,
+        from_u13_delta,
+        from_u14_delta,
+        from_u15_delta,
+        from_u16_delta,
+        from_u17_delta,
+        from_u18_delta,
+        from_u19_delta,
+        from_u20_delta,
+        from_u21_delta,
+        from_u22_delta,
+        from_u23_delta,
+        from_u24_delta,
+        from_u25_delta,
+        from_u26_delta,
+        from_u27_delta,
+        from_u28_delta,
+        from_u29_delta,
+        from_u30_delta,
+        from_u31_delta,
+        from_u32_delta,
+    ];
+    let func = unsafe { LUT.get_unchecked(nbits) };
+    unsafe { func(last_value, input, out, read_n) };
 }
 
 #[inline]
@@ -52,6 +94,7 @@ pub unsafe fn from_nbits_delta(
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
+/// - The runtime CPU must support the `neon` instructions.
 /// - `nbits` must be between 0 and 32.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits_delta1(
@@ -61,14 +104,72 @@ pub unsafe fn from_nbits_delta1(
     out: &mut [u32; X128],
     read_n: usize,
 ) {
-    unsafe { from_nbits(nbits, input, out, read_n) };
-    decode_delta1(last_value, out);
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
+    debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
+    #[allow(clippy::type_complexity)]
+    const LUT: [unsafe fn(u32, out: *const u8, &mut [u32; X128], usize); 33] = [
+        from_u0_delta1,
+        from_u1_delta1,
+        from_u2_delta1,
+        from_u3_delta1,
+        from_u4_delta1,
+        from_u5_delta1,
+        from_u6_delta1,
+        from_u7_delta1,
+        from_u8_delta1,
+        from_u9_delta1,
+        from_u10_delta1,
+        from_u11_delta1,
+        from_u12_delta1,
+        from_u13_delta1,
+        from_u14_delta1,
+        from_u15_delta1,
+        from_u16_delta1,
+        from_u17_delta1,
+        from_u18_delta1,
+        from_u19_delta1,
+        from_u20_delta1,
+        from_u21_delta1,
+        from_u22_delta1,
+        from_u23_delta1,
+        from_u24_delta1,
+        from_u25_delta1,
+        from_u26_delta1,
+        from_u27_delta1,
+        from_u28_delta1,
+        from_u29_delta1,
+        from_u30_delta1,
+        from_u31_delta1,
+        from_u32_delta1,
+    ];
+    let func = unsafe { LUT.get_unchecked(nbits) };
+    unsafe { func(last_value, input, out, read_n) };
 }
 
 #[target_feature(enable = "neon")]
 unsafe fn from_u0(_input: *const u8, out: &mut [u32; X128], _read_n: usize) {
     out.fill(0);
 }
+
+
+#[target_feature(enable = "neon")]
+unsafe fn from_u0_delta(last_value: u32, _input: *const u8, out: &mut [u32; X128], _read_n: usize) {
+    out.fill(last_value);
+}
+
+#[target_feature(enable = "neon")]
+unsafe fn from_u0_delta1(
+    last_value: u32,
+    _input: *const u8,
+    out: &mut [u32; X128],
+    _read_n: usize,
+) {
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..X128 {
+        out[i] = (i as u32).wrapping_add(last_value).wrapping_add(1);
+    }
+}
+
 
 macro_rules! define_x128_unpacker {
     ($func_name:ident, $bit_length:expr) => {
@@ -95,6 +196,55 @@ macro_rules! define_x128_unpacker {
                 let unpacked = unsafe {
                     unpack_x64_full::$func_name(input.add(max_compressed_size::<X64>($bit_length)))
                 };
+                store_u32x64(right, unpacked);
+            }
+        }
+    };
+}
+
+
+macro_rules! define_x128_unpacker_delta {
+    ($func_name:ident, $unpack_func_name:ident, $bit_length:expr, $delta_func_name:ident) => {
+        #[target_feature(enable = "neon")]
+        unsafe fn $func_name(
+            last_value: u32,
+            input: *const u8,
+            out: &mut [u32; X128],
+            read_n: usize,
+        ) {
+            let [left, right] = split_block_mut(out);
+
+            let mut last_value = vdupq_n_u32(last_value);
+
+            if read_n <= 64 {
+                let mut unpacked =
+                    unsafe { unpack_x64_partial::$unpack_func_name(input.add(0), read_n) };
+                $delta_func_name(last_value, &mut unpacked);
+                store_u32x64(left, unpacked);
+            } else if read_n < 128 {
+                let mut unpacked = unsafe { unpack_x64_full::$unpack_func_name(input.add(0)) };
+                last_value = $delta_func_name(last_value, &mut unpacked);
+                store_u32x64(left, unpacked);
+
+                unpacked = unsafe {
+                    unpack_x64_partial::$unpack_func_name(
+                        input.add(max_compressed_size::<X64>($bit_length)),
+                        read_n - X64,
+                    )
+                };
+                $delta_func_name(last_value, &mut unpacked);
+                store_u32x64(right, unpacked);
+            } else {
+                let mut unpacked = unsafe { unpack_x64_full::$unpack_func_name(input.add(0)) };
+                last_value = $delta_func_name(last_value, &mut unpacked);
+                store_u32x64(left, unpacked);
+
+                unpacked = unsafe {
+                    unpack_x64_full::$unpack_func_name(
+                        input.add(max_compressed_size::<X64>($bit_length)),
+                    )
+                };
+                $delta_func_name(last_value, &mut unpacked);
                 store_u32x64(right, unpacked);
             }
         }
@@ -134,51 +284,106 @@ define_x128_unpacker!(from_u30, 30);
 define_x128_unpacker!(from_u31, 31);
 define_x128_unpacker!(from_u32, 32);
 
+// Delta encoding
+define_x128_unpacker_delta!(from_u1_delta, from_u1, 1, decode_delta);
+define_x128_unpacker_delta!(from_u2_delta, from_u2, 2, decode_delta);
+define_x128_unpacker_delta!(from_u3_delta, from_u3, 3, decode_delta);
+define_x128_unpacker_delta!(from_u4_delta, from_u4, 4, decode_delta);
+define_x128_unpacker_delta!(from_u5_delta, from_u5, 5, decode_delta);
+define_x128_unpacker_delta!(from_u6_delta, from_u6, 6, decode_delta);
+define_x128_unpacker_delta!(from_u7_delta, from_u7, 7, decode_delta);
+define_x128_unpacker_delta!(from_u8_delta, from_u8, 8, decode_delta);
+define_x128_unpacker_delta!(from_u9_delta, from_u9, 9, decode_delta);
+define_x128_unpacker_delta!(from_u10_delta, from_u10, 10, decode_delta);
+define_x128_unpacker_delta!(from_u11_delta, from_u11, 11, decode_delta);
+define_x128_unpacker_delta!(from_u12_delta, from_u12, 12, decode_delta);
+define_x128_unpacker_delta!(from_u13_delta, from_u13, 13, decode_delta);
+define_x128_unpacker_delta!(from_u14_delta, from_u14, 14, decode_delta);
+define_x128_unpacker_delta!(from_u15_delta, from_u15, 15, decode_delta);
+define_x128_unpacker_delta!(from_u16_delta, from_u16, 16, decode_delta);
+define_x128_unpacker_delta!(from_u17_delta, from_u17, 17, decode_delta);
+define_x128_unpacker_delta!(from_u18_delta, from_u18, 18, decode_delta);
+define_x128_unpacker_delta!(from_u19_delta, from_u19, 19, decode_delta);
+define_x128_unpacker_delta!(from_u20_delta, from_u20, 20, decode_delta);
+define_x128_unpacker_delta!(from_u21_delta, from_u21, 21, decode_delta);
+define_x128_unpacker_delta!(from_u22_delta, from_u22, 22, decode_delta);
+define_x128_unpacker_delta!(from_u23_delta, from_u23, 23, decode_delta);
+define_x128_unpacker_delta!(from_u24_delta, from_u24, 24, decode_delta);
+define_x128_unpacker_delta!(from_u25_delta, from_u25, 25, decode_delta);
+define_x128_unpacker_delta!(from_u26_delta, from_u26, 26, decode_delta);
+define_x128_unpacker_delta!(from_u27_delta, from_u27, 27, decode_delta);
+define_x128_unpacker_delta!(from_u28_delta, from_u28, 28, decode_delta);
+define_x128_unpacker_delta!(from_u29_delta, from_u29, 29, decode_delta);
+define_x128_unpacker_delta!(from_u30_delta, from_u30, 30, decode_delta);
+define_x128_unpacker_delta!(from_u31_delta, from_u31, 31, decode_delta);
+define_x128_unpacker_delta!(from_u32_delta, from_u32, 32, decode_delta);
+
+// Delta-1 encoding
+define_x128_unpacker_delta!(from_u1_delta1, from_u1, 1, decode_delta1);
+define_x128_unpacker_delta!(from_u2_delta1, from_u2, 2, decode_delta1);
+define_x128_unpacker_delta!(from_u3_delta1, from_u3, 3, decode_delta1);
+define_x128_unpacker_delta!(from_u4_delta1, from_u4, 4, decode_delta1);
+define_x128_unpacker_delta!(from_u5_delta1, from_u5, 5, decode_delta1);
+define_x128_unpacker_delta!(from_u6_delta1, from_u6, 6, decode_delta1);
+define_x128_unpacker_delta!(from_u7_delta1, from_u7, 7, decode_delta1);
+define_x128_unpacker_delta!(from_u8_delta1, from_u8, 8, decode_delta1);
+define_x128_unpacker_delta!(from_u9_delta1, from_u9, 9, decode_delta1);
+define_x128_unpacker_delta!(from_u10_delta1, from_u10, 10, decode_delta1);
+define_x128_unpacker_delta!(from_u11_delta1, from_u11, 11, decode_delta1);
+define_x128_unpacker_delta!(from_u12_delta1, from_u12, 12, decode_delta1);
+define_x128_unpacker_delta!(from_u13_delta1, from_u13, 13, decode_delta1);
+define_x128_unpacker_delta!(from_u14_delta1, from_u14, 14, decode_delta1);
+define_x128_unpacker_delta!(from_u15_delta1, from_u15, 15, decode_delta1);
+define_x128_unpacker_delta!(from_u16_delta1, from_u16, 16, decode_delta1);
+define_x128_unpacker_delta!(from_u17_delta1, from_u17, 17, decode_delta1);
+define_x128_unpacker_delta!(from_u18_delta1, from_u18, 18, decode_delta1);
+define_x128_unpacker_delta!(from_u19_delta1, from_u19, 19, decode_delta1);
+define_x128_unpacker_delta!(from_u20_delta1, from_u20, 20, decode_delta1);
+define_x128_unpacker_delta!(from_u21_delta1, from_u21, 21, decode_delta1);
+define_x128_unpacker_delta!(from_u22_delta1, from_u22, 22, decode_delta1);
+define_x128_unpacker_delta!(from_u23_delta1, from_u23, 23, decode_delta1);
+define_x128_unpacker_delta!(from_u24_delta1, from_u24, 24, decode_delta1);
+define_x128_unpacker_delta!(from_u25_delta1, from_u25, 25, decode_delta1);
+define_x128_unpacker_delta!(from_u26_delta1, from_u26, 26, decode_delta1);
+define_x128_unpacker_delta!(from_u27_delta1, from_u27, 27, decode_delta1);
+define_x128_unpacker_delta!(from_u28_delta1, from_u28, 28, decode_delta1);
+define_x128_unpacker_delta!(from_u29_delta1, from_u29, 29, decode_delta1);
+define_x128_unpacker_delta!(from_u30_delta1, from_u30, 30, decode_delta1);
+define_x128_unpacker_delta!(from_u31_delta1, from_u31, 31, decode_delta1);
+define_x128_unpacker_delta!(from_u32_delta1, from_u32, 32, decode_delta1);
+
 #[target_feature(enable = "neon")]
-fn decode_delta(last_value: u32, block: &mut [u32; X128]) -> u32 {
-    use std::arch::aarch64::*;
+fn decode_delta(last_value: uint32x4_t, block: &mut [u32x8; 8]) -> uint32x4_t {
+    let block = unsafe { std::mem::transmute::<&mut [u32x8; 8], &mut [uint32x4_t; 16]>(block) };
 
-    let mut prev = vdupq_n_u32(last_value);
-    let ptr = block.as_mut_ptr();
+    let zero = vdupq_n_u32(0);
 
-    for i in 0..32 {
-        let mut v = unsafe { vld1q_u32(ptr.add(i * 4)) };
-
-        v = vaddq_u32(v, vextq_u32::<3>(vdupq_n_u32(0), v));
-        v = vaddq_u32(v, vextq_u32::<2>(vdupq_n_u32(0), v));
-
-        v = vaddq_u32(v, prev);
-
-        unsafe { vst1q_u32(ptr.add(i * 4), v) };
-
-        prev = vdupq_laneq_u32::<3>(v);
+    // Prefix sum within each 4-element register
+    // (analogous to the alignr cascade, but only need shifts of 1 and 2 for 4 lanes)
+    for i in 0..16 {
+        block[i] = vaddq_u32(block[i], vextq_u32::<3>(zero, block[i])); // shift right by 1
+        block[i] = vaddq_u32(block[i], vextq_u32::<2>(zero, block[i])); // shift right by 2
     }
 
-    vgetq_lane_u32::<0>(prev)
+    // Chain blocks by propagating the last element of each block to the next
+    block[0] = vaddq_u32(block[0], last_value);
+    for i in 1..16 {
+        let last = vdupq_laneq_u32::<3>(block[i - 1]);
+        block[i] = vaddq_u32(block[i], last);
+    }
+
+    vdupq_laneq_u32::<3>(block[15])
 }
 
 #[target_feature(enable = "neon")]
-fn decode_delta1(last_value: u32, block: &mut [u32; X128]) -> u32 {
-    use std::arch::aarch64::*;
+fn decode_delta1(last_value: uint32x4_t, block: &mut [u32x8; 8]) -> uint32x4_t {
+    let view = unsafe { std::mem::transmute::<&mut [u32x8; 8], &mut [uint32x4_t; 16]>(block) };
 
-    let mut prev = vdupq_n_u32(last_value);
-    let ptr = block.as_mut_ptr();
-
-    for i in 0..32 {
-        let mut v = unsafe { vld1q_u32(ptr.add(i * 4)) };
-        v = vaddq_u32(v, vdupq_n_u32(1));
-
-        v = vaddq_u32(v, vextq_u32::<3>(vdupq_n_u32(0), v));
-        v = vaddq_u32(v, vextq_u32::<2>(vdupq_n_u32(0), v));
-
-        v = vaddq_u32(v, prev);
-
-        unsafe { vst1q_u32(ptr.add(i * 4), v) };
-
-        prev = vdupq_laneq_u32::<3>(v);
+    let ones = vdupq_n_u32(1);
+    for i in 0..16 {
+        view[i] = vaddq_u32(view[i], ones);
     }
-
-    vgetq_lane_u32::<0>(prev)
+    decode_delta(last_value, block)
 }
 
 #[cfg(test)]
@@ -191,7 +396,8 @@ mod tests {
         let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32);
         let mut block = [1; X128];
         block[0] = 0;
-        unsafe { decode_delta(0, &mut block) };
+        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
+        unsafe { decode_delta(vdupq_n_u32(0), data) };
         assert_eq!(block, expected_values);
     }
 
@@ -201,7 +407,8 @@ mod tests {
         let expected_values: [u32; X128] = std::array::from_fn(|i| 4 + i as u32);
         let mut block = [1; X128];
         block[0] = 0;
-        unsafe { decode_delta(4, &mut block) };
+        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
+        unsafe { decode_delta(vdupq_n_u32(4), data) };
         assert_eq!(block, expected_values);
     }
 
@@ -210,7 +417,8 @@ mod tests {
     fn test_decode_delta1_zero_starting_value() {
         let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32 + 1);
         let mut block = [0; X128];
-        unsafe { decode_delta1(0, &mut block) };
+        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
+        unsafe { decode_delta1(vdupq_n_u32(4), data) };
         assert_eq!(block, expected_values);
     }
 
@@ -219,7 +427,8 @@ mod tests {
     fn test_decode_delta1_starting_value() {
         let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32 + 5);
         let mut block = [0; X128];
-        unsafe { decode_delta1(4, &mut block) };
+        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
+        unsafe { decode_delta1(vdupq_n_u32(0), data) };
         assert_eq!(block, expected_values);
     }
 }
