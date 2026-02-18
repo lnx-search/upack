@@ -9,7 +9,7 @@ compile_error!("big endian machines are not supported");
 pub mod avx2;
 #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
 pub mod avx512;
-#[cfg(all(feature = "neon"))]
+#[cfg(all(target_arch = "aarch64", feature = "neon"))]
 pub mod neon;
 pub mod scalar;
 #[cfg(test)]
@@ -69,6 +69,11 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::pack_x128(output, input, n) };
         }
 
+        #[cfg(all(target_arch = "aarch64", feature = "neon"))]
+        if neon::can_use() {
+            return unsafe { neon::pack_x128(output, input, n) };
+        }
+
         unsafe { scalar::pack_x128(output, input, n) }
     }
 
@@ -90,6 +95,11 @@ impl CompressibleArray for [u32; X128] {
             return unsafe { avx2::pack_delta_x128(initial_value, output, input, n) };
         }
 
+        #[cfg(all(target_arch = "aarch64", feature = "neon"))]
+        if neon::can_use() {
+            return unsafe { neon::pack_delta_x128(initial_value, output, input, n) };
+        }
+
         unsafe { scalar::pack_delta_x128(initial_value, output, input, n) }
     }
 
@@ -109,6 +119,11 @@ impl CompressibleArray for [u32; X128] {
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
             return unsafe { avx2::pack_delta1_x128(initial_value, output, input, n) };
+        }
+
+        #[cfg(all(target_arch = "aarch64", feature = "neon"))]
+        if neon::can_use() {
+            return unsafe { neon::pack_delta1_x128(initial_value, output, input, n) };
         }
 
         unsafe { scalar::pack_delta1_x128(initial_value, output, input, n) }
@@ -133,6 +148,11 @@ impl CompressibleArray for [u32; X128] {
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
             return unsafe { avx2::unpack_x128(compressed_bit_length, input, output, n) };
+        }
+
+        #[cfg(all(target_arch = "aarch64", feature = "neon"))]
+        if neon::can_use() {
+            return unsafe { neon::unpack_x128(compressed_bit_length, input, output, n) };
         }
 
         unsafe { scalar::unpack_x128(compressed_bit_length, input, output, n) }
@@ -169,6 +189,13 @@ impl CompressibleArray for [u32; X128] {
             };
         }
 
+        #[cfg(all(target_arch = "aarch64", feature = "neon"))]
+        if neon::can_use() {
+            return unsafe {
+                neon::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n)
+            };
+        }
+
         unsafe { scalar::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n) }
     }
 
@@ -200,6 +227,13 @@ impl CompressibleArray for [u32; X128] {
         if avx2::can_use() {
             return unsafe {
                 avx2::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
+            };
+        }
+
+        #[cfg(all(target_arch = "aarch64", feature = "neon"))]
+        if neon::can_use() {
+            return unsafe {
+                neon::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
             };
         }
 

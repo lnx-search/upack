@@ -2,6 +2,7 @@ use super::data::*;
 use super::polyfill::*;
 use super::util::*;
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 1-bit elements.
 ///
 /// # Safety
@@ -12,6 +13,7 @@ pub(crate) unsafe fn to_u1(out: *mut u8, block: [u32x8; 8]) {
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 1-bit
 /// bitmap and write to `out`.
 ///
@@ -19,17 +21,19 @@ pub(crate) unsafe fn to_u1(out: *mut u8, block: [u32x8; 8]) {
 unsafe fn pack_u1_registers(out: *mut u8, data: [u8x32; 2]) {
     let [d1, d2] = data;
 
-    let cmp1 = _scalar_slli_u8x32::<7>(d1);
-    let cmp2 = _scalar_slli_u8x32::<7>(d2);
+    let select_mask = _neon_set1_u8(0b1);
+    let cmp1 = _neon_and_u8x32(d1, select_mask);
+    let cmp2 = _neon_and_u8x32(d2, select_mask);
 
-    let mask1 = _scalar_mask_u8x32(cmp1);
-    let mask2 = _scalar_mask_u8x32(cmp2);
+    let mask1 = _neon_nonzero_mask_u8x32(cmp1);
+    let mask2 = _neon_nonzero_mask_u8x32(cmp2);
 
     let merged_mask = ((mask2 as u64) << 32) | mask1 as u64;
     // We assume LE endianness
     unsafe { std::ptr::write_unaligned(out.add(0).cast(), merged_mask) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 2-bit elements.
 ///
 /// # Safety
@@ -40,20 +44,24 @@ pub(crate) unsafe fn to_u2(out: *mut u8, block: [u32x8; 8]) {
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 2-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2]) {
     let [d1, d2] = data;
 
-    let lo_cmp1 = _scalar_slli_u8x32::<7>(d1);
-    let hi_cmp1 = _scalar_slli_u8x32::<6>(d1);
-    let lo_mask1 = _scalar_mask_u8x32(lo_cmp1);
-    let hi_mask1 = _scalar_mask_u8x32(hi_cmp1);
+    let lo_select_mask = _neon_set1_u8(0b01);
+    let hi_select_mask = _neon_set1_u8(0b10);
 
-    let lo_cmp2 = _scalar_slli_u8x32::<7>(d2);
-    let hi_cmp2 = _scalar_slli_u8x32::<6>(d2);
-    let lo_mask2 = _scalar_mask_u8x32(lo_cmp2);
-    let hi_mask2 = _scalar_mask_u8x32(hi_cmp2);
+    let lo_cmp1 = _neon_and_u8x32(d1, lo_select_mask);
+    let hi_cmp1 = _neon_and_u8x32(d1, hi_select_mask);
+    let lo_mask1 = _neon_nonzero_mask_u8x32(lo_cmp1);
+    let hi_mask1 = _neon_nonzero_mask_u8x32(hi_cmp1);
+
+    let lo_cmp2 = _neon_and_u8x32(d2, lo_select_mask);
+    let hi_cmp2 = _neon_and_u8x32(d2, hi_select_mask);
+    let lo_mask2 = _neon_nonzero_mask_u8x32(lo_cmp2);
+    let hi_mask2 = _neon_nonzero_mask_u8x32(hi_cmp2);
 
     let lo_merged_mask1 = ((lo_mask2 as u64) << 32) | lo_mask1 as u64;
     let hi_merged_mask1 = ((hi_mask2 as u64) << 32) | hi_mask1 as u64;
@@ -62,6 +70,7 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2]) {
     unsafe { std::ptr::write_unaligned(out.add(8).cast(), hi_merged_mask1) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 3-bit elements.
 ///
 /// # Safety
@@ -72,24 +81,29 @@ pub(crate) unsafe fn to_u3(out: *mut u8, block: [u32x8; 8]) {
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 3-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
     let [d1, d2] = data;
 
-    let b0_cmp1 = _scalar_slli_u8x32::<7>(d1);
-    let b1_cmp1 = _scalar_slli_u8x32::<6>(d1);
-    let b2_cmp1 = _scalar_slli_u8x32::<5>(d1);
-    let b0_mask1 = _scalar_mask_u8x32(b0_cmp1);
-    let b1_mask1 = _scalar_mask_u8x32(b1_cmp1);
-    let b2_mask1 = _scalar_mask_u8x32(b2_cmp1);
+    let b0_select_mask = _neon_set1_u8(0b001);
+    let b1_select_mask = _neon_set1_u8(0b010);
+    let b2_select_mask = _neon_set1_u8(0b100);
 
-    let b0_cmp2 = _scalar_slli_u8x32::<7>(d2);
-    let b1_cmp2 = _scalar_slli_u8x32::<6>(d2);
-    let b2_cmp2 = _scalar_slli_u8x32::<5>(d2);
-    let b0_mask2 = _scalar_mask_u8x32(b0_cmp2);
-    let b1_mask2 = _scalar_mask_u8x32(b1_cmp2);
-    let b2_mask2 = _scalar_mask_u8x32(b2_cmp2);
+    let b0_cmp1 = _neon_and_u8x32(d1, b0_select_mask);
+    let b1_cmp1 = _neon_and_u8x32(d1, b1_select_mask);
+    let b2_cmp1 = _neon_and_u8x32(d1, b2_select_mask);
+    let b0_mask1 = _neon_nonzero_mask_u8x32(b0_cmp1);
+    let b1_mask1 = _neon_nonzero_mask_u8x32(b1_cmp1);
+    let b2_mask1 = _neon_nonzero_mask_u8x32(b2_cmp1);
+
+    let b0_cmp2 = _neon_and_u8x32(d2, b0_select_mask);
+    let b1_cmp2 = _neon_and_u8x32(d2, b1_select_mask);
+    let b2_cmp2 = _neon_and_u8x32(d2, b2_select_mask);
+    let b0_mask2 = _neon_nonzero_mask_u8x32(b0_cmp2);
+    let b1_mask2 = _neon_nonzero_mask_u8x32(b1_cmp2);
+    let b2_mask2 = _neon_nonzero_mask_u8x32(b2_cmp2);
 
     let b0_merged_mask = ((b0_mask2 as u64) << 32) | b0_mask1 as u64;
     let b1_merged_mask = ((b1_mask2 as u64) << 32) | b1_mask1 as u64;
@@ -100,6 +114,7 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
     unsafe { std::ptr::write_unaligned(out.add(16).cast(), b2_merged_mask) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 4-bit elements.
 ///
 /// # Safety
@@ -110,12 +125,14 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8]) {
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
     unsafe { super::pack_x64_partial::pack_u4_registers(out.add(0).cast(), data) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 5-bit elements.
 ///
 /// # Safety
@@ -126,10 +143,11 @@ pub(crate) unsafe fn to_u5(out: *mut u8, block: [u32x8; 8]) {
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 5-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u5_registers(out: *mut u8, data: [u8x32; 2]) {
-    let mask = _scalar_set1_u8(0b1111);
+    let mask = _neon_set1_u8(0b1111);
     let masked = and_u8x32(data, mask);
     unsafe { pack_u4_registers(out, masked) };
 
@@ -138,6 +156,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [u8x32; 2]) {
     unsafe { pack_u1_registers(out.add(32), remaining) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 6-bit elements.
 ///
 /// # Safety
@@ -148,10 +167,11 @@ pub(crate) unsafe fn to_u6(out: *mut u8, block: [u32x8; 8]) {
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 6-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2]) {
-    let mask = _scalar_set1_u8(0b1111);
+    let mask = _neon_set1_u8(0b1111);
     let masked = and_u8x32(data, mask);
     unsafe { pack_u4_registers(out, masked) };
 
@@ -160,21 +180,22 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2]) {
     unsafe { pack_u2_registers(out.add(32), remaining) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 7-bit elements.
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(7)` bytes to.
-
 pub(crate) unsafe fn to_u7(out: *mut u8, block: [u32x8; 8]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u7_registers(out, partially_packed) }
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 7-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u7_registers(out: *mut u8, data: [u8x32; 2]) {
-    let mask = _scalar_set1_u8(0b1111);
+    let mask = _neon_set1_u8(0b1111);
     let masked = and_u8x32(data, mask);
     unsafe { pack_u4_registers(out, masked) };
 
@@ -183,6 +204,7 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [u8x32; 2]) {
     unsafe { pack_u3_registers(out.add(32), remaining) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 8-bit elements.
 ///
 /// # Safety
@@ -192,6 +214,7 @@ pub(crate) unsafe fn to_u8(out: *mut u8, block: [u32x8; 8]) {
     unsafe { store_u8x32x2(out, partially_packed) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 9-bit elements.
 ///
 /// # Safety
@@ -202,6 +225,7 @@ pub(crate) unsafe fn to_u9(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u1_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 10-bit elements.
 ///
 /// # Safety
@@ -212,6 +236,7 @@ pub(crate) unsafe fn to_u10(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u2_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 11-bit elements.
 ///
 /// # Safety
@@ -222,6 +247,7 @@ pub(crate) unsafe fn to_u11(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u3_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 12-bit elements.
 ///
 /// # Safety
@@ -232,6 +258,7 @@ pub(crate) unsafe fn to_u12(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u4_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 13-bit elements.
 ///
 /// # Safety
@@ -242,6 +269,7 @@ pub(crate) unsafe fn to_u13(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u5_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 14-bit elements.
 ///
 /// # Safety
@@ -252,6 +280,7 @@ pub(crate) unsafe fn to_u14(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u6_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 15-bit elements.
 ///
 /// # Safety
@@ -262,6 +291,7 @@ pub(crate) unsafe fn to_u15(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u7_registers(out.add(64), hi) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 16-bit elements.
 ///
 /// # Safety
@@ -271,13 +301,15 @@ pub(crate) unsafe fn to_u16(out: *mut u8, block: [u32x8; 8]) {
     unsafe { store_u16x16x4(out, packed) };
 }
 
+#[target_feature(enable = "neon")]
 unsafe fn store_lo_u16_registers(out: *mut u8, data: [u32x8; 8]) {
-    let mask = _scalar_set1_u32(0xFFFF);
+    let mask = _neon_set1_u32(0xFFFF);
     let shifted = and_u32x8(data, mask);
     let packed = pack_u32_to_u16_unordered(shifted);
     unsafe { store_u16x16x4(out, packed) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 17-bit elements.
 ///
 /// # Safety
@@ -290,6 +322,7 @@ pub(crate) unsafe fn to_u17(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u1_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 18-bit elements.
 ///
 /// # Safety
@@ -302,6 +335,7 @@ pub(crate) unsafe fn to_u18(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u2_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 19-bit elements.
 ///
 /// # Safety
@@ -314,6 +348,7 @@ pub(crate) unsafe fn to_u19(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u3_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 20-bit elements.
 ///
 /// # Safety
@@ -326,6 +361,7 @@ pub(crate) unsafe fn to_u20(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u4_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 21-bit elements.
 ///
 /// # Safety
@@ -338,6 +374,7 @@ pub(crate) unsafe fn to_u21(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u5_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 22-bit elements.
 ///
 /// # Safety
@@ -350,6 +387,7 @@ pub(crate) unsafe fn to_u22(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u6_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 23-bit elements.
 ///
 /// # Safety
@@ -362,6 +400,7 @@ pub(crate) unsafe fn to_u23(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u7_registers(out.add(128), hi_bits) }
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 24-bit elements.
 ///
 /// # Safety
@@ -374,6 +413,7 @@ pub(crate) unsafe fn to_u24(out: *mut u8, block: [u32x8; 8]) {
     unsafe { store_u8x32x2(out.add(128), hi_bits) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 25-bit elements.
 ///
 /// # Safety
@@ -387,6 +427,7 @@ pub(crate) unsafe fn to_u25(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u1_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 26-bit elements.
 ///
 /// # Safety
@@ -400,6 +441,7 @@ pub(crate) unsafe fn to_u26(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u2_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 27-bit elements.
 ///
 /// # Safety
@@ -413,6 +455,7 @@ pub(crate) unsafe fn to_u27(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u3_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 28-bit elements.
 ///
 /// # Safety
@@ -426,6 +469,7 @@ pub(crate) unsafe fn to_u28(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u4_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 29-bit elements.
 ///
 /// # Safety
@@ -439,6 +483,7 @@ pub(crate) unsafe fn to_u29(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u5_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 30-bit elements.
 ///
 /// # Safety
@@ -452,6 +497,7 @@ pub(crate) unsafe fn to_u30(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u6_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 31-bit elements.
 ///
 /// # Safety
@@ -465,6 +511,7 @@ pub(crate) unsafe fn to_u31(out: *mut u8, block: [u32x8; 8]) {
     unsafe { pack_u7_registers(out.add(192), hi) };
 }
 
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 32-bit elements.
 ///
 /// # Safety
@@ -512,11 +559,12 @@ mod tests {
     #[case(30, to_u30)]
     #[case(31, to_u31)]
     #[case(32, to_u32)]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_saturation(#[case] bit_len: u8, #[case] packer: unsafe fn(*mut u8, [u32x8; 8])) {
         let pack_value = (2u64.pow(bit_len as u32) - 1) as u32;
 
         let values = [pack_value; X64];
-        let data = load_u32x64(&values);
+        let data = unsafe { load_u32x64(&values) };
 
         let mut output = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { packer(output.as_mut_ptr(), data) };

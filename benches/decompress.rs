@@ -11,7 +11,7 @@ fn main() {
     divan::main();
 }
 
-#[divan::bench(sample_size = 1000, sample_count = 15_000)]
+#[divan::bench(sample_size = 1000, sample_count = 5_000)]
 fn bench_upack_decompress_x128(bencher: Bencher) {
     let sample_data = utils::load_sample_u32_doc_id_data_x128();
     let total_entries = sample_data.len() * X128;
@@ -37,7 +37,7 @@ fn bench_upack_decompress_x128(bencher: Bencher) {
         });
 }
 
-#[divan::bench(sample_size = 1000, sample_count = 15_000)]
+#[divan::bench(sample_size = 1000, sample_count = 5_000)]
 fn bench_upack_decompress_delta_x128(bencher: Bencher) {
     let sample_data = utils::load_sample_u32_doc_id_data_x128();
     let total_entries = sample_data.len() * X128;
@@ -69,7 +69,7 @@ fn bench_upack_decompress_delta_x128(bencher: Bencher) {
         });
 }
 
-#[divan::bench(sample_size = 1000, sample_count = 15_000)]
+#[divan::bench(sample_size = 1000, sample_count = 5_000)]
 fn bench_upack_decompress_delta1_x128(bencher: Bencher) {
     let sample_data = utils::load_sample_u32_doc_id_data_x128();
     let total_entries = sample_data.len() * X128;
@@ -101,7 +101,7 @@ fn bench_upack_decompress_delta1_x128(bencher: Bencher) {
         });
 }
 
-#[divan::bench(sample_size = 1000, sample_count = 15_000)]
+#[divan::bench(sample_size = 1000, sample_count = 5_000)]
 fn bench_bitpacking_decompress_x128(bencher: Bencher) {
     let sample_data = utils::load_sample_u32_doc_id_data_x128();
     let total_entries = sample_data.len() * X128;
@@ -130,7 +130,7 @@ fn bench_bitpacking_decompress_x128(bencher: Bencher) {
         });
 }
 
-#[divan::bench(sample_size = 1000, sample_count = 15_000)]
+#[divan::bench(sample_size = 1000, sample_count = 5_000)]
 fn bench_bitpacking_decompress_delta_x128(bencher: Bencher) {
     let sample_data = utils::load_sample_u32_doc_id_data_x128();
     let total_entries = sample_data.len() * X128;
@@ -160,7 +160,7 @@ fn bench_bitpacking_decompress_delta_x128(bencher: Bencher) {
         });
 }
 
-#[divan::bench(sample_size = 1000, sample_count = 15_000)]
+#[divan::bench(sample_size = 1000, sample_count = 5_000)]
 fn bench_bitpacking_decompress_delta1_x128(bencher: Bencher) {
     let sample_data = utils::load_sample_u32_doc_id_data_x128();
     let total_entries = sample_data.len() * X128;

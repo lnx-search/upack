@@ -11,6 +11,13 @@ mod unpack_x64_full;
 mod unpack_x64_partial;
 mod util;
 
+#[inline]
+/// Returns `true` if the runtime CPU can safely execute the NEON backed implementation.
+pub fn can_use() -> bool {
+    std::arch::is_aarch64_feature_detected!("neon")
+}
+
+#[target_feature(enable = "neon")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
@@ -31,6 +38,7 @@ pub unsafe fn pack_x128(
     }
 }
 
+#[target_feature(enable = "neon")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out` after
 /// applying Delta encoding.
 ///
@@ -51,6 +59,7 @@ pub unsafe fn pack_delta_x128(
     unsafe { pack_x128(out, block, pack_n) }
 }
 
+#[target_feature(enable = "neon")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out` after
 /// applying Delta-1 encoding.
 ///
@@ -71,6 +80,7 @@ pub unsafe fn pack_delta1_x128(
     unsafe { pack_x128(out, block, pack_n) }
 }
 
+#[target_feature(enable = "neon")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
@@ -88,6 +98,7 @@ pub unsafe fn unpack_x128(
     compressed_size(nbits as usize, read_n)
 }
 
+#[target_feature(enable = "neon")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out` after
 /// applying Delta encoding.
 ///
@@ -109,6 +120,7 @@ pub unsafe fn unpack_delta_x128(
     compressed_size(nbits as usize, read_n)
 }
 
+#[target_feature(enable = "neon")]
 /// Pack a block of 128 32-bit integers and write the compressed block to `out` after
 /// applying Delta-1 encoding.
 ///

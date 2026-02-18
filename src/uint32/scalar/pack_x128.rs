@@ -23,7 +23,6 @@ pub unsafe fn to_nbits(nbits: usize, out: *mut u8, block: &[u32; X128], pack_n: 
     unsafe { func(out, block, pack_n) };
 }
 
-#[target_feature(enable = "avx2")]
 unsafe fn to_u0(_out: *mut u8, _block: &[u32; X128], _pack_n: usize) {}
 
 macro_rules! define_x128_packer {

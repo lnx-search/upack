@@ -4,6 +4,7 @@ use crate::uint32::{max_compressed_size, split_block_mut};
 use crate::{X64, X128};
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to `nbits` bit length  elements.
 ///
 /// # Safety
@@ -25,6 +26,7 @@ pub unsafe fn from_nbits(nbits: usize, input: *const u8, out: &mut [u32; X128], 
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to `nbits` bit length elements which have
 /// been delta-encoded.
 ///
@@ -44,6 +46,7 @@ pub unsafe fn from_nbits_delta(
 }
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to `nbits` bit length elements which have
 /// been delta-1-encoded.
 ///
@@ -62,12 +65,14 @@ pub unsafe fn from_nbits_delta1(
     decode_delta1(last_value, out);
 }
 
+#[target_feature(enable = "neon")]
 unsafe fn from_u0(_input: *const u8, out: &mut [u32; X128], _read_n: usize) {
     out.fill(0);
 }
 
 macro_rules! define_x128_unpacker {
     ($func_name:ident, $bit_length:expr) => {
+        #[target_feature(enable = "neon")]
         unsafe fn $func_name(input: *const u8, out: &mut [u32; X128], read_n: usize) {
             let [left, right] = split_block_mut(out);
 
@@ -129,22 +134,51 @@ define_x128_unpacker!(from_u30, 30);
 define_x128_unpacker!(from_u31, 31);
 define_x128_unpacker!(from_u32, 32);
 
-fn decode_delta(mut last_value: u32, block: &mut [u32; X128]) -> u32 {
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..128 {
-        last_value = last_value.wrapping_add(block[i]);
-        block[i] = last_value;
+#[target_feature(enable = "neon")]
+fn decode_delta(last_value: u32, block: &mut [u32; X128]) -> u32 {
+    use std::arch::aarch64::*;
+
+    let mut prev = vdupq_n_u32(last_value);
+    let ptr = block.as_mut_ptr();
+
+    for i in 0..32 {
+        let mut v = unsafe { vld1q_u32(ptr.add(i * 4)) };
+
+        v = vaddq_u32(v, vextq_u32::<3>(vdupq_n_u32(0), v));
+        v = vaddq_u32(v, vextq_u32::<2>(vdupq_n_u32(0), v));
+
+        v = vaddq_u32(v, prev);
+
+        unsafe { vst1q_u32(ptr.add(i * 4), v) };
+
+        prev = vdupq_laneq_u32::<3>(v);
     }
-    last_value
+
+    vgetq_lane_u32::<0>(prev)
 }
 
-fn decode_delta1(mut last_value: u32, block: &mut [u32; X128]) -> u32 {
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..128 {
-        last_value = last_value.wrapping_add(block[i]).wrapping_add(1);
-        block[i] = last_value;
+#[target_feature(enable = "neon")]
+fn decode_delta1(last_value: u32, block: &mut [u32; X128]) -> u32 {
+    use std::arch::aarch64::*;
+
+    let mut prev = vdupq_n_u32(last_value);
+    let ptr = block.as_mut_ptr();
+
+    for i in 0..32 {
+        let mut v = unsafe { vld1q_u32(ptr.add(i * 4)) };
+        v = vaddq_u32(v, vdupq_n_u32(1));
+
+        v = vaddq_u32(v, vextq_u32::<3>(vdupq_n_u32(0), v));
+        v = vaddq_u32(v, vextq_u32::<2>(vdupq_n_u32(0), v));
+
+        v = vaddq_u32(v, prev);
+
+        unsafe { vst1q_u32(ptr.add(i * 4), v) };
+
+        prev = vdupq_laneq_u32::<3>(v);
     }
-    last_value
+
+    vgetq_lane_u32::<0>(prev)
 }
 
 #[cfg(test)]
@@ -152,36 +186,40 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta_zero_starting_value() {
         let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32);
         let mut block = [1; X128];
         block[0] = 0;
-        decode_delta(0, &mut block);
+        unsafe { decode_delta(0, &mut block) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta_starting_value() {
         let expected_values: [u32; X128] = std::array::from_fn(|i| 4 + i as u32);
         let mut block = [1; X128];
         block[0] = 0;
-        decode_delta(4, &mut block);
+        unsafe { decode_delta(4, &mut block) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta1_zero_starting_value() {
         let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32 + 1);
         let mut block = [0; X128];
-        decode_delta1(0, &mut block);
+        unsafe { decode_delta1(0, &mut block) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta1_starting_value() {
         let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32 + 5);
         let mut block = [0; X128];
-        decode_delta1(4, &mut block);
+        unsafe { decode_delta1(4, &mut block) };
         assert_eq!(block, expected_values);
     }
 }

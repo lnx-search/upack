@@ -4,6 +4,7 @@ use crate::uint32::{max_compressed_size, split_block};
 use crate::{X64, X128};
 
 #[inline]
+#[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to `nbits` bit length  elements.
 ///
 /// # Safety
@@ -23,11 +24,12 @@ pub unsafe fn to_nbits(nbits: usize, out: *mut u8, block: &[u32; X128], pack_n: 
     unsafe { func(out, block, pack_n) };
 }
 
-#[target_feature(enable = "avx2")]
+#[target_feature(enable = "neon")]
 unsafe fn to_u0(_out: *mut u8, _block: &[u32; X128], _pack_n: usize) {}
 
 macro_rules! define_x128_packer {
     ($func_name:ident, $bit_length:expr) => {
+        #[target_feature(enable = "neon")]
         unsafe fn $func_name(out: *mut u8, block: &[u32; X128], pack_n: usize) {
             let [left, right] = split_block(block);
 
