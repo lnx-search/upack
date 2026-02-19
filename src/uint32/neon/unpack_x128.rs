@@ -1,7 +1,7 @@
 use std::arch::aarch64::*;
 
-use super::polyfill::*;
 use super::data::*;
+use super::polyfill::*;
 use super::{unpack_x64_full, unpack_x64_partial};
 use crate::uint32::{max_compressed_size, split_block_mut};
 use crate::{X64, X128};
@@ -151,7 +151,6 @@ unsafe fn from_u0(_input: *const u8, out: &mut [u32; X128], _read_n: usize) {
     out.fill(0);
 }
 
-
 #[target_feature(enable = "neon")]
 unsafe fn from_u0_delta(last_value: u32, _input: *const u8, out: &mut [u32; X128], _read_n: usize) {
     out.fill(last_value);
@@ -169,7 +168,6 @@ unsafe fn from_u0_delta1(
         out[i] = (i as u32).wrapping_add(last_value).wrapping_add(1);
     }
 }
-
 
 macro_rules! define_x128_unpacker {
     ($func_name:ident, $bit_length:expr) => {
@@ -201,7 +199,6 @@ macro_rules! define_x128_unpacker {
         }
     };
 }
-
 
 macro_rules! define_x128_unpacker_delta {
     ($func_name:ident, $unpack_func_name:ident, $bit_length:expr, $delta_func_name:ident) => {
