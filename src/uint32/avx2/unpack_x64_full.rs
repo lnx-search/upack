@@ -44,25 +44,8 @@ pub unsafe fn from_u2(input: *const u8) -> [__m256i; 8] {
 /// Unpack eight registers containing 64 8-bit elements from a 2-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u2_registers(input: *const u8) -> [__m256i; 2] {
-    let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
-    let mask2: u64 = unsafe { std::ptr::read_unaligned(input.add(8).cast()) };
-
-    let bit = _mm256_set1_epi8(0b01);
-    let mut lo_bits_packed1 = expand_mask_epi8(mask1 as __mmask32);
-    let mut lo_bits_packed2 = expand_mask_epi8((mask1 >> 32) as __mmask32);
-    lo_bits_packed1 = _mm256_and_si256(lo_bits_packed1, bit);
-    lo_bits_packed2 = _mm256_and_si256(lo_bits_packed2, bit);
-
-    let bit = _mm256_set1_epi8(0b10);
-    let mut hi_bits_packed1 = expand_mask_epi8(mask2 as __mmask32);
-    let mut hi_bits_packed2 = expand_mask_epi8((mask2 >> 32) as __mmask32);
-    hi_bits_packed1 = _mm256_and_si256(hi_bits_packed1, bit);
-    hi_bits_packed2 = _mm256_and_si256(hi_bits_packed2, bit);
-
-    let two_bits1 = _mm256_or_si256(hi_bits_packed1, lo_bits_packed1);
-    let two_bits2 = _mm256_or_si256(hi_bits_packed2, lo_bits_packed2);
-
-    [two_bits1, two_bits2]
+    let packed = unsafe { _mm_loadu_si128(input.cast()) };
+    unpack_u2_to_u8_unordered(packed)
 }
 
 #[target_feature(enable = "avx2")]
@@ -80,32 +63,19 @@ pub unsafe fn from_u3(input: *const u8) -> [__m256i; 8] {
 /// Unpack eight registers containing 64 8-bit elements from a 3-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u3_registers(input: *const u8) -> [__m256i; 2] {
-    let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
-    let mask2: u64 = unsafe { std::ptr::read_unaligned(input.add(8).cast()) };
-    let mask3: u64 = unsafe { std::ptr::read_unaligned(input.add(16).cast()) };
+    let packed_2bit = unsafe { _mm_loadu_si128(input.add(0).cast()) };
+    let lo_2bits = unpack_u2_to_u8_unordered(packed_2bit);
 
-    let bit = _mm256_set1_epi8(0b001);
-    let mut b0_bits_packed1 = expand_mask_epi8(mask1 as __mmask32);
-    let mut b0_bits_packed2 = expand_mask_epi8((mask1 >> 32) as __mmask32);
-    b0_bits_packed1 = _mm256_and_si256(b0_bits_packed1, bit);
-    b0_bits_packed2 = _mm256_and_si256(b0_bits_packed2, bit);
-
-    let bit = _mm256_set1_epi8(0b010);
-    let mut b1_bits_packed1 = expand_mask_epi8(mask2 as __mmask32);
-    let mut b1_bits_packed2 = expand_mask_epi8((mask2 >> 32) as __mmask32);
-    b1_bits_packed1 = _mm256_and_si256(b1_bits_packed1, bit);
-    b1_bits_packed2 = _mm256_and_si256(b1_bits_packed2, bit);
+    let hi_bitmask: u64 = unsafe { std::ptr::read_unaligned(input.add(16).cast()) };
 
     let bit = _mm256_set1_epi8(0b100);
-    let mut b2_bits_packed1 = expand_mask_epi8(mask3 as __mmask32);
-    let mut b2_bits_packed2 = expand_mask_epi8((mask3 >> 32) as __mmask32);
-    b2_bits_packed1 = _mm256_and_si256(b2_bits_packed1, bit);
-    b2_bits_packed2 = _mm256_and_si256(b2_bits_packed2, bit);
+    let mut hi_bits_packed1 = expand_mask_epi8(hi_bitmask as __mmask32);
+    let mut hi_bits_packed2 = expand_mask_epi8((hi_bitmask >> 32) as __mmask32);
+    hi_bits_packed1 = _mm256_and_si256(hi_bits_packed1, bit);
+    hi_bits_packed2 = _mm256_and_si256(hi_bits_packed2, bit);
 
-    let mut three_bits1 = _mm256_or_si256(b1_bits_packed1, b0_bits_packed1);
-    let mut three_bits2 = _mm256_or_si256(b1_bits_packed2, b0_bits_packed2);
-    three_bits1 = _mm256_or_si256(three_bits1, b2_bits_packed1);
-    three_bits2 = _mm256_or_si256(three_bits2, b2_bits_packed2);
+    let three_bits1 = _mm256_or_si256(hi_bits_packed1, lo_2bits[0]);
+    let three_bits2 = _mm256_or_si256(hi_bits_packed2, lo_2bits[1]);
 
     [three_bits1, three_bits2]
 }
@@ -125,7 +95,8 @@ pub unsafe fn from_u4(input: *const u8) -> [__m256i; 8] {
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
 unsafe fn unpack_u4_registers(input: *const u8) -> [__m256i; 2] {
-    unsafe { super::unpack_x64_partial::unpack_u4_registers(input) }
+    let packed = unsafe { _mm256_loadu_si256(input.cast()) };
+    unpack_u4_to_u8_unordered(packed)
 }
 
 #[target_feature(enable = "avx2")]

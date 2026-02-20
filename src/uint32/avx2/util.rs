@@ -353,6 +353,38 @@ pub(super) fn pack_u32_to_u16_split_unordered(data: [__m256i; 8]) -> ([__m256i; 
     ([hi_8bits_a, hi_8bits_b], [lo_8bits_a, lo_8bits_b])
 }
 
+
+#[target_feature(enable = "avx2")]
+pub(super) fn pack_u8_to_u4_unordered(data: [__m256i; 2]) -> __m256i {
+    let shifted = _mm256_slli_epi16::<4>(data[1]);
+    _mm256_or_si256(data[0], shifted)
+}
+
+#[target_feature(enable = "avx2")]
+pub(super) fn unpack_u4_to_u8_unordered(data: __m256i) -> [__m256i; 2] {
+    let mask = _mm256_set1_epi8(0x0F);
+    let lo_nibbles = _mm256_and_si256(data, mask);
+    let hi_nibbles = _mm256_and_si256(_mm256_srli_epi16::<4>(data), mask);
+    [lo_nibbles, hi_nibbles]
+}
+
+#[target_feature(enable = "avx2")]
+pub(super) fn pack_u8_to_u2_unordered(data: [__m256i; 2]) -> __m128i {
+    let nibbles = pack_u8_to_u4_unordered(data);
+    let lo = _mm256_castsi256_si128(nibbles);
+    let hi = _mm256_extracti128_si256::<1>(nibbles);
+    _mm_or_si128(lo, _mm_slli_epi16::<2>(hi))
+}
+
+#[target_feature(enable = "avx2")]
+pub(super) fn unpack_u2_to_u8_unordered(data: __m128i) -> [__m256i; 2] {
+    let mask = _mm_set1_epi8(0b0011_0011);
+    let lo = _mm_and_si128(data, mask);
+    let hi = _mm_and_si128(_mm_srli_epi16::<2>(data), mask);
+    let nibbles = _mm256_set_m128i(hi, lo);
+    unpack_u4_to_u8_unordered(nibbles)
+}
+
 #[target_feature(enable = "avx2")]
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_si256<const N: usize>(mut data: [__m256i; N], mask: __m256i) -> [__m256i; N] {
@@ -627,6 +659,32 @@ mod tests {
         let unpacked = unsafe { unpack_u8_to_u16_unordered(data) };
 
         let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
+        assert_eq!(view, expected);
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_unpack_u4_to_u8_unordered() {
+        let expected: [u8; X64] = std::array::from_fn(|i| i as u8 % 16);
+
+        let data = unsafe { load_si256x2(expected.as_ptr()) };
+        let packed = unsafe { pack_u8_to_u4_unordered(data) };
+        let unpacked = unsafe { unpack_u4_to_u8_unordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<[__m256i; 2], [u8; X64]>(unpacked) };
+        assert_eq!(view, expected);
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_unpack_u2_to_u8_unordered() {
+        let expected: [u8; X64] = std::array::from_fn(|i| i as u8 % 4);
+
+        let data = unsafe { load_si256x2(expected.as_ptr()) };
+        let packed = unsafe { pack_u8_to_u2_unordered(data) };
+        let unpacked = unsafe { unpack_u2_to_u8_unordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<[__m256i; 2], [u8; X64]>(unpacked) };
         assert_eq!(view, expected);
     }
 }
