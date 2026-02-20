@@ -140,19 +140,8 @@ pub(super) fn pack_u32_to_u8_unordered(data: [__m512i; 4]) -> __m512i {
 /// Unpack 1 register containing 8-bit elements and produce 4 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u8_to_u32_unordered(packed: __m512i) -> [__m512i; 4] {
-    let mask = _mm512_set1_epi32(0xFF);
-
-    let shift_1 = packed;
-    let shift_2 = _mm512_srli_epi32::<8>(packed);
-    let shift_3 = _mm512_srli_epi32::<16>(packed);
-    let shift_4 = _mm512_srli_epi32::<24>(packed);
-
-    [
-        _mm512_and_si512(shift_1, mask),
-        _mm512_and_si512(shift_3, mask),
-        _mm512_and_si512(shift_2, mask),
-        _mm512_and_si512(shift_4, mask),
-    ]
+    let partially_unpacked = unpack_u8_to_u16_unordered(packed);
+    unpack_u16_to_u32_unordered(partially_unpacked)
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
@@ -176,18 +165,13 @@ pub(super) fn pack_u32_to_u16_unordered(data: [__m512i; 4]) -> [__m512i; 2] {
 /// Unpack 2 registers containing 16-bit elements and produce 4 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u16_to_u32_unordered(data: [__m512i; 2]) -> [__m512i; 4] {
-    let mask = _mm512_set1_epi32(0xFFFF);
-
-    let shift_1 = data[0];
-    let shift_2 = _mm512_srli_epi32::<16>(data[0]);
-    let shift_3 = data[1];
-    let shift_4 = _mm512_srli_epi32::<16>(data[1]);
+    let zeroes = _mm512_setzero_si512();
 
     [
-        _mm512_and_si512(shift_1, mask),
-        _mm512_and_si512(shift_2, mask),
-        _mm512_and_si512(shift_3, mask),
-        _mm512_and_si512(shift_4, mask),
+        _mm512_mask_blend_epi16(0xAAAA_AAAA, data[0], zeroes),
+        _mm512_srli_epi32::<16>(data[0]),
+        _mm512_mask_blend_epi16(0xAAAA_AAAA, data[1], zeroes),
+        _mm512_srli_epi32::<16>(data[1]),
     ]
 }
 
@@ -246,13 +230,10 @@ pub(super) fn pack_u32_to_u16_split_unordered(data: [__m512i; 4]) -> (__m512i, _
 /// Unpack 1 register containing 8-bit elements and produce 2 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u8_to_u16_unordered(data: __m512i) -> [__m512i; 2] {
-    let mask = _mm512_set1_epi16(0xFF);
-    let shift_1 = data;
-    let shift_2 = _mm512_srli_epi16::<8>(data);
-
+    let zeroes = _mm512_setzero_si512();
     [
-        _mm512_and_si512(shift_1, mask),
-        _mm512_and_si512(shift_2, mask),
+        _mm512_mask_blend_epi8(0xAAAAAAAAAAAAAAAA, data, zeroes),
+        _mm512_srli_epi16::<8>(data),
     ]
 }
 
@@ -561,5 +542,21 @@ mod tests {
 
         let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(packed) };
         assert_eq!(view, PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u8_to_u16_unordered_layout() {
+        let expected: [u16; X64] = std::array::from_fn(|i| i as u16);
+
+        let data =
+            unsafe { _mm512_loadu_epi8(PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT.as_ptr().cast()) };
+        let unpacked = unsafe { unpack_u8_to_u16_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(unpacked) };
+        assert_eq!(view, expected);
     }
 }
