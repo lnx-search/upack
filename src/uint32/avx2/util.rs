@@ -143,35 +143,78 @@ pub(super) fn unpack_u8_to_u16_ordered(data: [__m256i; 2]) -> [__m256i; 4] {
 /// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
 /// invalid data.
 pub(super) fn pack_u32_to_u8_unordered(data: [__m256i; 8]) -> [__m256i; 2] {
-    let partially_unpacked = pack_u32_to_u16_unordered(data);
-    pack_u16_to_u8_unordered(partially_unpacked)
+    let shift_1 = [data[0], data[1]];
+    let shift_2 = [
+        _mm256_slli_epi32::<8>(data[4]),
+        _mm256_slli_epi32::<8>(data[5]),
+    ];
+    let shift_3 = [
+        _mm256_slli_epi32::<16>(data[2]),
+        _mm256_slli_epi32::<16>(data[3]),
+    ];
+    let shift_4 = [
+        _mm256_slli_epi32::<24>(data[6]),
+        _mm256_slli_epi32::<24>(data[7]),
+    ];
+
+    let mut packed = shift_1;
+    packed = or_si256_all(packed, shift_2);
+    packed = or_si256_all(packed, shift_3);
+    packed = or_si256_all(packed, shift_4);
+
+    packed
 }
 
 #[target_feature(enable = "avx2")]
 /// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u8_to_u32_unordered(data: [__m256i; 2]) -> [__m256i; 8] {
-    let partially_unpacked = unpack_u8_to_u16_unordered(data);
-    unpack_u16_to_u32_unordered(partially_unpacked)
+    let mask = _mm256_set1_epi32(0xFF);
+
+    let shift_1 = [data[0], data[1]];
+    let shift_2 = [
+        _mm256_srli_epi32::<8>(data[0]),
+        _mm256_srli_epi32::<8>(data[1]),
+    ];
+    let shift_3 = [
+        _mm256_srli_epi32::<16>(data[0]),
+        _mm256_srli_epi32::<16>(data[1]),
+    ];
+    let shift_4 = [
+        _mm256_srli_epi32::<24>(data[0]),
+        _mm256_srli_epi32::<24>(data[1]),
+    ];
+
+    [
+        _mm256_and_si256(shift_1[0], mask),
+        _mm256_and_si256(shift_1[1], mask),
+        _mm256_and_si256(shift_3[0], mask),
+        _mm256_and_si256(shift_3[1], mask),
+        _mm256_and_si256(shift_2[0], mask),
+        _mm256_and_si256(shift_2[1], mask),
+        _mm256_and_si256(shift_4[0], mask),
+        _mm256_and_si256(shift_4[1], mask),
+    ]
 }
 
 #[target_feature(enable = "avx2")]
 /// Unpack 2 sets of registers containing 16-bit elements and produce 4 registers holding
 /// 16-bit elements.
 pub(super) fn unpack_u8_to_u16_unordered(data: [__m256i; 2]) -> [__m256i; 4] {
-    let zero = _mm256_setzero_si256();
+    let mask = _mm256_set1_epi16(0xFF);
 
-    let unpack_block = |packed: __m256i| -> [__m256i; 2] {
-        [
-            _mm256_unpacklo_epi8(packed, zero),
-            _mm256_unpackhi_epi8(packed, zero),
-        ]
-    };
+    let shift_1 = [data[0], data[1]];
+    let shift_2 = [
+        _mm256_srli_epi16::<8>(data[0]),
+        _mm256_srli_epi16::<8>(data[1]),
+    ];
 
-    let block0 = unpack_block(data[0]);
-    let block1 = unpack_block(data[1]);
-
-    [block0[0], block1[0], block0[1], block1[1]]
+    [
+        _mm256_and_si256(shift_1[0], mask),
+        _mm256_and_si256(shift_1[1], mask),
+        _mm256_and_si256(shift_2[0], mask),
+        _mm256_and_si256(shift_2[1], mask),
+    ]
 }
 
 #[target_feature(enable = "avx2")]
@@ -233,51 +276,40 @@ pub(super) fn unpack_u16_to_u32_ordered(data: [__m256i; 4]) -> [__m256i; 8] {
 /// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
 /// invalid data.
 pub(super) fn pack_u32_to_u16_unordered(data: [__m256i; 8]) -> [__m256i; 4] {
-    [
-        _mm256_packus_epi32(data[0], data[2]),
-        _mm256_packus_epi32(data[1], data[3]),
-        _mm256_packus_epi32(data[4], data[6]),
-        _mm256_packus_epi32(data[5], data[7]),
-    ]
+    let lo_1 = _mm256_or_si256(data[0], _mm256_slli_epi32::<16>(data[2]));
+    let lo_2 = _mm256_or_si256(data[1], _mm256_slli_epi32::<16>(data[3]));
+    let hi_1 = _mm256_or_si256(data[4], _mm256_slli_epi32::<16>(data[6]));
+    let hi_2 = _mm256_or_si256(data[5], _mm256_slli_epi32::<16>(data[7]));
+
+    [lo_1, lo_2, hi_1, hi_2]
 }
 
 #[target_feature(enable = "avx2")]
 /// Unpack 4 sets of registers containing 16-bit elements and produce 8 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u16_to_u32_unordered(data: [__m256i; 4]) -> [__m256i; 8] {
-    let zero = _mm256_setzero_si256();
+    let mask = _mm256_set1_epi32(0xFFFF);
 
-    let unpack_block = |packed| {
-        [
-            _mm256_unpacklo_epi16(packed, zero),
-            _mm256_unpackhi_epi16(packed, zero),
-        ]
-    };
-
-    let block0 = unpack_block(data[0]);
-    let block1 = unpack_block(data[1]);
-    let block2 = unpack_block(data[2]);
-    let block3 = unpack_block(data[3]);
+    let shift_1 = [data[0], data[1]];
+    let shift_2 = [
+        _mm256_srli_epi32::<16>(data[0]),
+        _mm256_srli_epi32::<16>(data[1]),
+    ];
+    let shift_3 = [data[2], data[3]];
+    let shift_4 = [
+        _mm256_srli_epi32::<16>(data[2]),
+        _mm256_srli_epi32::<16>(data[3]),
+    ];
 
     [
-        block0[0], block1[0], block0[1], block1[1], block2[0], block3[0], block2[1], block3[1],
-    ]
-}
-
-#[target_feature(enable = "avx2")]
-/// Pack 4 sets of registers containing 16-bit elements and produce 2 registers holding
-/// 8-bit elements.
-///
-/// The order of elements is maintained.
-///
-/// # Important note on saturation
-/// This routine produces garbage results if the input elements are beyond the maximum value
-/// that can be represented in a [u8] value, meaning any value over [u8::MAX] produces
-/// invalid data.
-pub(super) fn pack_u16_to_u8_unordered(data: [__m256i; 4]) -> [__m256i; 2] {
-    [
-        _mm256_packus_epi16(data[0], data[2]),
-        _mm256_packus_epi16(data[1], data[3]),
+        _mm256_and_si256(shift_1[0], mask),
+        _mm256_and_si256(shift_1[1], mask),
+        _mm256_and_si256(shift_2[0], mask),
+        _mm256_and_si256(shift_2[1], mask),
+        _mm256_and_si256(shift_3[0], mask),
+        _mm256_and_si256(shift_3[1], mask),
+        _mm256_and_si256(shift_4[0], mask),
+        _mm256_and_si256(shift_4[1], mask),
     ]
 }
 
@@ -336,16 +368,28 @@ pub(super) fn pack_u32_to_u16_split_ordered(data: [__m256i; 8]) -> ([__m256i; 2]
 /// that can be represented in a [u16] value, meaning any value over [u16::MAX] produces
 /// invalid data.
 pub(super) fn pack_u32_to_u16_split_unordered(data: [__m256i; 8]) -> ([__m256i; 2], [__m256i; 2]) {
-    let packed_u16 = pack_u32_to_u16_unordered(data);
+    let packed = pack_u32_to_u16_unordered(data);
 
-    let mask = _mm256_set1_epi16(0x00FF);
-    let lo_8bits = and_si256(packed_u16, mask);
-    let hi_8bits = srli_epi16::<8, 4>(packed_u16);
+    let lo_mask = _mm256_set1_epi16(0x00FFu16 as i16);
+    let hi_mask = _mm256_set1_epi16(0xFF00u16 as i16);
 
-    let packed_lo_8bits = pack_u16_to_u8_unordered(lo_8bits);
-    let packed_hi_8bits = pack_u16_to_u8_unordered(hi_8bits);
+    let lo_8bits_1a = _mm256_slli_epi16::<8>(packed[2]);
+    let lo_8bits_1b = _mm256_slli_epi16::<8>(packed[3]);
+    let lo_8bits_2a = _mm256_and_si256(packed[0], lo_mask);
+    let lo_8bits_2b = _mm256_and_si256(packed[1], lo_mask);
 
-    (packed_hi_8bits, packed_lo_8bits)
+    let lo_8bits_a = _mm256_or_si256(lo_8bits_1a, lo_8bits_2a);
+    let lo_8bits_b = _mm256_or_si256(lo_8bits_1b, lo_8bits_2b);
+
+    let hi_8bits_1a = _mm256_srli_epi16::<8>(packed[0]);
+    let hi_8bits_1b = _mm256_srli_epi16::<8>(packed[1]);
+    let hi_8bits_2a = _mm256_and_si256(packed[2], hi_mask);
+    let hi_8bits_2b = _mm256_and_si256(packed[3], hi_mask);
+
+    let hi_8bits_a = _mm256_or_si256(hi_8bits_1a, hi_8bits_2a);
+    let hi_8bits_b = _mm256_or_si256(hi_8bits_1b, hi_8bits_2b);
+
+    ([hi_8bits_a, hi_8bits_b], [lo_8bits_a, lo_8bits_b])
 }
 
 #[target_feature(enable = "avx2")]
@@ -458,9 +502,9 @@ mod tests {
         let packed = unsafe { pack_u32_to_u16_unordered(data) };
 
         let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(packed) };
-        assert_eq!(view[..8], [0, 1, 2, 3, 16, 17, 18, 19]);
-        assert_eq!(view[8..][..8], [4, 5, 6, 7, 20, 21, 22, 23]);
-        assert_eq!(view[16..][..8], [8, 9, 10, 11, 24, 25, 26, 27]);
+        assert_eq!(view[..8], [0, 16, 1, 17, 2, 18, 3, 19]);
+        assert_eq!(view[8..][..8], [4, 20, 5, 21, 6, 22, 7, 23]);
+        assert_eq!(view[16..][..8], [8, 24, 9, 25, 10, 26, 11, 27]);
     }
 
     #[test]
@@ -532,10 +576,10 @@ mod tests {
         let packed = unsafe { pack_u32_to_u8_unordered(data) };
 
         let view = unsafe { std::mem::transmute::<[__m256i; 2], [u8; X64]>(packed) };
-        assert_eq!(view[..8], [0, 1, 2, 3, 16, 17, 18, 19]);
-        assert_eq!(view[8..][..8], [32, 33, 34, 35, 48, 49, 50, 51]);
-        assert_eq!(view[16..][..8], [4, 5, 6, 7, 20, 21, 22, 23]);
-        assert_eq!(view[24..][..8], [36, 37, 38, 39, 52, 53, 54, 55]);
+        assert_eq!(view[..8], [0, 32, 16, 48, 1, 33, 17, 49]);
+        assert_eq!(view[8..][..8], [2, 34, 18, 50, 3, 35, 19, 51]);
+        assert_eq!(view[16..][..8], [4, 36, 20, 52, 5, 37, 21, 53]);
+        assert_eq!(view[24..][..8], [6, 38, 22, 54, 7, 39, 23, 55]);
     }
 
     #[test]
@@ -574,23 +618,6 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    fn test_unpack_u8_u16_unordered() {
-        let mut input = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            input[i] = i as u16;
-        }
-
-        let data = unsafe { load_si256x4(input.as_ptr().cast()) };
-        let packed = unsafe { pack_u16_to_u8_unordered(data) };
-        let unpacked = unsafe { unpack_u8_to_u16_unordered(packed) };
-
-        let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
-        assert_eq!(view, input);
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "avx2"), ignore)]
     fn test_unpack_u8_u16_ordered() {
         let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
@@ -604,18 +631,6 @@ mod tests {
 
         let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
         assert_eq!(view, input);
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    fn test_pack_u16_to_u8_unordered_layout() {
-        let input: [u16; X64] = std::array::from_fn(|i| i as u16);
-
-        let data = unsafe { load_si256x4(input.as_ptr().cast()) };
-        let packed = unsafe { pack_u16_to_u8_unordered(data) };
-
-        let view = unsafe { std::mem::transmute::<[__m256i; 2], [u8; X64]>(packed) };
-        assert_eq!(view, PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
     }
 
     #[test]
