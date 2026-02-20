@@ -169,51 +169,23 @@ pub(super) fn pack_u32_to_u8_unordered(data: [__m256i; 8]) -> [__m256i; 2] {
 /// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u8_to_u32_unordered(data: [__m256i; 2]) -> [__m256i; 8] {
-    let mask = _mm256_set1_epi32(0xFF);
-
-    let shift_1 = [data[0], data[1]];
-    let shift_2 = [
-        _mm256_srli_epi32::<8>(data[0]),
-        _mm256_srli_epi32::<8>(data[1]),
-    ];
-    let shift_3 = [
-        _mm256_srli_epi32::<16>(data[0]),
-        _mm256_srli_epi32::<16>(data[1]),
-    ];
-    let shift_4 = [
-        _mm256_srli_epi32::<24>(data[0]),
-        _mm256_srli_epi32::<24>(data[1]),
-    ];
-
-    [
-        _mm256_and_si256(shift_1[0], mask),
-        _mm256_and_si256(shift_1[1], mask),
-        _mm256_and_si256(shift_3[0], mask),
-        _mm256_and_si256(shift_3[1], mask),
-        _mm256_and_si256(shift_2[0], mask),
-        _mm256_and_si256(shift_2[1], mask),
-        _mm256_and_si256(shift_4[0], mask),
-        _mm256_and_si256(shift_4[1], mask),
-    ]
+    let partially_unpacked = unpack_u8_to_u16_unordered(data);
+    unpack_u16_to_u32_unordered(partially_unpacked)
 }
 
 #[target_feature(enable = "avx2")]
 /// Unpack 2 sets of registers containing 16-bit elements and produce 4 registers holding
 /// 16-bit elements.
 pub(super) fn unpack_u8_to_u16_unordered(data: [__m256i; 2]) -> [__m256i; 4] {
-    let mask = _mm256_set1_epi16(0xFF);
-
-    let shift_1 = [data[0], data[1]];
-    let shift_2 = [
-        _mm256_srli_epi16::<8>(data[0]),
-        _mm256_srli_epi16::<8>(data[1]),
-    ];
+    let zeroes = _mm256_setzero_si256();
+    // Note: We're still operating on u8s, this is just a way to use a broadcast rather than array load.
+    let mask = _mm256_set1_epi16(0xFF_00u16 as i16);
 
     [
-        _mm256_and_si256(shift_1[0], mask),
-        _mm256_and_si256(shift_1[1], mask),
-        _mm256_and_si256(shift_2[0], mask),
-        _mm256_and_si256(shift_2[1], mask),
+        _mm256_blendv_epi8(data[0], zeroes, mask),
+        _mm256_blendv_epi8(data[1], zeroes, mask),
+        _mm256_srli_epi16::<8>(data[0]),
+        _mm256_srli_epi16::<8>(data[1]),
     ]
 }
 
@@ -288,28 +260,17 @@ pub(super) fn pack_u32_to_u16_unordered(data: [__m256i; 8]) -> [__m256i; 4] {
 /// Unpack 4 sets of registers containing 16-bit elements and produce 8 registers holding
 /// 32-bit elements.
 pub(super) fn unpack_u16_to_u32_unordered(data: [__m256i; 4]) -> [__m256i; 8] {
-    let mask = _mm256_set1_epi32(0xFFFF);
-
-    let shift_1 = [data[0], data[1]];
-    let shift_2 = [
-        _mm256_srli_epi32::<16>(data[0]),
-        _mm256_srli_epi32::<16>(data[1]),
-    ];
-    let shift_3 = [data[2], data[3]];
-    let shift_4 = [
-        _mm256_srli_epi32::<16>(data[2]),
-        _mm256_srli_epi32::<16>(data[3]),
-    ];
+    let zeroes = _mm256_setzero_si256();
 
     [
-        _mm256_and_si256(shift_1[0], mask),
-        _mm256_and_si256(shift_1[1], mask),
-        _mm256_and_si256(shift_2[0], mask),
-        _mm256_and_si256(shift_2[1], mask),
-        _mm256_and_si256(shift_3[0], mask),
-        _mm256_and_si256(shift_3[1], mask),
-        _mm256_and_si256(shift_4[0], mask),
-        _mm256_and_si256(shift_4[1], mask),
+        _mm256_blend_epi16::<0b10101010>(data[0], zeroes),
+        _mm256_blend_epi16::<0b10101010>(data[1], zeroes),
+        _mm256_srli_epi32::<16>(data[0]),
+        _mm256_srli_epi32::<16>(data[1]),
+        _mm256_blend_epi16::<0b10101010>(data[2], zeroes),
+        _mm256_blend_epi16::<0b10101010>(data[3], zeroes),
+        _mm256_srli_epi32::<16>(data[2]),
+        _mm256_srli_epi32::<16>(data[3]),
     ]
 }
 
@@ -464,7 +425,7 @@ mod tests {
 
     use super::*;
     use crate::X64;
-    use crate::uint32::avx2::data::{load_si256x4, load_u32x64};
+    use crate::uint32::avx2::data::{load_si256x2, load_si256x4, load_u32x64};
     use crate::uint32::test_util::*;
 
     #[test]
@@ -509,7 +470,7 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    fn test_unpack_u32_u16_ordered() {
+    fn test_unpack_u16_u32_ordered() {
         let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
         for i in 0..X64 {
@@ -526,7 +487,7 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    fn test_unpack_u32_u16_unordered() {
+    fn test_unpack_u16_u32_unordered() {
         let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
         for i in 0..X64 {
@@ -584,7 +545,7 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    fn test_unpack_u32_u8_ordered() {
+    fn test_unpack_u8_u32_ordered() {
         let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
         for i in 0..X64 {
@@ -601,7 +562,7 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    fn test_unpack_u32_u8_unordered() {
+    fn test_unpack_u8_u32_unordered() {
         let mut input = [0; X64];
         #[allow(clippy::needless_range_loop)]
         for i in 0..X64 {
@@ -655,5 +616,17 @@ mod tests {
 
         let view = unsafe { std::mem::transmute::<[__m256i; 2], [u8; X64]>(packed) };
         assert_eq!(view, PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,);
+    }
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_unpack_u8_to_u16_unordered_layout() {
+        let expected: [u16; X64] = std::array::from_fn(|i| i as u16);
+
+        let data = unsafe { load_si256x2(PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT.as_ptr()) };
+        let unpacked = unsafe { unpack_u8_to_u16_unordered(data) };
+
+        let view = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
+        assert_eq!(view, expected);
     }
 }
