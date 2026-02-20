@@ -787,7 +787,7 @@ mod tests {
         for value in values.iter_mut() {
             *value = fastrand::u32(0..max_value);
         }
-        let data = unsafe { load_u32x64(&values) };
+        let data = load_u32x64(&values);
 
         let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { packer(packed.as_mut_ptr(), data, X64) };
@@ -844,7 +844,7 @@ mod tests {
             for value in values.iter_mut() {
                 *value = fastrand::u32(0..max_value);
             }
-            let data = unsafe { load_u32x64(&values) };
+            let data = load_u32x64(&values);
 
             let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
             unsafe { packer(packed.as_mut_ptr(), data, length) };
