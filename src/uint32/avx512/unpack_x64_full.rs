@@ -38,16 +38,8 @@ pub(super) unsafe fn from_u2(input: *const u8) -> [__m512i; 4] {
 /// Unpack eight registers containing 64 8-bit elements from a 2-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u2_registers(input: *const u8) -> __m512i {
-    let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
-    let mask2: u64 = unsafe { std::ptr::read_unaligned(input.add(8).cast()) };
-
-    let bit = _mm512_set1_epi8(0b01);
-    let lo_bits_packed = _mm512_maskz_mov_epi8(mask1, bit);
-
-    let bit = _mm512_set1_epi8(0b10);
-    let hi_bits_packed = _mm512_maskz_mov_epi8(mask2, bit);
-
-    _mm512_or_si512(hi_bits_packed, lo_bits_packed)
+    let packed_2bit = unsafe { _mm_loadu_si128(input.add(0).cast()) };
+    unpack_u2_to_u8_unordered(packed_2bit)
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
@@ -65,21 +57,15 @@ pub(super) unsafe fn from_u3(input: *const u8) -> [__m512i; 4] {
 /// Unpack eight registers containing 64 8-bit elements from a 3-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u3_registers(input: *const u8) -> __m512i {
-    let mask1: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
-    let mask2: u64 = unsafe { std::ptr::read_unaligned(input.add(8).cast()) };
-    let mask3: u64 = unsafe { std::ptr::read_unaligned(input.add(16).cast()) };
+    let packed_2bit = unsafe { _mm_loadu_si128(input.add(0).cast()) };
+    let lo_2bits = unpack_u2_to_u8_unordered(packed_2bit);
 
-    let bit = _mm512_set1_epi8(0b001);
-    let b0_bits_packed = _mm512_maskz_mov_epi8(mask1, bit);
-
-    let bit = _mm512_set1_epi8(0b010);
-    let b1_bits_packed = _mm512_maskz_mov_epi8(mask2, bit);
+    let hi_bitmask: u64 = unsafe { std::ptr::read_unaligned(input.add(16).cast()) };
 
     let bit = _mm512_set1_epi8(0b100);
-    let b2_bits_packed = _mm512_maskz_mov_epi8(mask3, bit);
+    let hi_1bits = _mm512_maskz_mov_epi8(hi_bitmask, bit);
 
-    const OP_MASK: i32 = _MM_TERNLOG_C | _MM_TERNLOG_B | _MM_TERNLOG_A;
-    _mm512_ternarylogic_epi32::<OP_MASK>(b2_bits_packed, b1_bits_packed, b0_bits_packed)
+    _mm512_or_si512(hi_1bits, lo_2bits)
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]
@@ -97,7 +83,8 @@ pub(super) unsafe fn from_u4(input: *const u8) -> [__m512i; 4] {
 /// Unpack eight registers containing 64 8-bit elements from a 4-bit nibbles provided
 /// by `input`.
 unsafe fn unpack_u4_registers(input: *const u8) -> __m512i {
-    unsafe { super::unpack_x64_partial::unpack_u4_registers(input) }
+    let packed = unsafe { _mm256_loadu_si256(input.cast()) };
+    unpack_u4_to_u8_unordered(packed)
 }
 
 #[target_feature(enable = "avx512f", enable = "avx512bw")]

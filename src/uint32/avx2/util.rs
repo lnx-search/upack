@@ -353,7 +353,6 @@ pub(super) fn pack_u32_to_u16_split_unordered(data: [__m256i; 8]) -> ([__m256i; 
     ([hi_8bits_a, hi_8bits_b], [lo_8bits_a, lo_8bits_b])
 }
 
-
 #[target_feature(enable = "avx2")]
 pub(super) fn pack_u8_to_u4_unordered(data: [__m256i; 2]) -> __m256i {
     let shifted = _mm256_slli_epi16::<4>(data[1]);

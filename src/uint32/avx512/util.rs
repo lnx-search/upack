@@ -237,6 +237,39 @@ pub(super) fn unpack_u8_to_u16_unordered(data: __m512i) -> [__m512i; 2] {
     ]
 }
 
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+pub(super) fn pack_u8_to_u4_unordered(data: __m512i) -> __m256i {
+    let lo = _mm512_castsi512_si256(data);
+    let hi = _mm512_extracti64x4_epi64::<1>(data);
+    _mm256_or_si256(_mm256_slli_epi16::<4>(hi), lo)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+pub(super) fn unpack_u4_to_u8_unordered(data: __m256i) -> __m512i {
+    let mask = _mm256_set1_epi8(0x0F);
+    let lo_nibbles = _mm256_and_si256(data, mask);
+    let hi_nibbles = _mm256_and_si256(_mm256_srli_epi16::<4>(data), mask);
+    let extended = _mm512_castsi256_si512(lo_nibbles);
+    _mm512_inserti64x4::<1>(extended, hi_nibbles)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+pub(super) fn pack_u8_to_u2_unordered(data: __m512i) -> __m128i {
+    let nibbles = pack_u8_to_u4_unordered(data);
+    let lo = _mm256_castsi256_si128(nibbles);
+    let hi = _mm256_extracti128_si256::<1>(nibbles);
+    _mm_or_si128(lo, _mm_slli_epi16::<2>(hi))
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+pub(super) fn unpack_u2_to_u8_unordered(data: __m128i) -> __m512i {
+    let mask = _mm_set1_epi8(0b0011_0011);
+    let lo = _mm_and_si128(data, mask);
+    let hi = _mm_and_si128(_mm_srli_epi16::<2>(data), mask);
+    let nibbles = _mm256_set_m128i(hi, lo);
+    unpack_u4_to_u8_unordered(nibbles)
+}
+
 #[target_feature(enable = "avx512f")]
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_si512<const N: usize>(mut data: [__m512i; N], mask: __m512i) -> [__m512i; N] {
@@ -557,6 +590,38 @@ mod tests {
         let unpacked = unsafe { unpack_u8_to_u16_unordered(data) };
 
         let view = unsafe { std::mem::transmute::<[__m512i; 2], [u16; X64]>(unpacked) };
+        assert_eq!(view, expected);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u4_to_u8_unordered() {
+        let expected: [u8; X64] = std::array::from_fn(|i| i as u8 % 16);
+
+        let data = unsafe { _mm512_loadu_epi8(expected.as_ptr().cast()) };
+        let packed = unsafe { pack_u8_to_u4_unordered(data) };
+        let unpacked = unsafe { unpack_u4_to_u8_unordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(unpacked) };
+        assert_eq!(view, expected);
+    }
+
+    #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
+    fn test_unpack_u2_to_u8_unordered() {
+        let expected: [u8; X64] = std::array::from_fn(|i| i as u8 % 4);
+
+        let data = unsafe { _mm512_loadu_epi8(expected.as_ptr().cast()) };
+        let packed = unsafe { pack_u8_to_u2_unordered(data) };
+        let unpacked = unsafe { unpack_u2_to_u8_unordered(packed) };
+
+        let view = unsafe { std::mem::transmute::<__m512i, [u8; X64]>(unpacked) };
         assert_eq!(view, expected);
     }
 }
