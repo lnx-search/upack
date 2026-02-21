@@ -1,0 +1,16 @@
+[package]
+name = "generate-layout-samples"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+fastrand = "2"
+
+serde = { version = "1", features = ["derive"] }
+clap = { version = "4", features = ["derive"] }
+
+upack = { path = "../.." }
