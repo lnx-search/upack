@@ -99,13 +99,14 @@ mod tests {
     use crate::uint32::X128_MAX_OUTPUT_LEN;
 
     #[test]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_v1_layout_regression() {
         let tester = crate::uint32::test_util::load_uint32_regression_layout();
 
         let mut output_buffer = [0; X128_MAX_OUTPUT_LEN];
         for (len, bit_len, input, expected_output) in tester.iter_tests() {
             unsafe {
-                crate::uint32::avx512::pack_x128::to_nbits(
+                to_nbits(
                     bit_len as usize,
                     output_buffer.as_mut_ptr(),
                     input,

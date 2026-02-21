@@ -100,6 +100,10 @@ mod tests {
     use crate::uint32::X128_MAX_OUTPUT_LEN;
 
     #[test]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
     fn test_v1_layout_regression() {
         let tester = crate::uint32::test_util::load_uint32_regression_layout();
 
