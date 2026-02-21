@@ -10,7 +10,7 @@ mod runner;
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[arg(short = 'd', long = "duration", default_value = "30s")]
+    #[arg(short = 'd', long = "duration", default_value = "15s")]
     /// The time to run for each routine in some human-readable format, i.e. "10m".
     run_duration: humantime::Duration,
     #[arg(short = 's', long, default_value = "1000000")]
