@@ -81,8 +81,8 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [__m256i; 2]) {
     let hi_1bit2 = _mm256_slli_epi16::<5>(d2);
     let hi_1bitmask2 = _mm256_movemask_epi8(hi_1bit2) as u32;
 
-    let b2_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
-    unsafe { std::ptr::write_unaligned(out.add(16).cast(), b2_merged_mask) };
+    let hi_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
+    unsafe { std::ptr::write_unaligned(out.add(16).cast(), hi_merged_mask) };
 }
 
 #[target_feature(enable = "avx2")]

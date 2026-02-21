@@ -629,10 +629,10 @@ pub unsafe fn from_u32(input: *const u8) -> [__m256i; 8] {
 mod tests {
     use super::*;
     use crate::X64;
-    use crate::uint32::X128_MAX_OUTPUT_LEN;
     use crate::uint32::avx2::pack_x64_full::*;
     #[cfg(feature = "avx512")]
     use crate::uint32::avx512;
+    use crate::uint32::{X128_MAX_OUTPUT_LEN, scalar};
 
     #[rstest::rstest]
     #[case(1, from_u1)]
@@ -790,6 +790,62 @@ mod tests {
             *value = fastrand::u32(0..max_value);
         }
         let data = unsafe { avx512::data::load_u32x64(&values) };
+
+        let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
+        unsafe { packer(packed.as_mut_ptr(), data) };
+
+        let unpacked = unsafe { unpacker(packed.as_ptr()) };
+        let unpacked = unsafe { std::mem::transmute::<[__m256i; 8], [u32; X64]>(unpacked) };
+        assert_eq!(unpacked, values);
+    }
+
+    #[rstest::rstest]
+    #[case(1, scalar::pack_x64_full::to_u1, from_u1)]
+    #[case(2, scalar::pack_x64_full::to_u2, from_u2)]
+    #[case(3, scalar::pack_x64_full::to_u3, from_u3)]
+    #[case(4, scalar::pack_x64_full::to_u4, from_u4)]
+    #[case(5, scalar::pack_x64_full::to_u5, from_u5)]
+    #[case(6, scalar::pack_x64_full::to_u6, from_u6)]
+    #[case(7, scalar::pack_x64_full::to_u7, from_u7)]
+    #[case(8, scalar::pack_x64_full::to_u8, from_u8)]
+    #[case(9, scalar::pack_x64_full::to_u9, from_u9)]
+    #[case(10, scalar::pack_x64_full::to_u10, from_u10)]
+    #[case(11, scalar::pack_x64_full::to_u11, from_u11)]
+    #[case(12, scalar::pack_x64_full::to_u12, from_u12)]
+    #[case(13, scalar::pack_x64_full::to_u13, from_u13)]
+    #[case(14, scalar::pack_x64_full::to_u14, from_u14)]
+    #[case(15, scalar::pack_x64_full::to_u15, from_u15)]
+    #[case(16, scalar::pack_x64_full::to_u16, from_u16)]
+    #[case(17, scalar::pack_x64_full::to_u17, from_u17)]
+    #[case(18, scalar::pack_x64_full::to_u18, from_u18)]
+    #[case(19, scalar::pack_x64_full::to_u19, from_u19)]
+    #[case(20, scalar::pack_x64_full::to_u20, from_u20)]
+    #[case(21, scalar::pack_x64_full::to_u21, from_u21)]
+    #[case(22, scalar::pack_x64_full::to_u22, from_u22)]
+    #[case(23, scalar::pack_x64_full::to_u23, from_u23)]
+    #[case(24, scalar::pack_x64_full::to_u24, from_u24)]
+    #[case(25, scalar::pack_x64_full::to_u25, from_u25)]
+    #[case(26, scalar::pack_x64_full::to_u26, from_u26)]
+    #[case(27, scalar::pack_x64_full::to_u27, from_u27)]
+    #[case(28, scalar::pack_x64_full::to_u28, from_u28)]
+    #[case(29, scalar::pack_x64_full::to_u29, from_u29)]
+    #[case(30, scalar::pack_x64_full::to_u30, from_u30)]
+    #[case(31, scalar::pack_x64_full::to_u31, from_u31)]
+    #[case(32, scalar::pack_x64_full::to_u32, from_u32)]
+    fn test_unpack_scalar_packed(
+        #[case] bit_len: u8,
+        #[case] packer: unsafe fn(*mut u8, [scalar::polyfill::u32x8; 8]),
+        #[case] unpacker: unsafe fn(*const u8) -> [__m256i; 8],
+    ) {
+        fastrand::seed(5876358762523525);
+
+        let max_value = (2u64.pow(bit_len as u32) - 1) as u32;
+
+        let mut values = [0; X64];
+        for value in values.iter_mut() {
+            *value = fastrand::u32(0..max_value);
+        }
+        let data = scalar::data::load_u32x64(&values);
 
         let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { packer(packed.as_mut_ptr(), data) };
