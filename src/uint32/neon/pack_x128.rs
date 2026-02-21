@@ -105,14 +105,7 @@ mod tests {
 
         let mut output_buffer = [0; X128_MAX_OUTPUT_LEN];
         for (len, bit_len, input, expected_output) in tester.iter_tests() {
-            unsafe {
-                to_nbits(
-                    bit_len as usize,
-                    output_buffer.as_mut_ptr(),
-                    input,
-                    len,
-                )
-            };
+            unsafe { to_nbits(bit_len as usize, output_buffer.as_mut_ptr(), input, len) };
 
             let produced_buffer = &output_buffer[..expected_output.len()];
             assert_eq!(
