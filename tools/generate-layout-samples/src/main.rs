@@ -23,7 +23,11 @@ fn main() -> anyhow::Result<()> {
 
     tracing::info!("generating layout data output={}", args.output.display());
 
-    let mut metadata = Metadata::default();
+    let mut metadata = Metadata {
+        seeds: SEEDS.to_vec(),
+        ..Default::default()
+    };
+
     for seed in SEEDS {
         generate_permutations(&args.output, &mut metadata, seed)
             .context("generate permutations")?;
@@ -39,14 +43,16 @@ fn main() -> anyhow::Result<()> {
 
 #[derive(Default, Serialize)]
 struct Metadata {
+    seeds: Vec<u64>,
     offsets: BTreeMap<String, Vec<BlockMetadata>>,
 }
 
 #[derive(Serialize)]
 struct BlockMetadata {
     seed: u64,
-    start: usize,
-    length: usize,
+    compressed_start: usize,
+    compressed_length: usize,
+    input_start: usize,
 }
 
 fn generate_permutations(output: &Path, metadata: &mut Metadata, seed: u64) -> anyhow::Result<()> {
@@ -55,6 +61,7 @@ fn generate_permutations(output: &Path, metadata: &mut Metadata, seed: u64) -> a
     let mut temp_output = [0; X128_MAX_OUTPUT_LEN];
 
     let mut output_buffer = Vec::new();
+    let mut input_buffer = Vec::new();
 
     for len in 1..=X128 {
         for bit_len in 1..=32 {
@@ -72,13 +79,17 @@ fn generate_permutations(output: &Path, metadata: &mut Metadata, seed: u64) -> a
                 "bit len doesn't match expected"
             );
 
-            let start = output_buffer.len();
+            let output_start = output_buffer.len();
             output_buffer.extend_from_slice(&temp_output[..output.bytes_written]);
+
+            let input_start = input_buffer.len();
+            input_buffer.extend_from_slice(&sample);
 
             let block = BlockMetadata {
                 seed,
-                start,
-                length: output.bytes_written,
+                compressed_start: output_start,
+                compressed_length: output.bytes_written,
+                input_start,
             };
 
             metadata
@@ -88,6 +99,10 @@ fn generate_permutations(output: &Path, metadata: &mut Metadata, seed: u64) -> a
                 .push(block);
         }
     }
+
+    let raw_buffer: &[u8] = bytemuck::cast_slice(&input_buffer);
+    std::fs::write(output.join(format!("seeded-{seed}.raw")), raw_buffer)
+        .context("write raw input buffer")?;
 
     std::fs::write(output.join(format!("seeded-{seed}.upack")), output_buffer)
         .context("write compressed buffer")?;

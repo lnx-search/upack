@@ -92,3 +92,32 @@ define_x128_packer!(to_u29, 29);
 define_x128_packer!(to_u30, 30);
 define_x128_packer!(to_u31, 31);
 define_x128_packer!(to_u32, 32);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::uint32::X128_MAX_OUTPUT_LEN;
+
+    #[test]
+    fn test_v1_layout_regression() {
+        let tester = crate::uint32::test_util::load_uint32_regression_layout();
+
+        let mut output_buffer = [0; X128_MAX_OUTPUT_LEN];
+        for (len, bit_len, input, expected_output) in tester.iter_tests() {
+            unsafe {
+                crate::uint32::avx512::pack_x128::to_nbits(
+                    bit_len as usize,
+                    output_buffer.as_mut_ptr(),
+                    input,
+                    len,
+                )
+            };
+
+            let produced_buffer = &output_buffer[..expected_output.len()];
+            assert_eq!(
+                produced_buffer, expected_output,
+                "regression test failed, outputs do not match, length:{len} bit_len:{bit_len}"
+            )
+        }
+    }
+}

@@ -274,6 +274,7 @@ name = "generate-layout-samples"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bytemuck",
  "clap",
  "fastrand",
  "serde",
@@ -781,6 +782,8 @@ dependencies = [
  "bytemuck",
  "fastrand",
  "rstest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

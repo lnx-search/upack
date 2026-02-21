@@ -13,4 +13,4 @@ bench:
     cargo bench
 
 test:
-    RUSTFLAGS="-Ctarget-cpu=native" cargo nextest run --workspace
+    RUSTFLAGS="-Ctarget-cpu=native" cargo nextest run --workspace --no-fail-fast
