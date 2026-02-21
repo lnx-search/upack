@@ -1,7 +1,8 @@
 use std::time::{Duration, Instant};
+
+use comfy_table::Table;
 use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
-use comfy_table::Table;
 use upack::X128;
 
 use crate::routine::Routine;
@@ -42,10 +43,7 @@ impl From<Config> for RunContext {
                 "Bytes Throughput",
             ]);
 
-        Self {
-            config,
-            table,
-        }
+        Self { config, table }
     }
 }
 

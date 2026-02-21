@@ -56,12 +56,22 @@ fn main() {
     };
 
     let mut runner = runner::RunContext::from(config);
+
+    // Compressors
     runner.run::<lib_upack::UpackCompressBase>();
     runner.run::<lib_upack::UpackCompressDelta>();
     runner.run::<lib_upack::UpackCompressDelta1>();
     runner.run::<lib_bitpacking::BitpackingCompressBase>();
     runner.run::<lib_bitpacking::BitpackingCompressDelta>();
     runner.run::<lib_bitpacking::BitpackingCompressDelta1>();
+
+    // Decompressors
+    runner.run::<lib_upack::UpackDecompressBase>();
+    runner.run::<lib_upack::UpackDecompressDelta>();
+    runner.run::<lib_upack::UpackDecompressDelta1>();
+    runner.run::<lib_bitpacking::BitpackingDecompressBase>();
+    runner.run::<lib_bitpacking::BitpackingDecompressDelta>();
+    runner.run::<lib_bitpacking::BitpackingDecompressDelta1>();
 
     tracing::info!("benchmark complete, results:");
 
