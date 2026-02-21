@@ -114,10 +114,6 @@ impl IndexMut<usize> for u8x32 {
 /// A block of 4, 32-bit elements.
 pub(crate) struct u32x4([u32; 4]);
 
-impl u32x4 {
-    pub const ZERO: Self = Self([0; 4]);
-}
-
 impl From<u16x8> for u32x4 {
     fn from(value: u16x8) -> Self {
         unsafe { std::mem::transmute(value) }
@@ -216,21 +212,25 @@ impl IndexMut<usize> for u8x16 {
     }
 }
 
+#[inline]
 /// Broadcast the single 32-bit element across all lanes in the register.
 pub(crate) fn _scalar_set1_u32(value: u32) -> u32x8 {
     u32x8([value; 8])
 }
 
+#[inline]
 /// Broadcast the single 16-bit element across all lanes in the register.
 pub(crate) fn _scalar_set1_u16(value: u16) -> u16x16 {
     u16x16([value; 16])
 }
 
+#[inline]
 /// Broadcast the single 8-bit element across all lanes in the register.
 pub(crate) fn _scalar_set1_u8(value: u8) -> u8x32 {
     u8x32([value; 32])
 }
 
+#[inline]
 /// Load 8, 32-bit elements from the provided `ptr`.
 ///
 /// # Safety
@@ -239,6 +239,7 @@ pub(crate) unsafe fn _scalar_load_u32x8(ptr: *const u32) -> u32x8 {
     unsafe { _scalar_load_u8x32(ptr.cast()).into() }
 }
 
+#[inline]
 /// Load 16, 16-bit elements from the provided `ptr`.
 ///
 /// # Safety
@@ -247,6 +248,7 @@ pub(crate) unsafe fn _scalar_load_u16x16(ptr: *const u16) -> u16x16 {
     unsafe { _scalar_load_u8x32(ptr.cast()).into() }
 }
 
+#[inline]
 /// Load 32, 8-bit elements from the provided `ptr`.
 ///
 /// # Safety
@@ -257,6 +259,7 @@ pub(crate) unsafe fn _scalar_load_u8x32(ptr: *const u8) -> u8x32 {
     block
 }
 
+#[inline]
 /// Load 16, 8-bit elements from the provided `ptr`.
 ///
 /// # Safety
@@ -267,6 +270,7 @@ pub(crate) unsafe fn _scalar_load_u8x16(ptr: *const u8) -> u8x16 {
     block
 }
 
+#[inline]
 /// Store 8, 32-bit elements in the provided `ptr`.
 ///
 /// # Safety
@@ -275,6 +279,7 @@ pub(crate) unsafe fn _scalar_store_u32x8(ptr: *mut u32, reg: u32x8) {
     unsafe { std::ptr::copy_nonoverlapping(reg.0.as_ptr(), ptr, 8) };
 }
 
+#[inline]
 /// Store 16, 16-bit elements in the provided `ptr`.
 ///
 /// # Safety
@@ -283,6 +288,7 @@ pub(crate) unsafe fn _scalar_store_u16x16(ptr: *mut u16, reg: u16x16) {
     unsafe { std::ptr::copy_nonoverlapping(reg.0.as_ptr(), ptr, 16) };
 }
 
+#[inline]
 /// Store 32, 8-bit elements in the provided `ptr`.
 ///
 /// # Safety
@@ -291,6 +297,7 @@ pub(crate) unsafe fn _scalar_store_u8x32(ptr: *mut u8, reg: u8x32) {
     unsafe { std::ptr::copy_nonoverlapping(reg.0.as_ptr(), ptr, 32) };
 }
 
+#[inline]
 /// Store 16, 8-bit elements in the provided `ptr`.
 ///
 /// # Safety
@@ -299,69 +306,7 @@ pub(crate) unsafe fn _scalar_store_u8x16(ptr: *mut u8, reg: u8x16) {
     unsafe { std::ptr::copy_nonoverlapping(reg.0.as_ptr(), ptr, 16) };
 }
 
-/// Pack the two provide [u32x8] registers to unsigned 16-bit integers in blocks
-/// of 128-bits.
-pub(crate) fn _scalar_pack_u32x8(a: u32x8, b: u32x8) -> u16x16 {
-    let mut out = u16x16::ZERO;
-
-    // Note:
-    // Mirrors the `packusdw` intel instruction in terms of layout, but the saturation
-    // behaviour is slightly different, that being said, we don't depend on that behaviour
-    // at all, technically the codegen could be a bit better, however, it isn't worth the effort.
-
-    // low 128-bits in a
-    for i in 0..4 {
-        out[i] = a[i] as u16;
-    }
-
-    // low 128-bits in b
-    for i in 0..4 {
-        out[i + 4] = b[i] as u16;
-    }
-
-    // high 128-bits in a
-    for i in 4..8 {
-        out[i + 4] = a[i] as u16;
-    }
-
-    // high 128-bits in b
-    for i in 4..8 {
-        out[i + 8] = b[i] as u16;
-    }
-
-    out
-}
-
-/// Pack the two provide [u16x16] registers to unsigned 8-bit integers in blocks
-/// of 128-bits.
-pub(crate) fn _scalar_pack_u16x16(a: u16x16, b: u16x16) -> u8x32 {
-    let mut out = u8x32::ZERO;
-
-    // Note: See _scalar_pack_u32x8 on differences in saturation behaviour.
-
-    // low 128-bits in a
-    for i in 0..8 {
-        out[i] = a[i] as u8;
-    }
-
-    // low 128-bits in b
-    for i in 0..8 {
-        out[i + 8] = b[i] as u8;
-    }
-
-    // high 128-bits in a
-    for i in 8..16 {
-        out[i + 8] = a[i] as u8;
-    }
-
-    // high 128-bits in b
-    for i in 8..16 {
-        out[i + 16] = b[i] as u8;
-    }
-
-    out
-}
-
+#[inline]
 /// Convert the provided 8-bit elements in register `a` to 16-bit integers via extension.
 pub(crate) fn _scalar_cvteu16_u8x16(a: u8x16) -> u16x16 {
     let mut out = u16x16::ZERO;
@@ -371,6 +316,7 @@ pub(crate) fn _scalar_cvteu16_u8x16(a: u8x16) -> u16x16 {
     out
 }
 
+#[inline]
 /// Convert the provided 16-bit elements in register `a` to 32-bit integers via extension.
 pub(crate) fn _scalar_cvteu32_u16x8(a: u16x8) -> u32x8 {
     let mut out = u32x8::ZERO;
@@ -380,6 +326,7 @@ pub(crate) fn _scalar_cvteu32_u16x8(a: u16x8) -> u32x8 {
     out
 }
 
+#[inline]
 /// Convert the provided [u32x8] register into a single [u16x8] register using
 /// truncation.
 pub(crate) fn _scalar_cvteu16_u32x8(a: u32x8) -> u16x8 {
@@ -390,6 +337,7 @@ pub(crate) fn _scalar_cvteu16_u32x8(a: u32x8) -> u16x8 {
     out
 }
 
+#[inline]
 /// Convert the provided [u16x16] register into a single [u8x16] register using
 /// truncation.
 pub(crate) fn _scalar_cvteu8_u16x16(a: u16x16) -> u8x16 {
@@ -400,6 +348,7 @@ pub(crate) fn _scalar_cvteu8_u16x16(a: u16x16) -> u8x16 {
     out
 }
 
+#[inline]
 /// Combine two [u32x4] registers via concatenation forming a [u32x8] register.
 pub(crate) fn _scalar_combine_u32x4(a: u32x4, b: u32x4) -> u32x8 {
     let mut block = u32x8::ZERO;
@@ -409,6 +358,7 @@ pub(crate) fn _scalar_combine_u32x4(a: u32x4, b: u32x4) -> u32x8 {
     block
 }
 
+#[inline]
 /// Combine two [u16x8] registers via concatenation forming a [u16x16] register.
 pub(crate) fn _scalar_combine_u16x8(a: u16x8, b: u16x8) -> u16x16 {
     let mut block = u16x16::ZERO;
@@ -418,6 +368,7 @@ pub(crate) fn _scalar_combine_u16x8(a: u16x8, b: u16x8) -> u16x16 {
     block
 }
 
+#[inline]
 /// Combine two [u8x16] registers via concatenation forming a [u8x32] register.
 pub(crate) fn _scalar_combine_u8x16(a: u8x16, b: u8x16) -> u8x32 {
     let mut block = u8x32::ZERO;
@@ -427,6 +378,7 @@ pub(crate) fn _scalar_combine_u8x16(a: u8x16, b: u8x16) -> u8x32 {
     block
 }
 
+#[inline]
 /// Perform a bitwise AND on the provided registers `a` and `b`.
 pub(crate) fn _scalar_and_u32x8(mut a: u32x8, b: u32x8) -> u32x8 {
     for i in 0..8 {
@@ -435,16 +387,19 @@ pub(crate) fn _scalar_and_u32x8(mut a: u32x8, b: u32x8) -> u32x8 {
     a
 }
 
+#[inline]
 /// Perform a bitwise AND on the provided registers `a` and `b`.
 pub(crate) fn _scalar_and_u16x16(a: u16x16, b: u16x16) -> u16x16 {
     _scalar_and_u32x8(a.into(), b.into()).into()
 }
 
+#[inline]
 /// Perform a bitwise AND on the provided registers `a` and `b`.
 pub(crate) fn _scalar_and_u8x32(a: u8x32, b: u8x32) -> u8x32 {
     _scalar_and_u32x8(a.into(), b.into()).into()
 }
 
+#[inline]
 /// Perform a bitwise OR on the provided registers `a` and `b`.
 pub(crate) fn _scalar_or_u32x8(mut a: u32x8, b: u32x8) -> u32x8 {
     for i in 0..8 {
@@ -453,16 +408,19 @@ pub(crate) fn _scalar_or_u32x8(mut a: u32x8, b: u32x8) -> u32x8 {
     a
 }
 
+#[inline]
 /// Perform a bitwise OR on the provided registers `a` and `b`.
 pub(crate) fn _scalar_or_u16x16(a: u16x16, b: u16x16) -> u16x16 {
     _scalar_or_u32x8(a.into(), b.into()).into()
 }
 
+#[inline]
 /// Perform a bitwise OR on the provided registers `a` and `b`.
 pub(crate) fn _scalar_or_u8x32(a: u8x32, b: u8x32) -> u8x32 {
     _scalar_or_u32x8(a.into(), b.into()).into()
 }
 
+#[inline]
 /// Perform a bitwise shift right on the provided register `a`.
 pub(crate) fn _scalar_srli_u32x8<const IMM8: u32>(mut a: u32x8) -> u32x8 {
     for i in 0..8 {
@@ -471,6 +429,7 @@ pub(crate) fn _scalar_srli_u32x8<const IMM8: u32>(mut a: u32x8) -> u32x8 {
     a
 }
 
+#[inline]
 /// Perform a bitwise shift right on the provided register `a`.
 pub(crate) fn _scalar_srli_u16x16<const IMM8: u32>(mut a: u16x16) -> u16x16 {
     for i in 0..16 {
@@ -479,6 +438,7 @@ pub(crate) fn _scalar_srli_u16x16<const IMM8: u32>(mut a: u16x16) -> u16x16 {
     a
 }
 
+#[inline]
 /// Perform a bitwise shift right on the provided register `a`.
 pub(crate) fn _scalar_srli_u8x32<const IMM8: u32>(mut a: u8x32) -> u8x32 {
     for i in 0..32 {
@@ -487,6 +447,7 @@ pub(crate) fn _scalar_srli_u8x32<const IMM8: u32>(mut a: u8x32) -> u8x32 {
     a
 }
 
+#[inline]
 /// Perform a bitwise shift left on the provided register `a`.
 pub(crate) fn _scalar_slli_u32x8<const IMM8: u32>(mut a: u32x8) -> u32x8 {
     for i in 0..8 {
@@ -495,6 +456,7 @@ pub(crate) fn _scalar_slli_u32x8<const IMM8: u32>(mut a: u32x8) -> u32x8 {
     a
 }
 
+#[inline]
 /// Perform a bitwise shift left on the provided register `a`.
 pub(crate) fn _scalar_slli_u16x16<const IMM8: u32>(mut a: u16x16) -> u16x16 {
     for i in 0..16 {
@@ -503,6 +465,7 @@ pub(crate) fn _scalar_slli_u16x16<const IMM8: u32>(mut a: u16x16) -> u16x16 {
     a
 }
 
+#[inline]
 /// Perform a bitwise shift left on the provided register `a`.
 pub(crate) fn _scalar_slli_u8x32<const IMM8: u32>(mut a: u8x32) -> u8x32 {
     for i in 0..32 {
@@ -511,18 +474,7 @@ pub(crate) fn _scalar_slli_u8x32<const IMM8: u32>(mut a: u8x32) -> u8x32 {
     a
 }
 
-/// Extract one 128-bit half from the input register.
-///
-/// `HALF` can be either `0` or `1` representing the index of the halves respectively.
-pub(crate) fn _scalar_extract_u32x8<const HALF: usize>(a: u32x8) -> u32x4 {
-    const { assert!(HALF <= 1, "selector must be either 0 or 1") };
-    let offset = HALF * 4;
-    let ptr = unsafe { a.0.as_ptr().add(offset) };
-    let mut out = u32x4::ZERO;
-    unsafe { std::ptr::copy_nonoverlapping(ptr, out.0.as_mut_ptr(), 4) };
-    out
-}
-
+#[inline]
 /// Extract one 128-bit half from the input register.
 ///
 /// `HALF` can be either `0` or `1` representing the index of the halves respectively.
@@ -535,6 +487,7 @@ pub(crate) fn _scalar_extract_u16x16<const HALF: usize>(a: u16x16) -> u16x8 {
     out
 }
 
+#[inline]
 /// Extract one 128-bit half from the input register.
 ///
 /// `HALF` can be either `0` or `1` representing the index of the halves respectively.
@@ -591,75 +544,77 @@ pub(crate) fn _scalar_mov_maskz_u8x32(mask: u32, a: u8x32) -> u8x32 {
     out
 }
 
-pub(crate) fn _scalar_maddubs_u8x32(a: u8x32, b: u8x32) -> u16x16 {
-    let mut out = u16x16::ZERO;
-    for i in 0..16 {
-        let intermediate1 = a[i + 0] as u16 * b[i + 0] as u16;
-        let intermediate2 = a[i + 1] as u16 * b[i + 1] as u16;
-        out[i] = intermediate1 + intermediate2;
-    }
-    out
+// LLVM is a bit _too_ smart here, and it unrolls the loop breaking the vectorization
+// that being said, it didn't do a great job vectorizing even if it isn't unrolled.
+#[cfg(all(target_arch = "x86_64", target_feature = "sse4.1"))]
+pub(crate) fn _scalar_blend_every_other_u8(a: u8x32, b: u8x32) -> u8x32 {
+    use std::arch::x86_64::*;
+    let lo_a = _scalar_extract_u8x32::<0>(a);
+    let lo_b = _scalar_extract_u8x32::<0>(b);
+    let hi_a = _scalar_extract_u8x32::<1>(a);
+    let hi_b = _scalar_extract_u8x32::<1>(b);
+
+    let lo_a_reg = unsafe { std::mem::transmute::<u8x16, __m128i>(lo_a) };
+    let lo_b_reg = unsafe { std::mem::transmute::<u8x16, __m128i>(lo_b) };
+    let hi_a_reg = unsafe { std::mem::transmute::<u8x16, __m128i>(hi_a) };
+    let hi_b_reg = unsafe { std::mem::transmute::<u8x16, __m128i>(hi_b) };
+
+    let mask = unsafe { _mm_set1_epi16(0xFF_00u16 as i16) };
+
+    let r1_reg = unsafe { _mm_blendv_epi8(lo_a_reg, lo_b_reg, mask) };
+    let r2_reg = unsafe { _mm_blendv_epi8(hi_a_reg, hi_b_reg, mask) };
+
+    let r1 = unsafe { std::mem::transmute::<__m128i, u8x16>(r1_reg) };
+    let r2 = unsafe { std::mem::transmute::<__m128i, u8x16>(r2_reg) };
+
+    _scalar_combine_u8x16(r1, r2)
 }
 
+#[cfg(not(all(target_arch = "x86_64", target_feature = "sse4.1")))]
 pub(crate) fn _scalar_blend_every_other_u8(a: u8x32, b: u8x32) -> u8x32 {
     let mut result = u8x32::ZERO;
     for i in 0..32 {
-        if i % 2 == 0 {
-            result[i] = a[i];
-        } else {
-            result[i] = b[i];
-        }
+        result[i] = if i % 2 == 0 { a[i] } else { b[i] }
     }
     result
 }
 
+#[cfg(all(target_arch = "x86_64", target_feature = "sse4.1"))]
+pub(crate) fn _scalar_blend_every_other_u16(a: u16x16, b: u16x16) -> u16x16 {
+    use std::arch::x86_64::*;
+    let lo_a = _scalar_extract_u16x16::<0>(a);
+    let lo_b = _scalar_extract_u16x16::<0>(b);
+    let hi_a = _scalar_extract_u16x16::<1>(a);
+    let hi_b = _scalar_extract_u16x16::<1>(b);
+
+    let lo_a_reg = unsafe { std::mem::transmute::<u16x8, __m128i>(lo_a) };
+    let lo_b_reg = unsafe { std::mem::transmute::<u16x8, __m128i>(lo_b) };
+    let hi_a_reg = unsafe { std::mem::transmute::<u16x8, __m128i>(hi_a) };
+    let hi_b_reg = unsafe { std::mem::transmute::<u16x8, __m128i>(hi_b) };
+
+    let r1_reg = unsafe { _mm_blend_epi16::<0b10101010>(lo_a_reg, lo_b_reg) };
+    let r2_reg = unsafe { _mm_blend_epi16::<0b10101010>(hi_a_reg, hi_b_reg) };
+
+    let r1 = unsafe { std::mem::transmute::<__m128i, u16x8>(r1_reg) };
+    let r2 = unsafe { std::mem::transmute::<__m128i, u16x8>(r2_reg) };
+
+    _scalar_combine_u16x8(r1, r2)
+}
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "sse4.1")))]
 pub(crate) fn _scalar_blend_every_other_u16(a: u16x16, b: u16x16) -> u16x16 {
     let mut result = u16x16::ZERO;
+
     for i in 0..16 {
-        if i % 2 == 0 {
-            result[i] = a[i];
-        } else {
-            result[i] = b[i];
-        }
+        result[i] = if i % 2 == 0 { a[i] } else { b[i] }
     }
+
     result
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_pack_u32x8() {
-        let a = _scalar_set1_u32(4);
-        let b = _scalar_set1_u32(2);
-        let result = _scalar_pack_u32x8(a, b);
-        assert_eq!(
-            result.0,
-            [
-                4, 4, 4, 4, // a_lo
-                2, 2, 2, 2, // b_lo
-                4, 4, 4, 4, // a_hi
-                2, 2, 2, 2, // b_hi
-            ]
-        );
-    }
-
-    #[test]
-    fn test_pack_u16x16() {
-        let a = _scalar_set1_u16(4);
-        let b = _scalar_set1_u16(2);
-        let result = _scalar_pack_u16x16(a, b);
-        assert_eq!(
-            result.0,
-            [
-                4, 4, 4, 4, 4, 4, 4, 4, // a_lo
-                2, 2, 2, 2, 2, 2, 2, 2, // b_lo
-                4, 4, 4, 4, 4, 4, 4, 4, // a_hi
-                2, 2, 2, 2, 2, 2, 2, 2, // b_hi
-            ]
-        );
-    }
 
     #[test]
     fn test_cvteu16_u32x8() {
@@ -717,17 +672,6 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_u32x8() {
-        let a = u32x8([4, 4, 4, 4, 2, 2, 2, 2]);
-
-        let result = _scalar_extract_u32x8::<0>(a);
-        assert_eq!(result.0, [4; 4]);
-
-        let result = _scalar_extract_u32x8::<1>(a);
-        assert_eq!(result.0, [2; 4]);
-    }
-
-    #[test]
     fn test_extract_u16x16() {
         let a = u16x16([4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2]);
 
@@ -772,5 +716,34 @@ mod tests {
         let a = _scalar_set1_u8(2);
         let result = _scalar_mov_maskz_u8x32(0, a);
         assert_eq!(result.0, [0; 32]);
+    }
+
+    #[test]
+    fn test_blend_every_other_u8() {
+        let a = u8x32([
+            4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2,
+        ]);
+        let b = u8x32([
+            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+            4, 4, 4,
+        ]);
+
+        let result = _scalar_blend_every_other_u8(a, b);
+        assert_eq!(
+            result.0,
+            [
+                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4,
+                2, 4, 2, 4
+            ]
+        );
+    }
+
+    #[test]
+    fn test_blend_every_other_u16() {
+        let a = u16x16([4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2]);
+        let b = u16x16([2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4]);
+        let result = _scalar_blend_every_other_u16(a, b);
+        assert_eq!(result.0, [4, 2, 4, 2, 4, 2, 4, 2, 2, 4, 2, 4, 2, 4, 2, 4]);
     }
 }

@@ -3,6 +3,7 @@
 use super::polyfill::*;
 use crate::X64;
 
+#[inline]
 /// Load 8, 256 bit registers holding 64 32-bit elements.
 pub(crate) fn load_u32x64(block: &[u32; X64]) -> [u32x8; 8] {
     let ptr: *const u32 = block.as_ptr();
@@ -13,6 +14,7 @@ pub(crate) fn load_u32x64(block: &[u32; X64]) -> [u32x8; 8] {
     data
 }
 
+#[inline]
 /// Store 8, 256 bit registers holding 64 32-bit elements.
 pub(crate) fn store_u32x64(block: &mut [u32; X64], data: [u32x8; 8]) {
     let ptr: *mut u32 = block.as_mut_ptr();
@@ -21,12 +23,14 @@ pub(crate) fn store_u32x64(block: &mut [u32; X64], data: [u32x8; 8]) {
     }
 }
 
+#[inline]
 /// Store 2, 256 bit registers holding 64 8-bit elements.
 pub(crate) unsafe fn store_u8x32x2(out: *mut u8, data: [u8x32; 2]) {
     unsafe { _scalar_store_u8x32(out.add(0), data[0].into()) };
     unsafe { _scalar_store_u8x32(out.add(32), data[1].into()) };
 }
 
+#[inline]
 /// Store 4, 256 bit registers holding 64 16-bit elements.
 pub(crate) unsafe fn store_u16x16x4(out: *mut u8, data: [u16x16; 4]) {
     unsafe { _scalar_store_u8x32(out.add(0), data[0].into()) };
@@ -35,6 +39,7 @@ pub(crate) unsafe fn store_u16x16x4(out: *mut u8, data: [u16x16; 4]) {
     unsafe { _scalar_store_u8x32(out.add(96), data[3].into()) };
 }
 
+#[inline]
 /// Store 8, 256 bit registers holding 64 32-bit elements.
 pub(crate) unsafe fn store_u32x8x8(out: *mut u8, data: [u32x8; 8]) {
     unsafe { _scalar_store_u8x32(out.add(0), data[0].into()) };
@@ -47,7 +52,7 @@ pub(crate) unsafe fn store_u32x8x8(out: *mut u8, data: [u32x8; 8]) {
     unsafe { _scalar_store_u8x32(out.add(224), data[7].into()) };
 }
 
-#[inline(never)]
+#[inline]
 /// Load 2, 256 bit registers holding 64 8-bit elements.
 pub(crate) unsafe fn load_u8x32x2(out: *const u8) -> [u8x32; 2] {
     unsafe {
@@ -58,6 +63,7 @@ pub(crate) unsafe fn load_u8x32x2(out: *const u8) -> [u8x32; 2] {
     }
 }
 
+#[inline]
 /// Load 4, 256 bit registers holding 64 16-bit elements.
 pub(crate) unsafe fn load_u16x16x4(out: *const u8) -> [u16x16; 4] {
     unsafe {
@@ -70,6 +76,7 @@ pub(crate) unsafe fn load_u16x16x4(out: *const u8) -> [u16x16; 4] {
     }
 }
 
+#[inline]
 /// Load 8, 256 bit registers holding 64 32-bit elements.
 pub(crate) unsafe fn load_u32x8x8(out: *const u8) -> [u32x8; 8] {
     unsafe {
