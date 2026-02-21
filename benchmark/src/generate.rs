@@ -12,7 +12,7 @@ pub struct GeneratedSamples {
 ///
 /// This should produce sample with varying bit lengths and varying
 /// gap sizes.
-pub fn generate_sample_input(
+pub fn sample_input(
     num_samples: usize,
     seed: u64,
     min_gap: u32,
@@ -22,7 +22,7 @@ pub fn generate_sample_input(
 ) -> GeneratedSamples {
     fastrand::seed(seed);
 
-    let mut samples = Vec::with_capacity(num_samples * X128);
+    let mut samples = Vec::with_capacity(num_samples);
     let mut last_values = Vec::with_capacity(num_samples);
 
     for _ in 0..num_samples {

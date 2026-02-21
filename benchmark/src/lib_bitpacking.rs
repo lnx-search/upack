@@ -22,7 +22,7 @@ impl Default for BitpackingCompressBase {
 impl Routine for BitpackingCompressBase {
     type PreparedInput = GeneratedSamples;
 
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "compress/bitpacking-base/x128"
     }
 
@@ -63,7 +63,7 @@ impl Default for BitpackingCompressDelta {
 impl Routine for BitpackingCompressDelta {
     type PreparedInput = GeneratedSamples;
 
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "compress/bitpacking-delta/x128"
     }
 
@@ -104,7 +104,7 @@ impl Default for BitpackingCompressDelta1 {
 impl Routine for BitpackingCompressDelta1 {
     type PreparedInput = GeneratedSamples;
 
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "compress/bitpacking-delta1/x128"
     }
 

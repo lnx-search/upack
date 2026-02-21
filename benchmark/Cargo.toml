@@ -8,7 +8,18 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 bitpacking = "0.9"
 humantime = "2"
+humansize = "2"
+comfy-table = "7"
 fastrand = "2"
 
 clap = { version = "4", features = ["derive"] }
-upack = { path = ".." }
+upack = { path = "..", default-features = false }
+
+[features]
+avx2 = ["upack/avx2"]
+avx512 = ["upack/avx512"]
+neon = ["upack/neon"]
+default = ["avx2", "avx512", "neon"]
+
+[profile.release]
+debug = true

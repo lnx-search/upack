@@ -19,7 +19,7 @@ impl Default for UpackCompressBase {
 impl Routine for UpackCompressBase {
     type PreparedInput = GeneratedSamples;
 
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "compress/upack-base/x128"
     }
 
@@ -55,7 +55,7 @@ impl Default for UpackCompressDelta {
 impl Routine for UpackCompressDelta {
     type PreparedInput = GeneratedSamples;
 
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "compress/upack-delta/x128"
     }
 
@@ -91,7 +91,7 @@ impl Default for UpackCompressDelta1 {
 impl Routine for UpackCompressDelta1 {
     type PreparedInput = GeneratedSamples;
 
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         "compress/upack-delta1/x128"
     }
 
