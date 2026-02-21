@@ -257,6 +257,16 @@ pub(crate) unsafe fn _scalar_load_u8x32(ptr: *const u8) -> u8x32 {
     block
 }
 
+/// Load 16, 8-bit elements from the provided `ptr`.
+///
+/// # Safety
+/// The provided `ptr` must be safe to read `16` elements.
+pub(crate) unsafe fn _scalar_load_u8x16(ptr: *const u8) -> u8x16 {
+    let mut block = u8x16::ZERO;
+    unsafe { std::ptr::copy_nonoverlapping(ptr, block.0.as_mut_ptr(), 16) };
+    block
+}
+
 /// Store 8, 32-bit elements in the provided `ptr`.
 ///
 /// # Safety
@@ -279,6 +289,14 @@ pub(crate) unsafe fn _scalar_store_u16x16(ptr: *mut u16, reg: u16x16) {
 /// The provided `ptr` must be safe to write `32` elements.
 pub(crate) unsafe fn _scalar_store_u8x32(ptr: *mut u8, reg: u8x32) {
     unsafe { std::ptr::copy_nonoverlapping(reg.0.as_ptr(), ptr, 32) };
+}
+
+/// Store 16, 8-bit elements in the provided `ptr`.
+///
+/// # Safety
+/// The provided `ptr` must be safe to write `16` elements.
+pub(crate) unsafe fn _scalar_store_u8x16(ptr: *mut u8, reg: u8x16) {
+    unsafe { std::ptr::copy_nonoverlapping(reg.0.as_ptr(), ptr, 16) };
 }
 
 /// Pack the two provide [u32x8] registers to unsigned 16-bit integers in blocks
@@ -581,6 +599,30 @@ pub(crate) fn _scalar_maddubs_u8x32(a: u8x32, b: u8x32) -> u16x16 {
         out[i] = intermediate1 + intermediate2;
     }
     out
+}
+
+pub(crate) fn _scalar_blend_every_other_u8(a: u8x32, b: u8x32) -> u8x32 {
+    let mut result = u8x32::ZERO;
+    for i in 0..32 {
+        if i % 2 == 0 {
+            result[i] = a[i];
+        } else {
+            result[i] = b[i];
+        }
+    }
+    result
+}
+
+pub(crate) fn _scalar_blend_every_other_u16(a: u16x16, b: u16x16) -> u16x16 {
+    let mut result = u16x16::ZERO;
+    for i in 0..16 {
+        if i % 2 == 0 {
+            result[i] = a[i];
+        } else {
+            result[i] = b[i];
+        }
+    }
+    result
 }
 
 #[cfg(test)]

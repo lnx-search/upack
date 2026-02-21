@@ -43,23 +43,8 @@ pub(crate) unsafe fn to_u2(out: *mut u8, block: [u32x8; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 2-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2]) {
-    let [d1, d2] = data;
-
-    let lo_cmp1 = _scalar_slli_u8x32::<7>(d1);
-    let hi_cmp1 = _scalar_slli_u8x32::<6>(d1);
-    let lo_mask1 = _scalar_mask_u8x32(lo_cmp1);
-    let hi_mask1 = _scalar_mask_u8x32(hi_cmp1);
-
-    let lo_cmp2 = _scalar_slli_u8x32::<7>(d2);
-    let hi_cmp2 = _scalar_slli_u8x32::<6>(d2);
-    let lo_mask2 = _scalar_mask_u8x32(lo_cmp2);
-    let hi_mask2 = _scalar_mask_u8x32(hi_cmp2);
-
-    let lo_merged_mask1 = ((lo_mask2 as u64) << 32) | lo_mask1 as u64;
-    let hi_merged_mask1 = ((hi_mask2 as u64) << 32) | hi_mask1 as u64;
-
-    unsafe { std::ptr::write_unaligned(out.add(0).cast(), lo_merged_mask1) };
-    unsafe { std::ptr::write_unaligned(out.add(8).cast(), hi_merged_mask1) };
+    let packed = pack_u8_to_u2_unordered(data);
+    unsafe { _scalar_store_u8x16(out.cast(), packed) };
 }
 
 /// Bitpack the provided block of integers to 3-bit elements.
@@ -75,29 +60,20 @@ pub(crate) unsafe fn to_u3(out: *mut u8, block: [u32x8; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 3-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
-    let [d1, d2] = data;
+    let mask = _scalar_set1_u8(0b11);
 
-    let b0_cmp1 = _scalar_slli_u8x32::<7>(d1);
-    let b1_cmp1 = _scalar_slli_u8x32::<6>(d1);
-    let b2_cmp1 = _scalar_slli_u8x32::<5>(d1);
-    let b0_mask1 = _scalar_mask_u8x32(b0_cmp1);
-    let b1_mask1 = _scalar_mask_u8x32(b1_cmp1);
-    let b2_mask1 = _scalar_mask_u8x32(b2_cmp1);
+    let lo_2bit = and_u8x32(data, mask);
+    let packed = pack_u8_to_u2_unordered(lo_2bit);
+    unsafe { _scalar_store_u8x16(out.add(0), packed) };
 
-    let b0_cmp2 = _scalar_slli_u8x32::<7>(d2);
-    let b1_cmp2 = _scalar_slli_u8x32::<6>(d2);
-    let b2_cmp2 = _scalar_slli_u8x32::<5>(d2);
-    let b0_mask2 = _scalar_mask_u8x32(b0_cmp2);
-    let b1_mask2 = _scalar_mask_u8x32(b1_cmp2);
-    let b2_mask2 = _scalar_mask_u8x32(b2_cmp2);
+    let hi_1bit1 = _scalar_slli_u8x32::<5>(data[0]);
+    let hi_1bitmask1 = _scalar_mask_u8x32(hi_1bit1);
 
-    let b0_merged_mask = ((b0_mask2 as u64) << 32) | b0_mask1 as u64;
-    let b1_merged_mask = ((b1_mask2 as u64) << 32) | b1_mask1 as u64;
-    let b2_merged_mask = ((b2_mask2 as u64) << 32) | b2_mask1 as u64;
+    let hi_1bit2 = _scalar_slli_u8x32::<5>(data[1]);
+    let hi_1bitmask2 = _scalar_mask_u8x32(hi_1bit2);
 
-    unsafe { std::ptr::write_unaligned(out.add(0).cast(), b0_merged_mask) };
-    unsafe { std::ptr::write_unaligned(out.add(8).cast(), b1_merged_mask) };
-    unsafe { std::ptr::write_unaligned(out.add(16).cast(), b2_merged_mask) };
+    let hi_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
+    unsafe { std::ptr::write_unaligned(out.add(16).cast(), hi_merged_mask) };
 }
 
 /// Bitpack the provided block of integers to 4-bit elements.
@@ -113,7 +89,8 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
-    unsafe { super::pack_x64_partial::pack_u4_registers(out.add(0).cast(), data) };
+    let packed = pack_u8_to_u4_unordered(data);
+    unsafe { _scalar_store_u8x32(out, packed) };
 }
 
 /// Bitpack the provided block of integers to 5-bit elements.
@@ -157,7 +134,9 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2]) {
 
     // 4bit * 64 / 8-bits per byte.
     let remaining = srli_u8x32::<4, 2>(data);
-    unsafe { pack_u2_registers(out.add(32), remaining) };
+    let mask = _scalar_set1_u8(0b11);
+    let masked = and_u8x32(remaining, mask);
+    unsafe { pack_u2_registers(out.add(32), masked) };
 }
 
 /// Bitpack the provided block of integers to 7-bit elements.

@@ -3,12 +3,12 @@ use crate::{CompressionDetails, X128};
 
 pub(super) mod data;
 mod pack_x128;
-mod pack_x64_full;
-mod pack_x64_partial;
-mod polyfill;
+pub(super) mod pack_x64_full;
+pub(super) mod pack_x64_partial;
+pub(super) mod polyfill;
 mod unpack_x128;
-mod unpack_x64_full;
-mod unpack_x64_partial;
+pub(super) mod unpack_x64_full;
+pub(super) mod unpack_x64_partial;
 mod util;
 
 /// Pack a block of 128 32-bit integers and write the compressed block to `out`.
