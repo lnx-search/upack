@@ -184,4 +184,21 @@ mod tests {
         decode_delta1(4, &mut block);
         assert_eq!(block, expected_values);
     }
+
+    #[test]
+    fn test_v1_layout_regression() {
+        let tester = crate::uint32::test_util::load_uint32_regression_layout();
+
+        let mut output_buffer = [0u32; X128];
+        for (len, bit_len, expected_output, input) in tester.iter_tests() {
+            unsafe { from_nbits(bit_len as usize, input.as_ptr(), &mut output_buffer, len) };
+
+            let produced_buffer = &output_buffer[..len];
+            assert_eq!(
+                produced_buffer,
+                &expected_output[..len],
+                "regression test failed, outputs do not match, length:{len} bit_len:{bit_len}"
+            )
+        }
+    }
 }
