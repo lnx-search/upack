@@ -58,12 +58,12 @@ fn generate_permutations(output: &Path, metadata: &mut Metadata, seed: u64) -> a
 
     for len in 1..=X128 {
         for bit_len in 1..=32 {
-            let max_value = 2u64.pow(bit_len) as u32;
-            let min_value = 2u64.pow(bit_len - 1) as u32;
+            let max_value = 2u64.pow(bit_len);
+            let min_value = 2u64.pow(bit_len - 1);
 
             let mut sample = [0; X128];
             for v in sample.iter_mut() {
-                *v = fastrand::u32(min_value..max_value);
+                *v = fastrand::u64(min_value..max_value) as u32;
             }
 
             let output = upack::compress(len, &sample, &mut temp_output);
