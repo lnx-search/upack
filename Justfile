@@ -9,8 +9,8 @@ lint:
 format:
     cargo +nightly fmt --all
 
-bench:
-    cargo bench
+bench features="avx512,avx2,neon":
+    cargo run -p benchmark --release --no-default-features --features {{features}}
 
 test:
     RUSTFLAGS="-Ctarget-cpu=native" cargo nextest run --workspace --no-fail-fast
