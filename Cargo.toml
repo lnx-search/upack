@@ -3,6 +3,11 @@ name = "upack"
 version = "1.0.0"
 edition = "2024"
 
+[workspace]
+members = [
+    "benchmark"
+]
+
 [dependencies]
 
 [dev-dependencies]
@@ -10,23 +15,8 @@ rstest = "0.26"
 fastrand = "2"
 bytemuck = "1"
 
-# benchmarking
-divan = "0.1"
-bitpacking = "0.9"
-
 [features]
 avx512 = []
 avx2 = []
 neon = []
 default = ["avx512", "avx2", "neon"]
-
-[[bench]]
-harness = false
-name = "decompress" 
-
-[[bench]]
-harness = false
-name = "compress"
-
-[profile.bench]
-debug = true

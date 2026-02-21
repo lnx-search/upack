@@ -1,0 +1,14 @@
+[package]
+name = "benchmark"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = "0.3"
+bitpacking = "0.9"
+humantime = "2"
+fastrand = "2"
+
+clap = { version = "4", features = ["derive"] }
+upack = { path = ".." }
