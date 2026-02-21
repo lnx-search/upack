@@ -143,7 +143,6 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(7)` bytes to.
-
 pub(crate) unsafe fn to_u7(out: *mut u8, block: [u32x8; 8]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u7_registers(out, partially_packed) }

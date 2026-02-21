@@ -20,6 +20,3 @@ avx2 = ["upack/avx2"]
 avx512 = ["upack/avx512"]
 neon = ["upack/neon"]
 default = ["avx2", "avx512", "neon"]
-
-[profile.release]
-debug = true

@@ -23,3 +23,6 @@ avx512 = []
 avx2 = []
 neon = []
 default = ["avx512", "avx2", "neon"]
+
+[profile.release]
+debug = true

@@ -26,8 +26,8 @@ pub(crate) fn store_u32x64(block: &mut [u32; X64], data: [u32x8; 8]) {
 #[inline]
 /// Store 2, 256 bit registers holding 64 8-bit elements.
 pub(crate) unsafe fn store_u8x32x2(out: *mut u8, data: [u8x32; 2]) {
-    unsafe { _scalar_store_u8x32(out.add(0), data[0].into()) };
-    unsafe { _scalar_store_u8x32(out.add(32), data[1].into()) };
+    unsafe { _scalar_store_u8x32(out.add(0), data[0]) };
+    unsafe { _scalar_store_u8x32(out.add(32), data[1]) };
 }
 
 #[inline]
