@@ -5,8 +5,9 @@ edition = "2024"
 
 [workspace]
 members = [
-    "benchmark"
-, "tools/generate-layout-samples"]
+    "benchmark",
+    "tools/generate-layout-samples",
+]
 
 [dependencies]
 
