@@ -25,7 +25,7 @@ struct Args {
     /// Useful for delta based comparisons, but probably shouldn't be touched
     /// unless you know what you're doing.
     max_gap: u32,
-    #[arg(long, default_value = "24", value_parser = clap::value_parser!(u8).range(1..=32))]
+    #[arg(long, default_value = "26", value_parser = clap::value_parser!(u8).range(1..=32))]
     /// The maximum bit length of produced integers for the sample inputs.
     max_bits: u8,
     #[arg(long, default_value_t = 40_000_000u32)]
