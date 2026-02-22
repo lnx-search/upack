@@ -7,6 +7,18 @@ use std::ops::Index;
 /// A block of 8, 32-bit elements.
 pub(super) struct u32x8([uint32x4_t; 2]);
 
+impl From<u16x16> for u32x8 {
+    fn from(value: u16x16) -> Self {
+        unsafe { std::mem::transmute(value) }
+    }
+}
+
+impl From<u8x32> for u32x8 {
+    fn from(value: u8x32) -> Self {
+        unsafe { std::mem::transmute(value) }
+    }
+}
+
 impl Index<usize> for u32x8 {
     type Output = uint32x4_t;
 
@@ -20,6 +32,18 @@ impl Index<usize> for u32x8 {
 #[derive(Copy, Clone)]
 /// A block of 16, 16-bit elements.
 pub(super) struct u16x16([uint16x8_t; 2]);
+
+impl From<u32x8> for u16x16 {
+    fn from(value: u32x8) -> Self {
+        unsafe { std::mem::transmute(value) }
+    }
+}
+
+impl From<u8x32> for u16x16 {
+    fn from(value: u8x32) -> Self {
+        unsafe { std::mem::transmute(value) }
+    }
+}
 
 impl Index<usize> for u16x16 {
     type Output = uint16x8_t;
@@ -35,6 +59,18 @@ impl Index<usize> for u16x16 {
 /// A block of 32, 8-bit elements.
 pub(super) struct u8x32([uint8x16_t; 2]);
 
+impl From<u32x8> for u8x32 {
+    fn from(value: u32x8) -> Self {
+        unsafe { std::mem::transmute(value) }
+    }
+}
+
+impl From<u16x16> for u8x32 {
+    fn from(value: u16x16) -> Self {
+        unsafe { std::mem::transmute(value) }
+    }
+}
+
 impl Index<usize> for u8x32 {
     type Output = uint8x16_t;
 
@@ -46,12 +82,6 @@ impl Index<usize> for u8x32 {
 #[allow(non_camel_case_types)]
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-/// A block of 4, 32-bit elements.
-pub(super) struct u32x4(uint32x4_t);
-
-#[allow(non_camel_case_types)]
-#[repr(transparent)]
-#[derive(Copy, Clone)]
 /// A block of 8, 16-bit elements.
 pub(super) struct u16x8(uint16x8_t);
 
@@ -59,7 +89,7 @@ pub(super) struct u16x8(uint16x8_t);
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 /// A block of 16, 8-bit elements.
-pub(super) struct u8x16(uint8x16_t);
+pub(super) struct u8x16(pub(super) uint8x16_t);
 
 #[target_feature(enable = "neon")]
 /// Broadcast the single 32-bit element across all lanes in the register.
@@ -113,6 +143,16 @@ pub(super) unsafe fn _neon_load_u8x32(ptr: *const u8) -> u8x32 {
 }
 
 #[target_feature(enable = "neon")]
+/// Load 16, 8-bit elements from the provided `ptr`.
+///
+/// # Safety
+/// The provided `ptr` must be safe to read `16` elements.
+pub(super) unsafe fn _neon_load_u8x16(ptr: *const u8) -> u8x16 {
+    let a = unsafe { vld1q_u8(ptr.add(0)) };
+    u8x16(a)
+}
+
+#[target_feature(enable = "neon")]
 /// Store 8, 32-bit elements in the provided `ptr`.
 ///
 /// # Safety
@@ -140,6 +180,15 @@ pub(super) unsafe fn _neon_store_u16x16(ptr: *mut u16, reg: u16x16) {
 pub(super) unsafe fn _neon_store_u8x32(ptr: *mut u8, reg: u8x32) {
     unsafe { vst1q_u8(ptr.add(0), reg[0]) };
     unsafe { vst1q_u8(ptr.add(16), reg[1]) };
+}
+
+#[target_feature(enable = "neon")]
+/// Store 16, 8-bit elements in the provided `ptr`.
+///
+/// # Safety
+/// The provided `ptr` must be safe to write `16` elements.
+pub(super) unsafe fn _neon_store_u8x16(ptr: *mut u8, reg: u8x16) {
+    unsafe { vst1q_u8(ptr, reg.0) };
 }
 
 #[target_feature(enable = "neon")]
@@ -200,12 +249,6 @@ pub(super) fn _neon_cvteu8_u16x16(a: u16x16) -> u8x16 {
     let lo = vmovn_u16(a[0]);
     let hi = vmovn_u16(a[1]);
     u8x16(vcombine_u8(lo, hi))
-}
-
-#[target_feature(enable = "neon")]
-/// Combine two [u32x4] registers via concatenation forming a [u32x8] register.
-pub(super) fn _neon_combine_u32x4(a: u32x4, b: u32x4) -> u32x8 {
-    u32x8([a.0, b.0])
 }
 
 #[target_feature(enable = "neon")]
@@ -320,15 +363,6 @@ pub(super) fn _neon_slli_u8x32<const IMM8: i32>(a: u8x32) -> u8x32 {
 /// Extract one 128-bit half from the input register.
 ///
 /// `HALF` can be either `0` or `1` representing the index of the halves respectively.
-pub(super) fn _neon_extract_u32x8<const HALF: usize>(a: u32x8) -> u32x4 {
-    const { assert!(HALF <= 1, "selector must be either 0 or 1") };
-    if HALF == 0 { u32x4(a[0]) } else { u32x4(a[1]) }
-}
-
-#[target_feature(enable = "neon")]
-/// Extract one 128-bit half from the input register.
-///
-/// `HALF` can be either `0` or `1` representing the index of the halves respectively.
 pub(super) fn _neon_extract_u16x16<const HALF: usize>(a: u16x16) -> u16x8 {
     const { assert!(HALF <= 1, "selector must be either 0 or 1") };
     if HALF == 0 { u16x8(a[0]) } else { u16x8(a[1]) }
@@ -433,6 +467,18 @@ pub(super) fn _neon_unpack_nibbles(packed: u8x32) -> [u8x32; 2] {
     [u8x32([a_0, a_1]), u8x32([b_0, b_1])]
 }
 
+#[target_feature(enable = "neon")]
+pub(super) fn _neon_blend_every_other_u8(a: u8x32, b: u8x32) -> u8x32 {
+    let mask = vreinterpretq_u8_u16(vdupq_n_u16(0x00FF));
+    u8x32([vbslq_u8(mask, a[0], b[0]), vbslq_u8(mask, a[1], b[1])])
+}
+
+#[target_feature(enable = "neon")]
+pub(super) fn _neon_blend_every_other_u16(a: u16x16, b: u16x16) -> u16x16 {
+    let mask = vreinterpretq_u16_u32(vdupq_n_u32(0x0000_FFFF));
+    u16x16([vbslq_u16(mask, a[0], b[0]), vbslq_u16(mask, a[1], b[1])])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -523,19 +569,6 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
-    fn test_combine_u32x4() {
-        unsafe {
-            let a = _neon_extract_u32x8::<0>(_neon_set1_u32(1));
-            let b = _neon_extract_u32x8::<0>(_neon_set1_u32(2));
-            let result = _neon_combine_u32x4(a, b);
-            let view = std::mem::transmute::<u32x8, [u32; 8]>(result);
-            assert_eq!(view[..4], [1; 4]);
-            assert_eq!(view[4..], [2; 4]);
-        }
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_combine_u16x8() {
         unsafe {
             let a = _neon_extract_u16x16::<0>(_neon_set1_u16(1));
@@ -557,22 +590,6 @@ mod tests {
             let view = std::mem::transmute::<u8x32, [u8; 32]>(result);
             assert_eq!(view[..16], [1; 16]);
             assert_eq!(view[16..], [2; 16]);
-        }
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "neon"), ignore)]
-    fn test_extract_u32x8() {
-        unsafe {
-            let a = _neon_load_u32x8([4, 4, 4, 4, 2, 2, 2, 2].as_ptr());
-
-            let result = _neon_extract_u32x8::<0>(a);
-            let view = std::mem::transmute::<u32x4, [u32; 4]>(result);
-            assert_eq!(view, [4; 4]);
-
-            let result = _neon_extract_u32x8::<1>(a);
-            let view = std::mem::transmute::<u32x4, [u32; 4]>(result);
-            assert_eq!(view, [2; 4]);
         }
     }
 

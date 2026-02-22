@@ -355,14 +355,12 @@ fn decode_delta(last_value: uint32x4_t, block: &mut [u32x8; 8]) -> uint32x4_t {
 
     let zero = vdupq_n_u32(0);
 
-    // Prefix sum within each 4-element register
-    // (analogous to the alignr cascade, but only need shifts of 1 and 2 for 4 lanes)
+    #[allow(clippy::needless_range_loop)]
     for i in 0..16 {
-        block[i] = vaddq_u32(block[i], vextq_u32::<3>(zero, block[i])); // shift right by 1
-        block[i] = vaddq_u32(block[i], vextq_u32::<2>(zero, block[i])); // shift right by 2
+        block[i] = vaddq_u32(block[i], vextq_u32::<3>(zero, block[i]));
+        block[i] = vaddq_u32(block[i], vextq_u32::<2>(zero, block[i]));
     }
 
-    // Chain blocks by propagating the last element of each block to the next
     block[0] = vaddq_u32(block[0], last_value);
     for i in 1..16 {
         let last = vdupq_laneq_u32::<3>(block[i - 1]);
@@ -377,6 +375,7 @@ fn decode_delta1(last_value: uint32x4_t, block: &mut [u32x8; 8]) -> uint32x4_t {
     let view = unsafe { std::mem::transmute::<&mut [u32x8; 8], &mut [uint32x4_t; 16]>(block) };
 
     let ones = vdupq_n_u32(1);
+    #[allow(clippy::needless_range_loop)]
     for i in 0..16 {
         view[i] = vaddq_u32(view[i], ones);
     }

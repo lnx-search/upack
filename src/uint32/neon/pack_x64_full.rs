@@ -48,26 +48,8 @@ pub(crate) unsafe fn to_u2(out: *mut u8, block: [u32x8; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 2-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2]) {
-    let [d1, d2] = data;
-
-    let lo_select_mask = _neon_set1_u8(0b01);
-    let hi_select_mask = _neon_set1_u8(0b10);
-
-    let lo_cmp1 = _neon_and_u8x32(d1, lo_select_mask);
-    let hi_cmp1 = _neon_and_u8x32(d1, hi_select_mask);
-    let lo_mask1 = _neon_nonzero_mask_u8x32(lo_cmp1);
-    let hi_mask1 = _neon_nonzero_mask_u8x32(hi_cmp1);
-
-    let lo_cmp2 = _neon_and_u8x32(d2, lo_select_mask);
-    let hi_cmp2 = _neon_and_u8x32(d2, hi_select_mask);
-    let lo_mask2 = _neon_nonzero_mask_u8x32(lo_cmp2);
-    let hi_mask2 = _neon_nonzero_mask_u8x32(hi_cmp2);
-
-    let lo_merged_mask1 = ((lo_mask2 as u64) << 32) | lo_mask1 as u64;
-    let hi_merged_mask1 = ((hi_mask2 as u64) << 32) | hi_mask1 as u64;
-
-    unsafe { std::ptr::write_unaligned(out.add(0).cast(), lo_merged_mask1) };
-    unsafe { std::ptr::write_unaligned(out.add(8).cast(), hi_merged_mask1) };
+    let packed = pack_u8_to_u2_unordered(data);
+    unsafe { _neon_store_u8x16(out.cast(), packed) };
 }
 
 #[target_feature(enable = "neon")]
@@ -85,33 +67,20 @@ pub(crate) unsafe fn to_u3(out: *mut u8, block: [u32x8; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 3-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
-    let [d1, d2] = data;
+    let mask = _neon_set1_u8(0b11);
 
-    let b0_select_mask = _neon_set1_u8(0b001);
-    let b1_select_mask = _neon_set1_u8(0b010);
-    let b2_select_mask = _neon_set1_u8(0b100);
+    let lo_2bit = and_u8x32(data, mask);
+    let packed = pack_u8_to_u2_unordered(lo_2bit);
+    unsafe { _neon_store_u8x16(out.add(0), packed) };
 
-    let b0_cmp1 = _neon_and_u8x32(d1, b0_select_mask);
-    let b1_cmp1 = _neon_and_u8x32(d1, b1_select_mask);
-    let b2_cmp1 = _neon_and_u8x32(d1, b2_select_mask);
-    let b0_mask1 = _neon_nonzero_mask_u8x32(b0_cmp1);
-    let b1_mask1 = _neon_nonzero_mask_u8x32(b1_cmp1);
-    let b2_mask1 = _neon_nonzero_mask_u8x32(b2_cmp1);
+    let hi_1bit1 = _neon_srli_u8x32::<2>(data[0]);
+    let hi_1bitmask1 = _neon_nonzero_mask_u8x32(hi_1bit1);
 
-    let b0_cmp2 = _neon_and_u8x32(d2, b0_select_mask);
-    let b1_cmp2 = _neon_and_u8x32(d2, b1_select_mask);
-    let b2_cmp2 = _neon_and_u8x32(d2, b2_select_mask);
-    let b0_mask2 = _neon_nonzero_mask_u8x32(b0_cmp2);
-    let b1_mask2 = _neon_nonzero_mask_u8x32(b1_cmp2);
-    let b2_mask2 = _neon_nonzero_mask_u8x32(b2_cmp2);
+    let hi_1bit2 = _neon_srli_u8x32::<2>(data[1]);
+    let hi_1bitmask2 = _neon_nonzero_mask_u8x32(hi_1bit2);
 
-    let b0_merged_mask = ((b0_mask2 as u64) << 32) | b0_mask1 as u64;
-    let b1_merged_mask = ((b1_mask2 as u64) << 32) | b1_mask1 as u64;
-    let b2_merged_mask = ((b2_mask2 as u64) << 32) | b2_mask1 as u64;
-
-    unsafe { std::ptr::write_unaligned(out.add(0).cast(), b0_merged_mask) };
-    unsafe { std::ptr::write_unaligned(out.add(8).cast(), b1_merged_mask) };
-    unsafe { std::ptr::write_unaligned(out.add(16).cast(), b2_merged_mask) };
+    let hi_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
+    unsafe { std::ptr::write_unaligned(out.add(16).cast(), hi_merged_mask) };
 }
 
 #[target_feature(enable = "neon")]
@@ -129,7 +98,8 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8]) {
 /// Pack two registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
-    unsafe { super::pack_x64_partial::pack_u4_registers(out.add(0).cast(), data) };
+    let packed = pack_u8_to_u4_unordered(data);
+    unsafe { _neon_store_u8x32(out, packed) };
 }
 
 #[target_feature(enable = "neon")]

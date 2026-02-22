@@ -3,7 +3,7 @@
 release:
     cargo build --release
 
-lint:
+clippy:
     cargo +nightly clippy
 
 format:
@@ -16,3 +16,9 @@ bench features="avx512,avx2,neon" duration="15s":
 
 test:
     RUSTFLAGS="-Ctarget-cpu=native" cargo nextest run --workspace --no-fail-fast
+
+asm target="":
+    cargo asm -p upack --lib --simplify {{target}}
+
+mca target:
+    cargo asm -p upack --lib --simplify {{target}} --mca
