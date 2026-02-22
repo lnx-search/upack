@@ -389,10 +389,10 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta_zero_starting_value() {
-        let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32);
-        let mut block = [1; X128];
+        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32);
+        let mut block = [1; X64];
         block[0] = 0;
-        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
+        let data = unsafe { std::mem::transmute::<&mut [u32; X64], &mut [u32x8; 8]>(&mut block) };
         unsafe { decode_delta(vdupq_n_u32(0), data) };
         assert_eq!(block, expected_values);
     }
@@ -400,10 +400,10 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta_starting_value() {
-        let expected_values: [u32; X128] = std::array::from_fn(|i| 4 + i as u32);
-        let mut block = [1; X128];
+        let expected_values: [u32; X64] = std::array::from_fn(|i| 4 + i as u32);
+        let mut block = [1; X64];
         block[0] = 0;
-        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
+        let data = unsafe { std::mem::transmute::<&mut [u32; X64], &mut [u32x8; 8]>(&mut block) };
         unsafe { decode_delta(vdupq_n_u32(4), data) };
         assert_eq!(block, expected_values);
     }
@@ -411,20 +411,20 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta1_zero_starting_value() {
-        let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32 + 1);
-        let mut block = [0; X128];
-        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
-        unsafe { decode_delta1(vdupq_n_u32(4), data) };
+        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32 + 1);
+        let mut block = [0; X64];
+        let data = unsafe { std::mem::transmute::<&mut [u32; X64], &mut [u32x8; 8]>(&mut block) };
+        unsafe { decode_delta1(vdupq_n_u32(0), data) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta1_starting_value() {
-        let expected_values: [u32; X128] = std::array::from_fn(|i| i as u32 + 5);
-        let mut block = [0; X128];
-        let data = unsafe { std::mem::transmute::<&mut [u32; X128], &mut [u32x8; 8]>(&mut block) };
-        unsafe { decode_delta1(vdupq_n_u32(0), data) };
+        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32 + 5);
+        let mut block = [0; X64];
+        let data = unsafe { std::mem::transmute::<&mut [u32; X64], &mut [u32x8; 8]>(&mut block) };
+        unsafe { decode_delta1(vdupq_n_u32(4), data) };
         assert_eq!(block, expected_values);
     }
 
