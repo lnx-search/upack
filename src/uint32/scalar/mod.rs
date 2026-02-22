@@ -20,7 +20,7 @@ pub unsafe fn pack_x128(
     block: &[u32; X128],
     pack_n: usize,
 ) -> CompressionDetails {
-    let max = block.iter().fold(0, |a, b| a.max(*b));
+    let max = block.iter().take(pack_n).fold(0, |a, b| a.max(*b));
     let nbits = 32 - max.leading_zeros();
 
     unsafe { pack_x128::to_nbits(nbits as usize, out.as_mut_ptr(), block, pack_n) };
