@@ -28,15 +28,19 @@ impl<const BLOCK_SIZE: usize> Routine for UpackCompressBase<BLOCK_SIZE> {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+        let total_samples = samples.len();
+
         for (sample, _last_value) in std::iter::zip(samples.iter(), last_values) {
             let output = upack::compress(128, sample, &mut self.output);
             std::hint::black_box(output);
         }
+
+        total_samples * BLOCK_SIZE
     }
 }
 
@@ -64,15 +68,19 @@ impl<const BLOCK_SIZE: usize> Routine for UpackCompressDelta<BLOCK_SIZE> {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+        let total_samples = samples.len();
+
         for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
             let output = upack::compress_delta(*last_value, 128, sample, &mut self.output);
             std::hint::black_box(output);
         }
+
+        total_samples * BLOCK_SIZE
     }
 }
 
@@ -100,15 +108,19 @@ impl<const BLOCK_SIZE: usize> Routine for UpackCompressDelta1<BLOCK_SIZE> {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+        let total_samples = samples.len();
+
         for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
             let output = upack::compress_delta1(*last_value, 128, sample, &mut self.output);
             std::hint::black_box(output);
         }
+
+        total_samples * BLOCK_SIZE
     }
 }
 
@@ -160,16 +172,19 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressBase<BLOCK_SIZE> {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
+        let total_samples = metadata.len();
 
         let mut offset = 0;
         for (_last_value, nbits) in metadata.iter().copied() {
             offset += upack::decompress(128, nbits, &compressed[offset..], &mut *self.output);
         }
+
+        total_samples * BLOCK_SIZE
     }
 }
 
@@ -216,11 +231,12 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta<BLOCK_SIZE> {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
+        let total_samples = metadata.len();
 
         let mut offset = 0;
         for (last_value, nbits) in metadata.iter().copied() {
@@ -232,6 +248,8 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta<BLOCK_SIZE> {
                 &mut *self.output,
             );
         }
+
+        total_samples * BLOCK_SIZE
     }
 }
 
@@ -278,11 +296,12 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta1<BLOCK_SIZE> {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
+        let total_samples = metadata.len();
 
         let mut offset = 0;
         for (last_value, nbits) in metadata.iter().copied() {
@@ -294,5 +313,7 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta1<BLOCK_SIZE> {
                 &mut *self.output,
             );
         }
+
+        total_samples * BLOCK_SIZE
     }
 }

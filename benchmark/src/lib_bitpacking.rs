@@ -31,11 +31,13 @@ impl Routine for BitpackingCompressBase {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+        let total_samples = samples.len();
+
         for (sample, _last_value) in std::iter::zip(samples.iter(), last_values) {
             let bits = self.packer.num_bits(sample);
             let output = self
@@ -43,6 +45,8 @@ impl Routine for BitpackingCompressBase {
                 .compress(sample, self.output.as_mut_slice(), bits);
             std::hint::black_box(output);
         }
+
+        total_samples * X128
     }
 }
 
@@ -72,11 +76,13 @@ impl Routine for BitpackingCompressDelta {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+        let total_samples = samples.len();
+
         for (sample, last_value) in std::iter::zip(samples.iter(), last_values) {
             let bits = self.packer.num_bits_sorted(*last_value, sample);
             let output =
@@ -84,6 +90,8 @@ impl Routine for BitpackingCompressDelta {
                     .compress_sorted(*last_value, sample, self.output.as_mut_slice(), bits);
             std::hint::black_box(output);
         }
+
+        total_samples * X128
     }
 }
 
@@ -113,11 +121,13 @@ impl Routine for BitpackingCompressDelta1 {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+        let total_samples = samples.len();
+
         for (sample, last_value) in std::iter::zip(samples.iter(), last_values) {
             let bits = self
                 .packer
@@ -130,6 +140,8 @@ impl Routine for BitpackingCompressDelta1 {
             );
             std::hint::black_box(output);
         }
+
+        total_samples * X128
     }
 }
 
@@ -186,11 +198,12 @@ impl Routine for BitpackingDecompressBase {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
+        let total_samples = metadata.len();
 
         let mut offset = 0;
         for (_last_value, nbits) in metadata.iter().copied() {
@@ -198,6 +211,8 @@ impl Routine for BitpackingDecompressBase {
                 .packer
                 .decompress(&compressed[offset..], &mut *self.output, nbits);
         }
+
+        total_samples * X128
     }
 }
 
@@ -249,11 +264,12 @@ impl Routine for BitpackingDecompressDelta {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
+        let total_samples = metadata.len();
 
         let mut offset = 0;
         for (last_value, nbits) in metadata.iter().copied() {
@@ -264,6 +280,8 @@ impl Routine for BitpackingDecompressDelta {
                 nbits,
             );
         }
+
+        total_samples * X128
     }
 }
 
@@ -320,11 +338,12 @@ impl Routine for BitpackingDecompressDelta1 {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
+        let total_samples = metadata.len();
 
         let mut offset = 0;
         for (last_value, nbits) in metadata.iter().copied() {
@@ -335,5 +354,7 @@ impl Routine for BitpackingDecompressDelta1 {
                 nbits,
             );
         }
+
+        total_samples * X128
     }
 }

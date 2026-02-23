@@ -3,7 +3,6 @@ use std::time::{Duration, Instant};
 use comfy_table::Table;
 use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
-use upack::X128;
 
 use crate::routine::Routine;
 
@@ -80,6 +79,7 @@ impl RunContext {
         let mut timing_samples = Vec::new();
         let mut total_execution_time = Duration::default();
         let mut total_samples_processed = 0;
+        let mut total_integers_processed = 0;
 
         let measurements_start = Instant::now();
         loop {
@@ -95,7 +95,7 @@ impl RunContext {
             let mut prepared = std::hint::black_box(routine.prep(samples));
 
             let start = Instant::now();
-            routine.execute(&mut prepared);
+            let num_integers_processed = routine.execute(&mut prepared);
             let elapsed = start.elapsed();
 
             // Drop after timing.
@@ -104,6 +104,7 @@ impl RunContext {
             timing_samples.push(elapsed / self.config.sample_size as u32);
             total_execution_time += elapsed;
             total_samples_processed += self.config.sample_size;
+            total_integers_processed += num_integers_processed;
 
             if measurements_start.elapsed() >= self.config.run_duration {
                 break;
@@ -115,10 +116,9 @@ impl RunContext {
             humantime::Duration::from(measurements_start.elapsed()),
         );
 
-        let total_ints_processed = total_samples_processed * X128;
-        let total_bytes_processed = total_ints_processed * size_of::<u32>();
+        let total_bytes_processed = total_integers_processed * size_of::<u32>();
 
-        let ints_per_sec = total_ints_processed as f32 / total_execution_time.as_secs_f32();
+        let ints_per_sec = total_integers_processed as f32 / total_execution_time.as_secs_f32();
         let bytes_per_sec = total_bytes_processed as f32 / total_execution_time.as_secs_f32();
 
         self.push_sample(

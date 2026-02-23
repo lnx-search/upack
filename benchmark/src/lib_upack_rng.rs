@@ -28,16 +28,21 @@ impl Routine for UpackRandomLenCompressBase {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+
+        let mut total_samples = 0;
         for (sample, _last_value) in std::iter::zip(samples.iter(), last_values) {
             let n = fastrand::usize(0..X128);
+            total_samples += n;
             let output = upack::compress(n, sample, &mut self.output);
             std::hint::black_box(output);
         }
+
+        total_samples
     }
 }
 
@@ -65,16 +70,21 @@ impl Routine for UpackRandomLenCompressDelta {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+
+        let mut total_samples = 0;
         for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
             let n = fastrand::usize(0..X128);
+            total_samples += n;
             let output = upack::compress_delta(*last_value, n, sample, &mut self.output);
             std::hint::black_box(output);
         }
+
+        total_samples
     }
 }
 
@@ -102,16 +112,21 @@ impl Routine for UpackRandomLenCompressDelta1 {
         samples
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let GeneratedSamples {
             samples,
             last_values,
         } = input;
+
+        let mut total_samples = 0;
         for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
             let n = fastrand::usize(0..X128);
+            total_samples += n;
             let output = upack::compress_delta1(*last_value, n, sample, &mut self.output);
             std::hint::black_box(output);
         }
+
+        total_samples
     }
 }
 
@@ -165,16 +180,20 @@ impl Routine for UpackRandomLenDecompressBase {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
 
+        let mut total_samples = 0;
         let mut offset = 0;
         for (_last_value, n, nbits) in metadata.iter().copied() {
+            total_samples += n;
             offset += upack::decompress(n, nbits, &compressed[offset..], &mut *self.output);
         }
+
+        total_samples
     }
 }
 
@@ -223,14 +242,16 @@ impl Routine for UpackRandomLenDecompressDelta {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
 
+        let mut total_samples = 0;
         let mut offset = 0;
         for (last_value, n, nbits) in metadata.iter().copied() {
+            total_samples += n;
             offset += upack::decompress_delta(
                 last_value,
                 n,
@@ -239,6 +260,8 @@ impl Routine for UpackRandomLenDecompressDelta {
                 &mut *self.output,
             );
         }
+
+        total_samples
     }
 }
 
@@ -287,14 +310,15 @@ impl Routine for UpackRandomLenDecompressDelta1 {
         }
     }
 
-    fn execute(&mut self, input: &mut Self::PreparedInput) {
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
         let PreCompressed {
             compressed,
             metadata,
         } = input;
-
+        let mut total_samples = 0;
         let mut offset = 0;
         for (last_value, n, nbits) in metadata.iter().copied() {
+            total_samples += n;
             offset += upack::decompress_delta1(
                 last_value,
                 n,
@@ -303,5 +327,7 @@ impl Routine for UpackRandomLenDecompressDelta1 {
                 &mut *self.output,
             );
         }
+
+        total_samples
     }
 }

@@ -11,5 +11,5 @@ pub trait Routine: Default {
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput;
 
     /// Execute the routine for measurements.
-    fn execute(&mut self, samples: &mut Self::PreparedInput);
+    fn execute(&mut self, samples: &mut Self::PreparedInput) -> usize;
 }
