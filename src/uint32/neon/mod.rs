@@ -7,7 +7,7 @@ mod pack_x64_full;
 mod pack_x64_partial;
 mod polyfill;
 mod unpack_x128;
-pub mod unpack_x64_full;
+mod unpack_x64_full;
 mod unpack_x64_partial;
 mod util;
 
