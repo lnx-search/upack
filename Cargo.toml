@@ -2,6 +2,9 @@
 name = "upack"
 version = "1.0.0"
 edition = "2024"
+description = "Faster and more flexible SIMD bitpacking compression in pure Rust."
+keywords = ["compression", "simd"]
+authors = ["chillfish8 harrison.burt@cf8.gg"]
 
 [workspace]
 members = [
