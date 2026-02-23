@@ -22,8 +22,8 @@ unsafe fn pack_u1_registers(out: *mut u8, data: [u8x32; 2]) {
     let [d1, d2] = data;
 
     let select_mask = _neon_set1_u8(0b1);
-    let cmp1 = _neon_and_u8x32(d1, select_mask);
-    let cmp2 = _neon_and_u8x32(d2, select_mask);
+    let cmp1 = _neon_and_u8(d1, select_mask);
+    let cmp2 = _neon_and_u8(d2, select_mask);
 
     let mask1 = _neon_nonzero_mask_u8x32(cmp1);
     let mask2 = _neon_nonzero_mask_u8x32(cmp2);
@@ -73,10 +73,10 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
     let packed = pack_u8_to_u2_unordered(lo_2bit);
     unsafe { _neon_store_u8x16(out.add(0), packed) };
 
-    let hi_1bit1 = _neon_srli_u8x32::<2>(data[0]);
+    let hi_1bit1 = _neon_srli_u8::<2>(data[0]);
     let hi_1bitmask1 = _neon_nonzero_mask_u8x32(hi_1bit1);
 
-    let hi_1bit2 = _neon_srli_u8x32::<2>(data[1]);
+    let hi_1bit2 = _neon_srli_u8::<2>(data[1]);
     let hi_1bitmask2 = _neon_nonzero_mask_u8x32(hi_1bit2);
 
     let hi_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
@@ -99,7 +99,7 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8]) {
 /// bitmap and write to `out`.
 unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
     let packed = pack_u8_to_u4_unordered(data);
-    unsafe { _neon_store_u8x32(out, packed) };
+    unsafe { _neon_store_u8(out, packed) };
 }
 
 #[target_feature(enable = "neon")]

@@ -21,10 +21,10 @@ pub(super) fn pack_u32_to_u8_ordered(data: [u32x8; 8]) -> [u8x32; 2] {
 /// The order of elements is maintained.
 pub(super) fn pack_u32_to_u16_ordered(data: [u32x8; 8]) -> [u16x16; 4] {
     [
-        _neon_combine_u16x8(_neon_cvteu16_u32x8(data[0]), _neon_cvteu16_u32x8(data[1])),
-        _neon_combine_u16x8(_neon_cvteu16_u32x8(data[2]), _neon_cvteu16_u32x8(data[3])),
-        _neon_combine_u16x8(_neon_cvteu16_u32x8(data[4]), _neon_cvteu16_u32x8(data[5])),
-        _neon_combine_u16x8(_neon_cvteu16_u32x8(data[6]), _neon_cvteu16_u32x8(data[7])),
+        _neon_combine_u16(_neon_cvteu32_u16(data[0]), _neon_cvteu32_u16(data[1])),
+        _neon_combine_u16(_neon_cvteu32_u16(data[2]), _neon_cvteu32_u16(data[3])),
+        _neon_combine_u16(_neon_cvteu32_u16(data[4]), _neon_cvteu32_u16(data[5])),
+        _neon_combine_u16(_neon_cvteu32_u16(data[6]), _neon_cvteu32_u16(data[7])),
     ]
 }
 
@@ -35,8 +35,8 @@ pub(super) fn pack_u32_to_u16_ordered(data: [u32x8; 8]) -> [u16x16; 4] {
 /// The order of elements is maintained.
 pub(super) fn pack_u16_to_u8_ordered(data: [u16x16; 4]) -> [u8x32; 2] {
     [
-        _neon_combine_u8x16(_neon_cvteu8_u16x16(data[0]), _neon_cvteu8_u16x16(data[1])),
-        _neon_combine_u8x16(_neon_cvteu8_u16x16(data[2]), _neon_cvteu8_u16x16(data[3])),
+        _neon_combine_u8(_neon_cvteu16_u8(data[0]), _neon_cvteu16_u8(data[1])),
+        _neon_combine_u8(_neon_cvteu16_u8(data[2]), _neon_cvteu16_u8(data[3])),
     ]
 }
 
@@ -60,10 +60,10 @@ pub(super) fn unpack_u8_to_u16_ordered(data: [u8x32; 2]) -> [u16x16; 4] {
     ];
 
     [
-        _neon_cvteu16_u8x16(parts[0]),
-        _neon_cvteu16_u8x16(parts[1]),
-        _neon_cvteu16_u8x16(parts[2]),
-        _neon_cvteu16_u8x16(parts[3]),
+        _neon_cvteu8_u16(parts[0]),
+        _neon_cvteu8_u16(parts[1]),
+        _neon_cvteu8_u16(parts[2]),
+        _neon_cvteu8_u16(parts[3]),
     ]
 }
 
@@ -83,14 +83,14 @@ pub(super) fn unpack_u16_to_u32_ordered(data: [u16x16; 4]) -> [u32x8; 8] {
     ];
 
     [
-        _neon_cvteu32_u16x8(split_u16s[0]),
-        _neon_cvteu32_u16x8(split_u16s[1]),
-        _neon_cvteu32_u16x8(split_u16s[2]),
-        _neon_cvteu32_u16x8(split_u16s[3]),
-        _neon_cvteu32_u16x8(split_u16s[4]),
-        _neon_cvteu32_u16x8(split_u16s[5]),
-        _neon_cvteu32_u16x8(split_u16s[6]),
-        _neon_cvteu32_u16x8(split_u16s[7]),
+        _neon_cvteu16_u8(split_u16s[0]),
+        _neon_cvteu16_u8(split_u16s[1]),
+        _neon_cvteu16_u8(split_u16s[2]),
+        _neon_cvteu16_u8(split_u16s[3]),
+        _neon_cvteu16_u8(split_u16s[4]),
+        _neon_cvteu16_u8(split_u16s[5]),
+        _neon_cvteu16_u8(split_u16s[6]),
+        _neon_cvteu16_u8(split_u16s[7]),
     ]
 }
 
@@ -101,18 +101,9 @@ pub(super) fn unpack_u16_to_u32_ordered(data: [u16x16; 4]) -> [u32x8; 8] {
 /// The order of elements are _not_ maintained.
 pub(super) fn pack_u32_to_u8_unordered(data: [u32x8; 8]) -> [u8x32; 2] {
     let shift_1 = [data[0], data[1]];
-    let shift_2 = [
-        _neon_slli_u32x8::<8>(data[4]),
-        _neon_slli_u32x8::<8>(data[5]),
-    ];
-    let shift_3 = [
-        _neon_slli_u32x8::<16>(data[2]),
-        _neon_slli_u32x8::<16>(data[3]),
-    ];
-    let shift_4 = [
-        _neon_slli_u32x8::<24>(data[6]),
-        _neon_slli_u32x8::<24>(data[7]),
-    ];
+    let shift_2 = [_neon_slli_u32::<8>(data[4]), _neon_slli_u32::<8>(data[5])];
+    let shift_3 = [_neon_slli_u32::<16>(data[2]), _neon_slli_u32::<16>(data[3])];
+    let shift_4 = [_neon_slli_u32::<24>(data[6]), _neon_slli_u32::<24>(data[7])];
 
     let mut packed = shift_1;
     packed = or_u32x8_all(packed, shift_2);
@@ -128,10 +119,10 @@ pub(super) fn pack_u32_to_u8_unordered(data: [u32x8; 8]) -> [u8x32; 2] {
 ///
 /// The order of elements are _not_ maintained.
 pub(super) fn pack_u32_to_u16_unordered(data: [u32x8; 8]) -> [u16x16; 4] {
-    let lo_1 = _neon_or_u32x8(data[0], _neon_slli_u32x8::<16>(data[2]));
-    let lo_2 = _neon_or_u32x8(data[1], _neon_slli_u32x8::<16>(data[3]));
-    let hi_1 = _neon_or_u32x8(data[4], _neon_slli_u32x8::<16>(data[6]));
-    let hi_2 = _neon_or_u32x8(data[5], _neon_slli_u32x8::<16>(data[7]));
+    let lo_1 = _neon_or_u32(data[0], _neon_slli_u32::<16>(data[2]));
+    let lo_2 = _neon_or_u32(data[1], _neon_slli_u32::<16>(data[3]));
+    let hi_1 = _neon_or_u32(data[4], _neon_slli_u32::<16>(data[6]));
+    let hi_2 = _neon_or_u32(data[5], _neon_slli_u32::<16>(data[7]));
 
     [lo_1.into(), lo_2.into(), hi_1.into(), hi_2.into()]
 }
@@ -152,8 +143,8 @@ pub(super) fn unpack_u8_to_u16_unordered(data: [u8x32; 2]) -> [u16x16; 4] {
     [
         _neon_blend_every_other_u8(data[0], _neon_set1_u8(0)).into(),
         _neon_blend_every_other_u8(data[1], _neon_set1_u8(0)).into(),
-        _neon_srli_u16x16::<8>(data[0].into()),
-        _neon_srli_u16x16::<8>(data[1].into()),
+        _neon_srli_u16::<8>(data[0].into()),
+        _neon_srli_u16::<8>(data[1].into()),
     ]
 }
 
@@ -165,12 +156,12 @@ pub(super) fn unpack_u16_to_u32_unordered(data: [u16x16; 4]) -> [u32x8; 8] {
     [
         _neon_blend_every_other_u16(data[0], _neon_set1_u16(0)).into(),
         _neon_blend_every_other_u16(data[1], _neon_set1_u16(0)).into(),
-        _neon_srli_u32x8::<16>(data[0].into()),
-        _neon_srli_u32x8::<16>(data[1].into()),
+        _neon_srli_u32::<16>(data[0].into()),
+        _neon_srli_u32::<16>(data[1].into()),
         _neon_blend_every_other_u16(data[2], _neon_set1_u16(0)).into(),
         _neon_blend_every_other_u16(data[3], _neon_set1_u16(0)).into(),
-        _neon_srli_u32x8::<16>(data[2].into()),
-        _neon_srli_u32x8::<16>(data[3].into()),
+        _neon_srli_u32::<16>(data[2].into()),
+        _neon_srli_u32::<16>(data[3].into()),
     ]
 }
 
@@ -205,21 +196,21 @@ pub(super) fn pack_u32_to_u16_split_unordered(data: [u32x8; 8]) -> ([u8x32; 2], 
     let lo_mask = _neon_set1_u16(0x00FF);
     let hi_mask = _neon_set1_u16(0xFF00);
 
-    let lo_8bits_1a = _neon_slli_u16x16::<8>(packed[2]);
-    let lo_8bits_1b = _neon_slli_u16x16::<8>(packed[3]);
-    let lo_8bits_2a = _neon_and_u16x16(packed[0], lo_mask);
-    let lo_8bits_2b = _neon_and_u16x16(packed[1], lo_mask);
+    let lo_8bits_1a = _neon_slli_u16::<8>(packed[2]);
+    let lo_8bits_1b = _neon_slli_u16::<8>(packed[3]);
+    let lo_8bits_2a = _neon_and_u16(packed[0], lo_mask);
+    let lo_8bits_2b = _neon_and_u16(packed[1], lo_mask);
 
-    let lo_8bits_a = _neon_or_u16x16(lo_8bits_1a, lo_8bits_2a);
-    let lo_8bits_b = _neon_or_u16x16(lo_8bits_1b, lo_8bits_2b);
+    let lo_8bits_a = _neon_or_u16(lo_8bits_1a, lo_8bits_2a);
+    let lo_8bits_b = _neon_or_u16(lo_8bits_1b, lo_8bits_2b);
 
-    let hi_8bits_1a = _neon_srli_u16x16::<8>(packed[0]);
-    let hi_8bits_1b = _neon_srli_u16x16::<8>(packed[1]);
-    let hi_8bits_2a = _neon_and_u16x16(packed[2], hi_mask);
-    let hi_8bits_2b = _neon_and_u16x16(packed[3], hi_mask);
+    let hi_8bits_1a = _neon_srli_u16::<8>(packed[0]);
+    let hi_8bits_1b = _neon_srli_u16::<8>(packed[1]);
+    let hi_8bits_2a = _neon_and_u16(packed[2], hi_mask);
+    let hi_8bits_2b = _neon_and_u16(packed[3], hi_mask);
 
-    let hi_8bits_a = _neon_or_u16x16(hi_8bits_1a, hi_8bits_2a);
-    let hi_8bits_b = _neon_or_u16x16(hi_8bits_1b, hi_8bits_2b);
+    let hi_8bits_a = _neon_or_u16(hi_8bits_1a, hi_8bits_2a);
+    let hi_8bits_b = _neon_or_u16(hi_8bits_1b, hi_8bits_2b);
 
     (
         [hi_8bits_a.into(), hi_8bits_b.into()],
@@ -229,15 +220,15 @@ pub(super) fn pack_u32_to_u16_split_unordered(data: [u32x8; 8]) -> ([u8x32; 2], 
 
 #[target_feature(enable = "neon")]
 pub(super) fn pack_u8_to_u4_unordered(data: [u8x32; 2]) -> u8x32 {
-    let shifted = _neon_slli_u8x32::<4>(data[1]);
-    _neon_or_u8x32(data[0], shifted)
+    let shifted = _neon_slli_u8::<4>(data[1]);
+    _neon_or_u8(data[0], shifted)
 }
 
 #[target_feature(enable = "neon")]
 pub(super) fn unpack_u4_to_u8_unordered(data: u8x32) -> [u8x32; 2] {
     let mask = _neon_set1_u8(0x0F);
-    let lo_4bits = _neon_and_u8x32(data, mask);
-    let hi_4bits = _neon_srli_u8x32::<4>(data);
+    let lo_4bits = _neon_and_u8(data, mask);
+    let hi_4bits = _neon_srli_u8::<4>(data);
     [lo_4bits, hi_4bits]
 }
 
@@ -255,7 +246,7 @@ pub(super) fn unpack_u2_to_u8_unordered(data: u8x16) -> [u8x32; 2] {
     let mask = vdupq_n_u8(0b0011_0011);
     let lo = vandq_u8(data.0, mask);
     let hi = vandq_u8(vshrq_n_u8::<2>(data.0), mask);
-    let nibbles = _neon_combine_u8x16(u8x16(lo), u8x16(hi));
+    let nibbles = _neon_combine_u8(u8x16(lo), u8x16(hi));
     unpack_u4_to_u8_unordered(nibbles)
 }
 
@@ -264,7 +255,7 @@ pub(super) fn unpack_u2_to_u8_unordered(data: u8x16) -> [u8x32; 2] {
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_u32x8<const N: usize>(mut data: [u32x8; N], mask: u32x8) -> [u32x8; N] {
     for i in 0..N {
-        data[i] = _neon_and_u32x8(data[i], mask);
+        data[i] = _neon_and_u32(data[i], mask);
     }
     data
 }
@@ -274,7 +265,7 @@ pub(super) fn and_u32x8<const N: usize>(mut data: [u32x8; N], mask: u32x8) -> [u
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_u16x16<const N: usize>(mut data: [u16x16; N], mask: u16x16) -> [u16x16; N] {
     for i in 0..N {
-        data[i] = _neon_and_u16x16(data[i], mask);
+        data[i] = _neon_and_u16(data[i], mask);
     }
     data
 }
@@ -284,7 +275,7 @@ pub(super) fn and_u16x16<const N: usize>(mut data: [u16x16; N], mask: u16x16) ->
 /// Perform a bitwise AND on all provided registers with another broadcast register.
 pub(super) fn and_u8x32<const N: usize>(mut data: [u8x32; N], mask: u8x32) -> [u8x32; N] {
     for i in 0..N {
-        data[i] = _neon_and_u8x32(data[i], mask);
+        data[i] = _neon_and_u8(data[i], mask);
     }
     data
 }
@@ -294,7 +285,7 @@ pub(super) fn and_u8x32<const N: usize>(mut data: [u8x32; N], mask: u8x32) -> [u
 /// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u32x8_all<const N: usize>(mut a: [u32x8; N], b: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
-        a[i] = _neon_or_u32x8(a[i], b[i]);
+        a[i] = _neon_or_u32(a[i], b[i]);
     }
     a
 }
@@ -304,7 +295,7 @@ pub(super) fn or_u32x8_all<const N: usize>(mut a: [u32x8; N], b: [u32x8; N]) -> 
 /// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u16x16_all<const N: usize>(mut a: [u16x16; N], b: [u16x16; N]) -> [u16x16; N] {
     for i in 0..N {
-        a[i] = _neon_or_u16x16(a[i], b[i]);
+        a[i] = _neon_or_u16(a[i], b[i]);
     }
     a
 }
@@ -314,7 +305,7 @@ pub(super) fn or_u16x16_all<const N: usize>(mut a: [u16x16; N], b: [u16x16; N]) 
 /// Perform a bitwise OR on all provided registers with another broadcast register.
 pub(super) fn or_u8x32_all<const N: usize>(mut a: [u8x32; N], b: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
-        a[i] = _neon_or_u8x32(a[i], b[i]);
+        a[i] = _neon_or_u8(a[i], b[i]);
     }
     a
 }
@@ -324,7 +315,7 @@ pub(super) fn or_u8x32_all<const N: usize>(mut a: [u8x32; N], b: [u8x32; N]) -> 
 /// Shift all registers right by [IMM8] in 8-bit lanes.
 pub(super) fn srli_u8x32<const IMM8: i32, const N: usize>(mut data: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
-        data[i] = _neon_srli_u8x32::<IMM8>(data[i]);
+        data[i] = _neon_srli_u8::<IMM8>(data[i]);
     }
     data
 }
@@ -334,7 +325,7 @@ pub(super) fn srli_u8x32<const IMM8: i32, const N: usize>(mut data: [u8x32; N]) 
 /// Shift all registers right by [IMM8] in 16-bit lanes.
 pub(super) fn srli_u16x16<const IMM8: i32, const N: usize>(mut data: [u16x16; N]) -> [u16x16; N] {
     for i in 0..N {
-        data[i] = _neon_srli_u16x16::<IMM8>(data[i]);
+        data[i] = _neon_srli_u16::<IMM8>(data[i]);
     }
     data
 }
@@ -344,7 +335,7 @@ pub(super) fn srli_u16x16<const IMM8: i32, const N: usize>(mut data: [u16x16; N]
 /// Shift all registers right by [IMM8] in 32-bit lanes.
 pub(super) fn srli_u32x8<const IMM8: i32, const N: usize>(mut data: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
-        data[i] = _neon_srli_u32x8::<IMM8>(data[i]);
+        data[i] = _neon_srli_u32::<IMM8>(data[i]);
     }
     data
 }
@@ -354,7 +345,7 @@ pub(super) fn srli_u32x8<const IMM8: i32, const N: usize>(mut data: [u32x8; N]) 
 /// Shift all registers left by [IMM8] in 8-bit lanes.
 pub(super) fn slli_u8x32<const IMM8: i32, const N: usize>(mut data: [u8x32; N]) -> [u8x32; N] {
     for i in 0..N {
-        data[i] = _neon_slli_u8x32::<IMM8>(data[i]);
+        data[i] = _neon_slli_u8::<IMM8>(data[i]);
     }
     data
 }
@@ -364,7 +355,7 @@ pub(super) fn slli_u8x32<const IMM8: i32, const N: usize>(mut data: [u8x32; N]) 
 /// Shift all registers left by [IMM8] in 16-bit lanes.
 pub(super) fn slli_u16x16<const IMM8: i32, const N: usize>(mut data: [u16x16; N]) -> [u16x16; N] {
     for i in 0..N {
-        data[i] = _neon_slli_u16x16::<IMM8>(data[i]);
+        data[i] = _neon_slli_u16::<IMM8>(data[i]);
     }
     data
 }
@@ -374,7 +365,7 @@ pub(super) fn slli_u16x16<const IMM8: i32, const N: usize>(mut data: [u16x16; N]
 /// Shift all registers left by [IMM8] in 32-bit lanes.
 pub(super) fn slli_u32x8<const IMM8: i32, const N: usize>(mut data: [u32x8; N]) -> [u32x8; N] {
     for i in 0..N {
-        data[i] = _neon_slli_u32x8::<IMM8>(data[i]);
+        data[i] = _neon_slli_u32::<IMM8>(data[i]);
     }
     data
 }

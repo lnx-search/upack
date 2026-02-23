@@ -21,8 +21,8 @@ unsafe fn unpack_u1_registers(input: *const u8) -> [u8x32; 2] {
     let mask: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
 
     let ones = _neon_set1_u8(0b1);
-    let packed1 = _neon_mov_maskz_u8x32(mask as u32, ones);
-    let packed2 = _neon_mov_maskz_u8x32((mask >> 32) as u32, ones);
+    let packed1 = _neon_mov_maskz_u8(mask as u32, ones);
+    let packed2 = _neon_mov_maskz_u8((mask >> 32) as u32, ones);
     [packed1, packed2]
 }
 
@@ -68,8 +68,8 @@ unsafe fn unpack_u3_registers(input: *const u8) -> [u8x32; 2] {
     let hi_bitmask: u64 = unsafe { std::ptr::read_unaligned(input.add(16).cast()) };
 
     let ones = _neon_set1_u8(0b100);
-    let hi_1bits1 = _neon_mov_maskz_u8x32(hi_bitmask as u32, ones);
-    let hi_1bits2 = _neon_mov_maskz_u8x32((hi_bitmask >> 32) as u32, ones);
+    let hi_1bits1 = _neon_mov_maskz_u8(hi_bitmask as u32, ones);
+    let hi_1bits2 = _neon_mov_maskz_u8((hi_bitmask >> 32) as u32, ones);
 
     or_u8x32_all([hi_1bits1, hi_1bits2], lo_2bits)
 }
@@ -89,7 +89,7 @@ pub unsafe fn from_u4(input: *const u8) -> [u32x8; 8] {
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
 unsafe fn unpack_u4_registers(input: *const u8) -> [u8x32; 2] {
-    let packed = unsafe { _neon_load_u8x32(input) };
+    let packed = unsafe { _neon_load_u8(input) };
     unpack_u4_to_u8_unordered(packed)
 }
 

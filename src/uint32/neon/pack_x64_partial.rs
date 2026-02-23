@@ -19,8 +19,8 @@ unsafe fn pack_u1_registers(out: *mut u8, data: [u8x32; 2]) {
     let [d1, d2] = data;
 
     let select_mask = _neon_set1_u8(0b1);
-    let cmp1 = _neon_and_u8x32(d1, select_mask);
-    let cmp2 = _neon_and_u8x32(d2, select_mask);
+    let cmp1 = _neon_and_u8(d1, select_mask);
+    let cmp2 = _neon_and_u8(d2, select_mask);
 
     let mask1 = _neon_nonzero_mask_u8x32(cmp1);
     let mask2 = _neon_nonzero_mask_u8x32(cmp2);
@@ -47,13 +47,13 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {
     let lo_select_mask = _neon_set1_u8(0b01);
     let hi_select_mask = _neon_set1_u8(0b10);
 
-    let lo_cmp1 = _neon_and_u8x32(d1, lo_select_mask);
-    let hi_cmp1 = _neon_and_u8x32(d1, hi_select_mask);
+    let lo_cmp1 = _neon_and_u8(d1, lo_select_mask);
+    let hi_cmp1 = _neon_and_u8(d1, hi_select_mask);
     let lo_mask1 = _neon_nonzero_mask_u8x32(lo_cmp1);
     let hi_mask1 = _neon_nonzero_mask_u8x32(hi_cmp1);
 
-    let lo_cmp2 = _neon_and_u8x32(d2, lo_select_mask);
-    let hi_cmp2 = _neon_and_u8x32(d2, hi_select_mask);
+    let lo_cmp2 = _neon_and_u8(d2, lo_select_mask);
+    let hi_cmp2 = _neon_and_u8(d2, hi_select_mask);
     let lo_mask2 = _neon_nonzero_mask_u8x32(lo_cmp2);
     let hi_mask2 = _neon_nonzero_mask_u8x32(hi_cmp2);
 
@@ -83,16 +83,16 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2], pack_n: usize) {
     let b1_select_mask = _neon_set1_u8(0b010);
     let b2_select_mask = _neon_set1_u8(0b100);
 
-    let b0_cmp1 = _neon_and_u8x32(d1, b0_select_mask);
-    let b1_cmp1 = _neon_and_u8x32(d1, b1_select_mask);
-    let b2_cmp1 = _neon_and_u8x32(d1, b2_select_mask);
+    let b0_cmp1 = _neon_and_u8(d1, b0_select_mask);
+    let b1_cmp1 = _neon_and_u8(d1, b1_select_mask);
+    let b2_cmp1 = _neon_and_u8(d1, b2_select_mask);
     let b0_mask1 = _neon_nonzero_mask_u8x32(b0_cmp1);
     let b1_mask1 = _neon_nonzero_mask_u8x32(b1_cmp1);
     let b2_mask1 = _neon_nonzero_mask_u8x32(b2_cmp1);
 
-    let b0_cmp2 = _neon_and_u8x32(d2, b0_select_mask);
-    let b1_cmp2 = _neon_and_u8x32(d2, b1_select_mask);
-    let b2_cmp2 = _neon_and_u8x32(d2, b2_select_mask);
+    let b0_cmp2 = _neon_and_u8(d2, b0_select_mask);
+    let b1_cmp2 = _neon_and_u8(d2, b1_select_mask);
+    let b2_cmp2 = _neon_and_u8(d2, b2_select_mask);
     let b0_mask2 = _neon_nonzero_mask_u8x32(b0_cmp2);
     let b1_mask2 = _neon_nonzero_mask_u8x32(b1_cmp2);
     let b2_mask2 = _neon_nonzero_mask_u8x32(b2_cmp2);
@@ -120,7 +120,7 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8], _pack_n: usize) {
 /// bitmap and write to `out`.
 pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
     let packed = _neon_pack_nibbles(data[0], data[1]);
-    unsafe { _neon_store_u8x32(out, packed) };
+    unsafe { _neon_store_u8(out, packed) };
 }
 
 #[target_feature(enable = "neon")]

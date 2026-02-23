@@ -22,8 +22,8 @@ unsafe fn unpack_u1_registers(input: *const u8) -> [u8x32; 2] {
     let mask: u64 = unsafe { std::ptr::read_unaligned(input.cast()) };
 
     let ones = _neon_set1_u8(1);
-    let packed1 = _neon_mov_maskz_u8x32(mask as u32, ones);
-    let packed2 = _neon_mov_maskz_u8x32((mask >> 32) as u32, ones);
+    let packed1 = _neon_mov_maskz_u8(mask as u32, ones);
+    let packed2 = _neon_mov_maskz_u8((mask >> 32) as u32, ones);
 
     [packed1, packed2]
 }
@@ -50,15 +50,15 @@ unsafe fn unpack_u2_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
     let mask2: u64 = unsafe { std::ptr::read_unaligned(input.add(hi_offset).cast()) };
 
     let bit = _neon_set1_u8(0b01);
-    let lo_bits_packed1 = _neon_mov_maskz_u8x32(mask1 as u32, bit);
-    let lo_bits_packed2 = _neon_mov_maskz_u8x32((mask1 >> 32) as u32, bit);
+    let lo_bits_packed1 = _neon_mov_maskz_u8(mask1 as u32, bit);
+    let lo_bits_packed2 = _neon_mov_maskz_u8((mask1 >> 32) as u32, bit);
 
     let bit = _neon_set1_u8(0b10);
-    let hi_bits_packed1 = _neon_mov_maskz_u8x32(mask2 as u32, bit);
-    let hi_bits_packed2 = _neon_mov_maskz_u8x32((mask2 >> 32) as u32, bit);
+    let hi_bits_packed1 = _neon_mov_maskz_u8(mask2 as u32, bit);
+    let hi_bits_packed2 = _neon_mov_maskz_u8((mask2 >> 32) as u32, bit);
 
-    let two_bits1 = _neon_or_u8x32(hi_bits_packed1, lo_bits_packed1);
-    let two_bits2 = _neon_or_u8x32(hi_bits_packed2, lo_bits_packed2);
+    let two_bits1 = _neon_or_u8(hi_bits_packed1, lo_bits_packed1);
+    let two_bits2 = _neon_or_u8(hi_bits_packed2, lo_bits_packed2);
     [two_bits1, two_bits2]
 }
 
@@ -85,21 +85,21 @@ unsafe fn unpack_u3_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
     let mask3: u64 = unsafe { std::ptr::read_unaligned(input.add(step * 2).cast()) };
 
     let bit = _neon_set1_u8(0b001);
-    let b0_bits_packed1 = _neon_mov_maskz_u8x32(mask1 as u32, bit);
-    let b0_bits_packed2 = _neon_mov_maskz_u8x32((mask1 >> 32) as u32, bit);
+    let b0_bits_packed1 = _neon_mov_maskz_u8(mask1 as u32, bit);
+    let b0_bits_packed2 = _neon_mov_maskz_u8((mask1 >> 32) as u32, bit);
 
     let bit = _neon_set1_u8(0b010);
-    let b1_bits_packed1 = _neon_mov_maskz_u8x32(mask2 as u32, bit);
-    let b1_bits_packed2 = _neon_mov_maskz_u8x32((mask2 >> 32) as u32, bit);
+    let b1_bits_packed1 = _neon_mov_maskz_u8(mask2 as u32, bit);
+    let b1_bits_packed2 = _neon_mov_maskz_u8((mask2 >> 32) as u32, bit);
 
     let bit = _neon_set1_u8(0b100);
-    let b2_bits_packed1 = _neon_mov_maskz_u8x32(mask3 as u32, bit);
-    let b2_bits_packed2 = _neon_mov_maskz_u8x32((mask3 >> 32) as u32, bit);
+    let b2_bits_packed1 = _neon_mov_maskz_u8(mask3 as u32, bit);
+    let b2_bits_packed2 = _neon_mov_maskz_u8((mask3 >> 32) as u32, bit);
 
-    let mut three_bits1 = _neon_or_u8x32(b1_bits_packed1, b0_bits_packed1);
-    let mut three_bits2 = _neon_or_u8x32(b1_bits_packed2, b0_bits_packed2);
-    three_bits1 = _neon_or_u8x32(three_bits1, b2_bits_packed1);
-    three_bits2 = _neon_or_u8x32(three_bits2, b2_bits_packed2);
+    let mut three_bits1 = _neon_or_u8(b1_bits_packed1, b0_bits_packed1);
+    let mut three_bits2 = _neon_or_u8(b1_bits_packed2, b0_bits_packed2);
+    three_bits1 = _neon_or_u8(three_bits1, b2_bits_packed1);
+    three_bits2 = _neon_or_u8(three_bits2, b2_bits_packed2);
 
     [three_bits1, three_bits2]
 }
@@ -121,7 +121,7 @@ pub unsafe fn from_u4(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// Unpack eight registers containing 8 32-bit elements from a 4-bit nibbles provided
 /// by `input`.
 pub(super) unsafe fn unpack_u4_registers(input: *const u8) -> [u8x32; 2] {
-    let packed = unsafe { _neon_load_u8x32(input.cast()) };
+    let packed = unsafe { _neon_load_u8(input.cast()) };
     _neon_unpack_nibbles(packed)
 }
 
