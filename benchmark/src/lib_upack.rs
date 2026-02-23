@@ -5,11 +5,11 @@ use crate::generate::GeneratedSamples;
 use crate::routine::Routine;
 
 /// Execute the base upack compressor.
-pub struct UpackCompressBase {
+pub struct UpackCompressBase<const BLOCK_SIZE: usize = X128> {
     output: Box<[u8; X128_MAX_OUTPUT_LEN]>,
 }
 
-impl Default for UpackCompressBase {
+impl<const BLOCK_SIZE: usize> Default for UpackCompressBase<BLOCK_SIZE> {
     fn default() -> Self {
         Self {
             output: Box::new([0; X128_MAX_OUTPUT_LEN]),
@@ -17,11 +17,11 @@ impl Default for UpackCompressBase {
     }
 }
 
-impl Routine for UpackCompressBase {
+impl<const BLOCK_SIZE: usize> Routine for UpackCompressBase<BLOCK_SIZE> {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/upack-base/x128"
+    fn name() -> String {
+        format!("compress/upack-base/x{BLOCK_SIZE}")
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -41,11 +41,11 @@ impl Routine for UpackCompressBase {
 }
 
 /// Execute the delta upack compressor.
-pub struct UpackCompressDelta {
+pub struct UpackCompressDelta<const BLOCK_SIZE: usize = X128> {
     output: Box<[u8; X128_MAX_OUTPUT_LEN]>,
 }
 
-impl Default for UpackCompressDelta {
+impl<const BLOCK_SIZE: usize> Default for UpackCompressDelta<BLOCK_SIZE> {
     fn default() -> Self {
         Self {
             output: Box::new([0; X128_MAX_OUTPUT_LEN]),
@@ -53,11 +53,11 @@ impl Default for UpackCompressDelta {
     }
 }
 
-impl Routine for UpackCompressDelta {
+impl<const BLOCK_SIZE: usize> Routine for UpackCompressDelta<BLOCK_SIZE> {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/upack-delta/x128"
+    fn name() -> String {
+        format!("compress/upack-delta/x{BLOCK_SIZE}")
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -77,11 +77,11 @@ impl Routine for UpackCompressDelta {
 }
 
 /// Execute the delta-1 upack compressor.
-pub struct UpackCompressDelta1 {
+pub struct UpackCompressDelta1<const BLOCK_SIZE: usize = X128> {
     output: Box<[u8; X128_MAX_OUTPUT_LEN]>,
 }
 
-impl Default for UpackCompressDelta1 {
+impl<const BLOCK_SIZE: usize> Default for UpackCompressDelta1<BLOCK_SIZE> {
     fn default() -> Self {
         Self {
             output: Box::new([0; X128_MAX_OUTPUT_LEN]),
@@ -89,11 +89,11 @@ impl Default for UpackCompressDelta1 {
     }
 }
 
-impl Routine for UpackCompressDelta1 {
+impl<const BLOCK_SIZE: usize> Routine for UpackCompressDelta1<BLOCK_SIZE> {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/upack-delta1/x128"
+    fn name() -> String {
+        format!("compress/upack-delta1/x{BLOCK_SIZE}")
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -118,11 +118,11 @@ pub struct PreCompressed {
 }
 
 /// Execute the base upack decompressor.
-pub struct UpackDecompressBase {
+pub struct UpackDecompressBase<const BLOCK_SIZE: usize = X128> {
     output: Box<[u32; X128]>,
 }
 
-impl Default for UpackDecompressBase {
+impl<const BLOCK_SIZE: usize> Default for UpackDecompressBase<BLOCK_SIZE> {
     fn default() -> Self {
         Self {
             output: Box::new([0; X128]),
@@ -130,11 +130,11 @@ impl Default for UpackDecompressBase {
     }
 }
 
-impl Routine for UpackDecompressBase {
+impl<const BLOCK_SIZE: usize> Routine for UpackDecompressBase<BLOCK_SIZE> {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/upack-base/x128"
+    fn name() -> String {
+        format!("decompress/upack-base/x{BLOCK_SIZE}")
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -174,11 +174,11 @@ impl Routine for UpackDecompressBase {
 }
 
 /// Execute the delta upack decompressor.
-pub struct UpackDecompressDelta {
+pub struct UpackDecompressDelta<const BLOCK_SIZE: usize = X128> {
     output: Box<[u32; X128]>,
 }
 
-impl Default for UpackDecompressDelta {
+impl<const BLOCK_SIZE: usize> Default for UpackDecompressDelta<BLOCK_SIZE> {
     fn default() -> Self {
         Self {
             output: Box::new([0; X128]),
@@ -186,11 +186,11 @@ impl Default for UpackDecompressDelta {
     }
 }
 
-impl Routine for UpackDecompressDelta {
+impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta<BLOCK_SIZE> {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/upack-delta/x128"
+    fn name() -> String {
+        format!("decompress/upack-delta/x{BLOCK_SIZE}")
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -236,11 +236,11 @@ impl Routine for UpackDecompressDelta {
 }
 
 /// Execute the delta-1 upack decompressor.
-pub struct UpackDecompressDelta1 {
+pub struct UpackDecompressDelta1<const BLOCK_SIZE: usize = X128> {
     output: Box<[u32; X128]>,
 }
 
-impl Default for UpackDecompressDelta1 {
+impl<const BLOCK_SIZE: usize> Default for UpackDecompressDelta1<BLOCK_SIZE> {
     fn default() -> Self {
         Self {
             output: Box::new([0; X128]),
@@ -248,11 +248,11 @@ impl Default for UpackDecompressDelta1 {
     }
 }
 
-impl Routine for UpackDecompressDelta1 {
+impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta1<BLOCK_SIZE> {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/upack-delta1/x128"
+    fn name() -> String {
+        format!("decompress/upack-delta1/x{BLOCK_SIZE}")
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {

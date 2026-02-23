@@ -23,8 +23,8 @@ impl Default for BitpackingCompressBase {
 impl Routine for BitpackingCompressBase {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/bitpacking-base/x128"
+    fn name() -> String {
+        "compress/bitpacking-base/x128".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -64,8 +64,8 @@ impl Default for BitpackingCompressDelta {
 impl Routine for BitpackingCompressDelta {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/bitpacking-delta/x128"
+    fn name() -> String {
+        "compress/bitpacking-delta/x128".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -105,8 +105,8 @@ impl Default for BitpackingCompressDelta1 {
 impl Routine for BitpackingCompressDelta1 {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/bitpacking-delta1/x128"
+    fn name() -> String {
+        "compress/bitpacking-delta1/x128".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -156,8 +156,8 @@ impl Default for BitpackingDecompressBase {
 impl Routine for BitpackingDecompressBase {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/bitpacking-base/x128"
+    fn name() -> String {
+        "decompress/bitpacking-base/x128".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -219,8 +219,8 @@ impl Default for BitpackingDecompressDelta {
 impl Routine for BitpackingDecompressDelta {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/bitpacking-delta/x128"
+    fn name() -> String {
+        "decompress/bitpacking-delta/x128".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -285,8 +285,8 @@ impl Default for BitpackingDecompressDelta1 {
 impl Routine for BitpackingDecompressDelta1 {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/bitpacking-delta1/x128"
+    fn name() -> String {
+        "decompress/bitpacking-delta1/x128".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {

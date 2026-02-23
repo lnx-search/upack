@@ -20,8 +20,8 @@ impl Default for UpackRandomLenCompressBase {
 impl Routine for UpackRandomLenCompressBase {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/upack-base/random-len"
+    fn name() -> String {
+        "compress/upack-base/random-len".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -57,8 +57,8 @@ impl Default for UpackRandomLenCompressDelta {
 impl Routine for UpackRandomLenCompressDelta {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/upack-delta/random-len"
+    fn name() -> String {
+        "compress/upack-delta/random-len".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -94,8 +94,8 @@ impl Default for UpackRandomLenCompressDelta1 {
 impl Routine for UpackRandomLenCompressDelta1 {
     type PreparedInput = GeneratedSamples;
 
-    fn name() -> &'static str {
-        "compress/upack-delta1/random-len"
+    fn name() -> String {
+        "compress/upack-delta1/random-len".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -136,8 +136,8 @@ impl Default for UpackRandomLenDecompressBase {
 impl Routine for UpackRandomLenDecompressBase {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/upack-base/random-len"
+    fn name() -> String {
+        "decompress/upack-base/random-len".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -194,8 +194,8 @@ impl Default for UpackRandomLenDecompressDelta {
 impl Routine for UpackRandomLenDecompressDelta {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/upack-delta/random-len"
+    fn name() -> String {
+        "decompress/upack-delta/random-len".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
@@ -258,8 +258,8 @@ impl Default for UpackRandomLenDecompressDelta1 {
 impl Routine for UpackRandomLenDecompressDelta1 {
     type PreparedInput = PreCompressed;
 
-    fn name() -> &'static str {
-        "decompress/upack-delta1/random-len"
+    fn name() -> String {
+        "decompress/upack-delta1/random-len".to_string()
     }
 
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {

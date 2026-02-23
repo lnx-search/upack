@@ -5,7 +5,7 @@ pub trait Routine: Default {
     type PreparedInput;
 
     /// The name/identifier for the routine.
-    fn name() -> &'static str;
+    fn name() -> String;
 
     /// Prepare the input samples read for the timing run.
     fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput;

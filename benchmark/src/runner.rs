@@ -122,7 +122,7 @@ impl RunContext {
         let bytes_per_sec = total_bytes_processed as f32 / total_execution_time.as_secs_f32();
 
         self.push_sample(
-            name,
+            &name,
             min_sample(&timing_samples),
             max_sample(&timing_samples),
             total_execution_time / total_samples_processed as u32,
