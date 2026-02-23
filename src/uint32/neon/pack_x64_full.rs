@@ -181,7 +181,7 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [u8x32; 2]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(8)` bytes to.
 pub(crate) unsafe fn to_u8(out: *mut u8, block: [u32x8; 8]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
-    unsafe { store_u8x32x2(out, partially_packed) }
+    unsafe { store_u8x16x4(out, partially_packed) }
 }
 
 #[target_feature(enable = "neon")]
@@ -191,7 +191,7 @@ pub(crate) unsafe fn to_u8(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(9)` bytes to.
 pub(crate) unsafe fn to_u9(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u1_registers(out.add(64), hi) }
 }
 
@@ -202,7 +202,7 @@ pub(crate) unsafe fn to_u9(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(10)` bytes to.
 pub(crate) unsafe fn to_u10(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u2_registers(out.add(64), hi) }
 }
 
@@ -213,7 +213,7 @@ pub(crate) unsafe fn to_u10(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(11)` bytes to.
 pub(crate) unsafe fn to_u11(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u3_registers(out.add(64), hi) }
 }
 
@@ -224,7 +224,7 @@ pub(crate) unsafe fn to_u11(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(12)` bytes to.
 pub(crate) unsafe fn to_u12(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u4_registers(out.add(64), hi) }
 }
 
@@ -235,7 +235,7 @@ pub(crate) unsafe fn to_u12(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(13)` bytes to.
 pub(crate) unsafe fn to_u13(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u5_registers(out.add(64), hi) }
 }
 
@@ -246,7 +246,7 @@ pub(crate) unsafe fn to_u13(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(14)` bytes to.
 pub(crate) unsafe fn to_u14(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u6_registers(out.add(64), hi) }
 }
 
@@ -257,7 +257,7 @@ pub(crate) unsafe fn to_u14(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(15)` bytes to.
 pub(crate) unsafe fn to_u15(out: *mut u8, block: [u32x8; 8]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
-    unsafe { store_u8x32x2(out.add(0), lo) };
+    unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u7_registers(out.add(64), hi) }
 }
 
@@ -268,7 +268,7 @@ pub(crate) unsafe fn to_u15(out: *mut u8, block: [u32x8; 8]) {
 /// - `out` must be safe to write `max_compressed_size::<X64>(16)` bytes to.
 pub(crate) unsafe fn to_u16(out: *mut u8, block: [u32x8; 8]) {
     let packed = pack_u32_to_u16_unordered(block);
-    unsafe { store_u16x16x4(out, packed) };
+    unsafe { store_u16x8x8(out, packed) };
 }
 
 #[target_feature(enable = "neon")]
@@ -276,7 +276,7 @@ unsafe fn store_lo_u16_registers(out: *mut u8, data: [u32x8; 8]) {
     let mask = _neon_set1_u32(0xFFFF);
     let shifted = and_u32x8(data, mask);
     let packed = pack_u32_to_u16_unordered(shifted);
-    unsafe { store_u16x16x4(out, packed) };
+    unsafe { store_u16x8x8(out, packed) };
 }
 
 #[target_feature(enable = "neon")]
@@ -380,7 +380,7 @@ pub(crate) unsafe fn to_u24(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_bits = srli_u32x8::<16, 8>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
-    unsafe { store_u8x32x2(out.add(128), hi_bits) };
+    unsafe { store_u8x16x4(out.add(128), hi_bits) };
 }
 
 #[target_feature(enable = "neon")]
@@ -393,7 +393,7 @@ pub(crate) unsafe fn to_u25(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u1_registers(out.add(192), hi) };
 }
 
@@ -407,7 +407,7 @@ pub(crate) unsafe fn to_u26(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u2_registers(out.add(192), hi) };
 }
 
@@ -421,7 +421,7 @@ pub(crate) unsafe fn to_u27(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u3_registers(out.add(192), hi) };
 }
 
@@ -435,7 +435,7 @@ pub(crate) unsafe fn to_u28(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u4_registers(out.add(192), hi) };
 }
 
@@ -449,7 +449,7 @@ pub(crate) unsafe fn to_u29(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u5_registers(out.add(192), hi) };
 }
 
@@ -463,7 +463,7 @@ pub(crate) unsafe fn to_u30(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u6_registers(out.add(192), hi) };
 }
 
@@ -477,7 +477,7 @@ pub(crate) unsafe fn to_u31(out: *mut u8, block: [u32x8; 8]) {
 
     let hi_half = srli_u32x8::<16, 8>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
-    unsafe { store_u8x32x2(out.add(128), lo) };
+    unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u7_registers(out.add(192), hi) };
 }
 
@@ -487,7 +487,7 @@ pub(crate) unsafe fn to_u31(out: *mut u8, block: [u32x8; 8]) {
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(32)` bytes to.
 pub(crate) unsafe fn to_u32(out: *mut u8, block: [u32x8; 8]) {
-    unsafe { store_u32x8x8(out, block) };
+    unsafe { store_u32x4x16(out, block) };
 }
 
 #[cfg(test)]

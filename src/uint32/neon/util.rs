@@ -374,7 +374,7 @@ pub(super) fn slli_u32x8<const IMM8: i32, const N: usize>(mut data: [u32x8; N]) 
 mod tests {
     use super::*;
     use crate::X64;
-    use crate::uint32::neon::data::{load_u8x32x2, load_u32x64};
+    use crate::uint32::neon::data::{load_u8x16x4, load_u32x64};
     use crate::uint32::test_util::{
         PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT,
         PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,
@@ -530,7 +530,7 @@ mod tests {
     fn test_unpack_u8_to_u16_unordered_layout() {
         let expected: [u16; X64] = std::array::from_fn(|i| i as u16);
 
-        let data = unsafe { load_u8x32x2(PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT.as_ptr()) };
+        let data = unsafe { load_u8x16x4(PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT.as_ptr()) };
         let unpacked = unsafe { unpack_u8_to_u16_unordered(data) };
 
         let view = unsafe { std::mem::transmute::<[u16x16; 4], [u16; X64]>(unpacked) };
@@ -542,7 +542,7 @@ mod tests {
     fn test_unpack_u4_to_u8_unordered() {
         let expected: [u8; X64] = std::array::from_fn(|i| i as u8 % 16);
 
-        let data = unsafe { load_u8x32x2(expected.as_ptr()) };
+        let data = unsafe { load_u8x16x4(expected.as_ptr()) };
         let packed = unsafe { pack_u8_to_u4_unordered(data) };
         let unpacked = unsafe { unpack_u4_to_u8_unordered(packed) };
 
@@ -555,7 +555,7 @@ mod tests {
     fn test_unpack_u2_to_u8_unordered() {
         let expected: [u8; X64] = std::array::from_fn(|i| i as u8 % 4);
 
-        let data = unsafe { load_u8x32x2(expected.as_ptr()) };
+        let data = unsafe { load_u8x16x4(expected.as_ptr()) };
         let packed = unsafe { pack_u8_to_u2_unordered(data) };
         let unpacked = unsafe { unpack_u2_to_u8_unordered(packed) };
 

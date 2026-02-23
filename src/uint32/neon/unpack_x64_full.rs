@@ -166,7 +166,7 @@ unsafe fn unpack_u7_registers(input: *const u8) -> [u8x32; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(8)` bytes from.
 pub unsafe fn from_u8(input: *const u8) -> [u32x8; 8] {
-    let packed = unsafe { load_u8x32x2(input) };
+    let packed = unsafe { load_u8x16x4(input) };
     unpack_u8_to_u32_unordered(packed)
 }
 
@@ -177,7 +177,7 @@ pub unsafe fn from_u8(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(9)` bytes from.
 pub unsafe fn from_u9(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u1_registers(input.add(64)) };
@@ -195,7 +195,7 @@ pub unsafe fn from_u9(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(10)` bytes from.
 pub unsafe fn from_u10(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u2_registers(input.add(64)) };
@@ -213,7 +213,7 @@ pub unsafe fn from_u10(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(11)` bytes from.
 pub unsafe fn from_u11(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u3_registers(input.add(64)) };
@@ -231,7 +231,7 @@ pub unsafe fn from_u11(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(12)` bytes from.
 pub unsafe fn from_u12(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u4_registers(input.add(64)) };
@@ -249,7 +249,7 @@ pub unsafe fn from_u12(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(13)` bytes from.
 pub unsafe fn from_u13(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u5_registers(input.add(64)) };
@@ -267,7 +267,7 @@ pub unsafe fn from_u13(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(14)` bytes from.
 pub unsafe fn from_u14(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u6_registers(input.add(64)) };
@@ -285,7 +285,7 @@ pub unsafe fn from_u14(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(15)` bytes from.
 pub unsafe fn from_u15(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u7_registers(input.add(64)) };
@@ -303,7 +303,7 @@ pub unsafe fn from_u15(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(16)` bytes from.
 pub unsafe fn from_u16(input: *const u8) -> [u32x8; 8] {
-    let packed = unsafe { load_u16x16x4(input.add(0)) };
+    let packed = unsafe { load_u16x8x8(input.add(0)) };
     unpack_u16_to_u32_unordered(packed)
 }
 
@@ -314,7 +314,7 @@ pub unsafe fn from_u16(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(17)` bytes from.
 pub unsafe fn from_u17(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u1_registers(input.add(128)) };
@@ -331,7 +331,7 @@ pub unsafe fn from_u17(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(18)` bytes from.
 pub unsafe fn from_u18(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u2_registers(input.add(128)) };
@@ -348,7 +348,7 @@ pub unsafe fn from_u18(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(19)` bytes from.
 pub unsafe fn from_u19(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u3_registers(input.add(128)) };
@@ -365,7 +365,7 @@ pub unsafe fn from_u19(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(20)` bytes from.
 pub unsafe fn from_u20(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u4_registers(input.add(128)) };
@@ -382,7 +382,7 @@ pub unsafe fn from_u20(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(21)` bytes from.
 pub unsafe fn from_u21(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u5_registers(input.add(128)) };
@@ -399,7 +399,7 @@ pub unsafe fn from_u21(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(22)` bytes from.
 pub unsafe fn from_u22(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u6_registers(input.add(128)) };
@@ -416,7 +416,7 @@ pub unsafe fn from_u22(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(23)` bytes from.
 pub unsafe fn from_u23(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
     let hi_bits = unsafe { unpack_u7_registers(input.add(128)) };
@@ -433,10 +433,10 @@ pub unsafe fn from_u23(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(24)` bytes from.
 pub unsafe fn from_u24(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_bits = unsafe { load_u8x16x4(input.add(128)) };
     let mut hi_bits = unpack_u8_to_u32_unordered(hi_bits);
     hi_bits = slli_u32x8::<16, 8>(hi_bits);
 
@@ -450,10 +450,10 @@ pub unsafe fn from_u24(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(25)` bytes from.
 pub unsafe fn from_u25(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u1_registers(input.add(192)) };
@@ -474,10 +474,10 @@ pub unsafe fn from_u25(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(26)` bytes from.
 pub unsafe fn from_u26(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u2_registers(input.add(192)) };
@@ -498,10 +498,10 @@ pub unsafe fn from_u26(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(27)` bytes from.
 pub unsafe fn from_u27(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u3_registers(input.add(192)) };
@@ -522,10 +522,10 @@ pub unsafe fn from_u27(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(28)` bytes from.
 pub unsafe fn from_u28(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u4_registers(input.add(192)) };
@@ -546,10 +546,10 @@ pub unsafe fn from_u28(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(29)` bytes from.
 pub unsafe fn from_u29(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u5_registers(input.add(192)) };
@@ -570,10 +570,10 @@ pub unsafe fn from_u29(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(30)` bytes from.
 pub unsafe fn from_u30(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u6_registers(input.add(192)) };
@@ -594,10 +594,10 @@ pub unsafe fn from_u30(input: *const u8) -> [u32x8; 8] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(31)` bytes from.
 pub unsafe fn from_u31(input: *const u8) -> [u32x8; 8] {
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_unordered(lo_bits);
 
-    let hi_8bits = unsafe { load_u8x32x2(input.add(128)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(128)) };
     let hi_8bits = unpack_u8_to_u16_unordered(hi_8bits);
 
     let hi_1bits = unsafe { unpack_u7_registers(input.add(192)) };
@@ -619,7 +619,7 @@ pub unsafe fn from_u31(input: *const u8) -> [u32x8; 8] {
 /// - `input` must be safe to read `max_compressed_size::<X64>(32)`
 ///   bytes from.
 pub unsafe fn from_u32(input: *const u8) -> [u32x8; 8] {
-    unsafe { load_u32x8x8(input) }
+    unsafe { load_u32x4x16(input) }
 }
 
 #[cfg(test)]

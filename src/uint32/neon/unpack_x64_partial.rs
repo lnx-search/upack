@@ -205,7 +205,7 @@ unsafe fn unpack_u7_registers(input: *const u8, read_n: usize) -> [u8x32; 2] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u8(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let packed = unsafe { load_u8x32x2(input) };
+    let packed = unsafe { load_u8x16x4(input) };
     unpack_u8_to_u32_ordered(packed)
 }
 
@@ -217,7 +217,7 @@ pub unsafe fn from_u8(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u9(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -237,7 +237,7 @@ pub unsafe fn from_u9(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u10(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -257,7 +257,7 @@ pub unsafe fn from_u10(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u11(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -277,7 +277,7 @@ pub unsafe fn from_u11(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u12(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -297,7 +297,7 @@ pub unsafe fn from_u12(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u13(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -317,7 +317,7 @@ pub unsafe fn from_u13(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u14(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -337,7 +337,7 @@ pub unsafe fn from_u14(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u15(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u8x32x2(input.add(0)) };
+    let lo_bits = unsafe { load_u8x16x4(input.add(0)) };
     let lo_bits = unpack_u8_to_u16_ordered(lo_bits);
 
     let offset = read_n;
@@ -357,7 +357,7 @@ pub unsafe fn from_u15(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u16(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let packed = unsafe { load_u16x16x4(input.add(0)) };
+    let packed = unsafe { load_u16x8x8(input.add(0)) };
     unpack_u16_to_u32_ordered(packed)
 }
 
@@ -369,7 +369,7 @@ pub unsafe fn from_u16(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u17(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -388,7 +388,7 @@ pub unsafe fn from_u17(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u18(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -407,7 +407,7 @@ pub unsafe fn from_u18(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u19(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -426,7 +426,7 @@ pub unsafe fn from_u19(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u20(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -445,7 +445,7 @@ pub unsafe fn from_u20(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u21(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -464,7 +464,7 @@ pub unsafe fn from_u21(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u22(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -483,7 +483,7 @@ pub unsafe fn from_u22(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u23(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
@@ -502,11 +502,11 @@ pub unsafe fn from_u23(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u24(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let offset = read_n * 2;
-    let hi_bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_bits = unsafe { load_u8x16x4(input.add(offset)) };
     let mut hi_bits = unpack_u8_to_u32_ordered(hi_bits);
     hi_bits = slli_u32x8::<16, 8>(hi_bits);
 
@@ -521,11 +521,11 @@ pub unsafe fn from_u24(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u25(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -548,11 +548,11 @@ pub unsafe fn from_u25(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u26(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -575,11 +575,11 @@ pub unsafe fn from_u26(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u27(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -602,11 +602,11 @@ pub unsafe fn from_u27(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u28(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -629,11 +629,11 @@ pub unsafe fn from_u28(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u29(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -656,11 +656,11 @@ pub unsafe fn from_u29(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u30(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -682,11 +682,11 @@ pub unsafe fn from_u30(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `input` must be safe to read `max_compressed_size::<X64>(31)` bytes from.
 pub unsafe fn from_u31(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    let lo_bits = unsafe { load_u16x16x4(input.add(0)) };
+    let lo_bits = unsafe { load_u16x8x8(input.add(0)) };
     let lo_bits = unpack_u16_to_u32_ordered(lo_bits);
 
     let mut offset = read_n * 2;
-    let hi_8bits = unsafe { load_u8x32x2(input.add(offset)) };
+    let hi_8bits = unsafe { load_u8x16x4(input.add(offset)) };
     let hi_8bits = unpack_u8_to_u16_ordered(hi_8bits);
 
     offset += read_n;
@@ -710,7 +710,7 @@ pub unsafe fn from_u31(input: *const u8, read_n: usize) -> [u32x8; 8] {
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u32(input: *const u8, read_n: usize) -> [u32x8; 8] {
     debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
-    unsafe { load_u32x8x8(input) }
+    unsafe { load_u32x4x16(input) }
 }
 
 #[cfg(test)]
