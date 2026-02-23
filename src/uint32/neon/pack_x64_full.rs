@@ -1,3 +1,5 @@
+use std::arch::aarch64::*;
+
 use super::data::*;
 use super::polyfill::*;
 use super::util::*;
@@ -7,7 +9,7 @@ use super::util::*;
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(1)` bytes to.
-pub(crate) unsafe fn to_u1(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u1(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u1_registers(out, partially_packed) }
 }
@@ -18,17 +20,21 @@ pub(crate) unsafe fn to_u1(out: *mut u8, block: [u32x8; 8]) {
 /// bitmap and write to `out`.
 ///
 /// Any non-zero value will be treated as a set bit.
-unsafe fn pack_u1_registers(out: *mut u8, data: [u8x32; 2]) {
-    let [d1, d2] = data;
+unsafe fn pack_u1_registers(out: *mut u8, data: [uint8x16_t; 4]) {
+    let [d1, d2, d3, d4] = data;
 
     let select_mask = _neon_set1_u8(0b1);
     let cmp1 = _neon_and_u8(d1, select_mask);
     let cmp2 = _neon_and_u8(d2, select_mask);
+    let cmp3 = _neon_and_u8(d3, select_mask);
+    let cmp4 = _neon_and_u8(d4, select_mask);
 
-    let mask1 = _neon_nonzero_mask_u8x32(cmp1);
-    let mask2 = _neon_nonzero_mask_u8x32(cmp2);
+    let mask1 = _neon_nonzero_mask_u8(cmp1) as u64;
+    let mask2 = _neon_nonzero_mask_u8(cmp2) as u64;
+    let mask3 = _neon_nonzero_mask_u8(cmp3) as u64;
+    let mask4 = _neon_nonzero_mask_u8(cmp4) as u64;
 
-    let merged_mask = ((mask2 as u64) << 32) | mask1 as u64;
+    let merged_mask = (mask4 << 48) | (mask3 << 32) | (mask2 << 16) | mask1;
     // We assume LE endianness
     unsafe { std::ptr::write_unaligned(out.add(0).cast(), merged_mask) };
 }
@@ -38,7 +44,7 @@ unsafe fn pack_u1_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(2)` bytes to.
-pub(crate) unsafe fn to_u2(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u2(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u2_registers(out, partially_packed) }
 }
@@ -47,9 +53,9 @@ pub(crate) unsafe fn to_u2(out: *mut u8, block: [u32x8; 8]) {
 #[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 2-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2]) {
+unsafe fn pack_u2_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let packed = pack_u8_to_u2_unordered(data);
-    unsafe { _neon_store_u8x16(out.cast(), packed) };
+    unsafe { _neon_store_u8(out.cast(), packed) };
 }
 
 #[target_feature(enable = "neon")]
@@ -57,7 +63,7 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(3)` bytes to.
-pub(crate) unsafe fn to_u3(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u3(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u3_registers(out, partially_packed) }
 }
@@ -66,18 +72,18 @@ pub(crate) unsafe fn to_u3(out: *mut u8, block: [u32x8; 8]) {
 #[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 3-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
+unsafe fn pack_u3_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let mask = _neon_set1_u8(0b11);
 
-    let lo_2bit = and_u8x32(data, mask);
+    let lo_2bit = and_u8(data, mask);
     let packed = pack_u8_to_u2_unordered(lo_2bit);
-    unsafe { _neon_store_u8x16(out.add(0), packed) };
+    unsafe { _neon_store_u8(out.add(0), packed) };
 
     let hi_1bit1 = _neon_srli_u8::<2>(data[0]);
-    let hi_1bitmask1 = _neon_nonzero_mask_u8x32(hi_1bit1);
+    let hi_1bitmask1 = _neon_nonzero_mask_u8(hi_1bit1);
 
     let hi_1bit2 = _neon_srli_u8::<2>(data[1]);
-    let hi_1bitmask2 = _neon_nonzero_mask_u8x32(hi_1bit2);
+    let hi_1bitmask2 = _neon_nonzero_mask_u8(hi_1bit2);
 
     let hi_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
     unsafe { std::ptr::write_unaligned(out.add(16).cast(), hi_merged_mask) };
@@ -88,7 +94,7 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(4)` bytes to.
-pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u4(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u4_registers(out, partially_packed) }
 }
@@ -97,9 +103,10 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [u32x8; 8]) {
 #[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
+unsafe fn pack_u4_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let packed = pack_u8_to_u4_unordered(data);
-    unsafe { _neon_store_u8(out, packed) };
+    unsafe { _neon_store_u8(out.add(0), packed[0]) };
+    unsafe { _neon_store_u8(out.add(16), packed[1]) };
 }
 
 #[target_feature(enable = "neon")]
@@ -107,7 +114,7 @@ unsafe fn pack_u4_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(5)` bytes to.
-pub(crate) unsafe fn to_u5(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u5(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u5_registers(out, partially_packed) }
 }
@@ -116,13 +123,13 @@ pub(crate) unsafe fn to_u5(out: *mut u8, block: [u32x8; 8]) {
 #[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 5-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u5_registers(out: *mut u8, data: [u8x32; 2]) {
+unsafe fn pack_u5_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let mask = _neon_set1_u8(0b1111);
-    let masked = and_u8x32(data, mask);
+    let masked = and_u8(data, mask);
     unsafe { pack_u4_registers(out, masked) };
 
     // 4bit * 64 / 8-bits per byte.
-    let remaining = srli_u8x32::<4, 2>(data);
+    let remaining = srli_u8::<4, 4>(data);
     unsafe { pack_u1_registers(out.add(32), remaining) };
 }
 
@@ -131,7 +138,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(6)` bytes to.
-pub(crate) unsafe fn to_u6(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u6(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u6_registers(out, partially_packed) }
 }
@@ -140,13 +147,13 @@ pub(crate) unsafe fn to_u6(out: *mut u8, block: [u32x8; 8]) {
 #[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 6-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2]) {
+unsafe fn pack_u6_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let mask = _neon_set1_u8(0b1111);
-    let masked = and_u8x32(data, mask);
+    let masked = and_u8(data, mask);
     unsafe { pack_u4_registers(out, masked) };
 
     // 4bit * 64 / 8-bits per byte.
-    let remaining = srli_u8x32::<4, 2>(data);
+    let remaining = srli_u8::<4, 4>(data);
     unsafe { pack_u2_registers(out.add(32), remaining) };
 }
 
@@ -155,7 +162,7 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(7)` bytes to.
-pub(crate) unsafe fn to_u7(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u7(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { pack_u7_registers(out, partially_packed) }
 }
@@ -164,13 +171,13 @@ pub(crate) unsafe fn to_u7(out: *mut u8, block: [u32x8; 8]) {
 #[target_feature(enable = "neon")]
 /// Pack two registers containing 32 8-bit elements each into a 7-bit
 /// bitmap and write to `out`.
-unsafe fn pack_u7_registers(out: *mut u8, data: [u8x32; 2]) {
+unsafe fn pack_u7_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let mask = _neon_set1_u8(0b1111);
-    let masked = and_u8x32(data, mask);
+    let masked = and_u8(data, mask);
     unsafe { pack_u4_registers(out, masked) };
 
     // 4bit * 64 / 8-bits per byte.
-    let remaining = srli_u8x32::<4, 2>(data);
+    let remaining = srli_u8::<4, 4>(data);
     unsafe { pack_u3_registers(out.add(32), remaining) };
 }
 
@@ -179,7 +186,7 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [u8x32; 2]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(8)` bytes to.
-pub(crate) unsafe fn to_u8(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u8(out: *mut u8, block: [uint32x4_t; 16]) {
     let partially_packed = pack_u32_to_u8_unordered(block);
     unsafe { store_u8x16x4(out, partially_packed) }
 }
@@ -189,7 +196,7 @@ pub(crate) unsafe fn to_u8(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(9)` bytes to.
-pub(crate) unsafe fn to_u9(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u9(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u1_registers(out.add(64), hi) }
@@ -200,7 +207,7 @@ pub(crate) unsafe fn to_u9(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(10)` bytes to.
-pub(crate) unsafe fn to_u10(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u10(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u2_registers(out.add(64), hi) }
@@ -211,7 +218,7 @@ pub(crate) unsafe fn to_u10(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(11)` bytes to.
-pub(crate) unsafe fn to_u11(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u11(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u3_registers(out.add(64), hi) }
@@ -222,7 +229,7 @@ pub(crate) unsafe fn to_u11(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(12)` bytes to.
-pub(crate) unsafe fn to_u12(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u12(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u4_registers(out.add(64), hi) }
@@ -233,7 +240,7 @@ pub(crate) unsafe fn to_u12(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(13)` bytes to.
-pub(crate) unsafe fn to_u13(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u13(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u5_registers(out.add(64), hi) }
@@ -244,7 +251,7 @@ pub(crate) unsafe fn to_u13(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(14)` bytes to.
-pub(crate) unsafe fn to_u14(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u14(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u6_registers(out.add(64), hi) }
@@ -255,7 +262,7 @@ pub(crate) unsafe fn to_u14(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(15)` bytes to.
-pub(crate) unsafe fn to_u15(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u15(out: *mut u8, block: [uint32x4_t; 16]) {
     let (hi, lo) = pack_u32_to_u16_split_unordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u7_registers(out.add(64), hi) }
@@ -266,15 +273,15 @@ pub(crate) unsafe fn to_u15(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(16)` bytes to.
-pub(crate) unsafe fn to_u16(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u16(out: *mut u8, block: [uint32x4_t; 16]) {
     let packed = pack_u32_to_u16_unordered(block);
     unsafe { store_u16x8x8(out, packed) };
 }
 
 #[target_feature(enable = "neon")]
-unsafe fn store_lo_u16_registers(out: *mut u8, data: [u32x8; 8]) {
+unsafe fn store_lo_u16_registers(out: *mut u8, data: [uint32x4_t; 16]) {
     let mask = _neon_set1_u32(0xFFFF);
-    let shifted = and_u32x8(data, mask);
+    let shifted = and_u32(data, mask);
     let packed = pack_u32_to_u16_unordered(shifted);
     unsafe { store_u16x8x8(out, packed) };
 }
@@ -284,10 +291,10 @@ unsafe fn store_lo_u16_registers(out: *mut u8, data: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(17)` bytes to.
-pub(crate) unsafe fn to_u17(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u17(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u1_registers(out.add(128), hi_bits) }
 }
@@ -297,10 +304,10 @@ pub(crate) unsafe fn to_u17(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(18)` bytes to.
-pub(crate) unsafe fn to_u18(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u18(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u2_registers(out.add(128), hi_bits) }
 }
@@ -310,10 +317,10 @@ pub(crate) unsafe fn to_u18(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(19)` bytes to.
-pub(crate) unsafe fn to_u19(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u19(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u3_registers(out.add(128), hi_bits) }
 }
@@ -323,10 +330,10 @@ pub(crate) unsafe fn to_u19(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(20)` bytes to.
-pub(crate) unsafe fn to_u20(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u20(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u4_registers(out.add(128), hi_bits) }
 }
@@ -336,10 +343,10 @@ pub(crate) unsafe fn to_u20(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(21)` bytes to.
-pub(crate) unsafe fn to_u21(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u21(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u5_registers(out.add(128), hi_bits) }
 }
@@ -349,10 +356,10 @@ pub(crate) unsafe fn to_u21(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(22)` bytes to.
-pub(crate) unsafe fn to_u22(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u22(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u6_registers(out.add(128), hi_bits) }
 }
@@ -362,10 +369,10 @@ pub(crate) unsafe fn to_u22(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(23)` bytes to.
-pub(crate) unsafe fn to_u23(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u23(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { pack_u7_registers(out.add(128), hi_bits) }
 }
@@ -375,10 +382,10 @@ pub(crate) unsafe fn to_u23(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(24)` bytes to.
-pub(crate) unsafe fn to_u24(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u24(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_bits = srli_u32x8::<16, 8>(block);
+    let hi_bits = srli_u32::<16, 16>(block);
     let hi_bits = pack_u32_to_u8_unordered(hi_bits);
     unsafe { store_u8x16x4(out.add(128), hi_bits) };
 }
@@ -388,10 +395,10 @@ pub(crate) unsafe fn to_u24(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(25)` bytes to.
-pub(crate) unsafe fn to_u25(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u25(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u1_registers(out.add(192), hi) };
@@ -402,10 +409,10 @@ pub(crate) unsafe fn to_u25(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(26)` bytes to.
-pub(crate) unsafe fn to_u26(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u26(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u2_registers(out.add(192), hi) };
@@ -416,10 +423,10 @@ pub(crate) unsafe fn to_u26(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(27)` bytes to.
-pub(crate) unsafe fn to_u27(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u27(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u3_registers(out.add(192), hi) };
@@ -430,10 +437,10 @@ pub(crate) unsafe fn to_u27(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(28)` bytes to.
-pub(crate) unsafe fn to_u28(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u28(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u4_registers(out.add(192), hi) };
@@ -444,10 +451,10 @@ pub(crate) unsafe fn to_u28(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(29)` bytes to.
-pub(crate) unsafe fn to_u29(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u29(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u5_registers(out.add(192), hi) };
@@ -458,10 +465,10 @@ pub(crate) unsafe fn to_u29(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(30)` bytes to.
-pub(crate) unsafe fn to_u30(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u30(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u6_registers(out.add(192), hi) };
@@ -472,10 +479,10 @@ pub(crate) unsafe fn to_u30(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(31)` bytes to.
-pub(crate) unsafe fn to_u31(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u31(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_lo_u16_registers(out.add(0), block) };
 
-    let hi_half = srli_u32x8::<16, 8>(block);
+    let hi_half = srli_u32::<16, 16>(block);
     let (hi, lo) = pack_u32_to_u16_split_unordered(hi_half);
     unsafe { store_u8x16x4(out.add(128), lo) };
     unsafe { pack_u7_registers(out.add(192), hi) };
@@ -486,7 +493,7 @@ pub(crate) unsafe fn to_u31(out: *mut u8, block: [u32x8; 8]) {
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X64>(32)` bytes to.
-pub(crate) unsafe fn to_u32(out: *mut u8, block: [u32x8; 8]) {
+pub(crate) unsafe fn to_u32(out: *mut u8, block: [uint32x4_t; 16]) {
     unsafe { store_u32x4x16(out, block) };
 }
 
@@ -530,7 +537,7 @@ mod tests {
     #[case(31, to_u31)]
     #[case(32, to_u32)]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
-    fn test_saturation(#[case] bit_len: u8, #[case] packer: unsafe fn(*mut u8, [u32x8; 8])) {
+    fn test_saturation(#[case] bit_len: u8, #[case] packer: unsafe fn(*mut u8, [uint32x4_t; 16])) {
         let pack_value = (2u64.pow(bit_len as u32) - 1) as u32;
 
         let values = [pack_value; X64];
