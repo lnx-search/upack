@@ -60,8 +60,8 @@ pub(super) fn unpack_u8_to_u32_ordered(data: [uint8x16_t; 4]) -> [uint32x4_t; 16
 pub(super) fn unpack_u8_to_u16_ordered(data: [uint8x16_t; 4]) -> [uint16x8_t; 8] {
     let [d1, d2] = _neon_cvteu8_u16(data[0]);
     let [d3, d4] = _neon_cvteu8_u16(data[1]);
-    let [d5, d6] = _neon_cvteu8_u16(data[1]);
-    let [d7, d8] = _neon_cvteu8_u16(data[1]);
+    let [d5, d6] = _neon_cvteu8_u16(data[2]);
+    let [d7, d8] = _neon_cvteu8_u16(data[3]);
 
     [d1, d2, d3, d4, d5, d6, d7, d8]
 }
@@ -90,10 +90,10 @@ pub(super) fn unpack_u16_to_u32_ordered(data: [uint16x8_t; 8]) -> [uint32x4_t; 1
 ///
 /// The order of elements are _not_ maintained.
 pub(super) fn pack_u32_to_u8_unordered(data: [uint32x4_t; 16]) -> [uint8x16_t; 4] {
-    let d1 = pack_u32_to_u8_unordered_mini_block(data[0], data[4], data[8], data[12]);
-    let d2 = pack_u32_to_u8_unordered_mini_block(data[1], data[5], data[9], data[13]);
-    let d3 = pack_u32_to_u8_unordered_mini_block(data[2], data[6], data[10], data[14]);
-    let d4 = pack_u32_to_u8_unordered_mini_block(data[3], data[7], data[11], data[15]);
+    let d1 = pack_u32_to_u8_unordered_mini_block(data[0], data[8], data[4], data[12]);
+    let d2 = pack_u32_to_u8_unordered_mini_block(data[1], data[9], data[5], data[13]);
+    let d3 = pack_u32_to_u8_unordered_mini_block(data[2], data[10], data[6], data[14]);
+    let d4 = pack_u32_to_u8_unordered_mini_block(data[3], data[11], data[7], data[15]);
 
     [d1, d2, d3, d4]
 }
@@ -241,8 +241,8 @@ pub(super) fn pack_u32_to_u16_split_ordered(
     let packed_u16 = pack_u32_to_u16_ordered(data);
 
     let mask = _neon_set1_u16(0x00FF);
-    let lo_8bits = and_u16x16(packed_u16, mask);
-    let hi_8bits = srli_u16x16::<8, 8>(packed_u16);
+    let lo_8bits = and_u16(packed_u16, mask);
+    let hi_8bits = srli_u16::<8, 8>(packed_u16);
 
     let packed_lo_8bits = pack_u16_to_u8_ordered(lo_8bits);
     let packed_hi_8bits = pack_u16_to_u8_ordered(hi_8bits);
