@@ -5,6 +5,7 @@ use crate::runner::Config;
 mod generate;
 mod lib_bitpacking;
 mod lib_upack;
+mod lib_upack_rng;
 mod routine;
 mod runner;
 
@@ -65,6 +66,11 @@ fn main() {
     runner.run::<lib_bitpacking::BitpackingCompressDelta>();
     runner.run::<lib_bitpacking::BitpackingCompressDelta1>();
 
+    // Compressors - random block len
+    runner.run::<lib_upack_rng::UpackRandomLenCompressBase>();
+    runner.run::<lib_upack_rng::UpackRandomLenCompressDelta>();
+    runner.run::<lib_upack_rng::UpackRandomLenCompressDelta1>();
+
     // Decompressors
     runner.run::<lib_upack::UpackDecompressBase>();
     runner.run::<lib_upack::UpackDecompressDelta>();
@@ -72,6 +78,11 @@ fn main() {
     runner.run::<lib_bitpacking::BitpackingDecompressBase>();
     runner.run::<lib_bitpacking::BitpackingDecompressDelta>();
     runner.run::<lib_bitpacking::BitpackingDecompressDelta1>();
+
+    // Decompressors - random block len
+    runner.run::<lib_upack_rng::UpackRandomLenDecompressBase>();
+    runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta>();
+    runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta1>();
 
     tracing::info!("benchmark complete, results:");
 
