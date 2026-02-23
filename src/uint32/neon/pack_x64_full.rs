@@ -80,12 +80,19 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     unsafe { _neon_store_u8(out.add(0), packed) };
 
     let hi_1bit1 = _neon_srli_u8::<2>(data[0]);
-    let hi_1bitmask1 = _neon_nonzero_mask_u8(hi_1bit1);
+    let hi_1bitmask1 = _neon_nonzero_mask_u8(hi_1bit1) as u64;
 
     let hi_1bit2 = _neon_srli_u8::<2>(data[1]);
-    let hi_1bitmask2 = _neon_nonzero_mask_u8(hi_1bit2);
+    let hi_1bitmask2 = _neon_nonzero_mask_u8(hi_1bit2) as u64;
 
-    let hi_merged_mask = ((hi_1bitmask2 as u64) << 32) | hi_1bitmask1 as u64;
+    let hi_1bit3 = _neon_srli_u8::<2>(data[2]);
+    let hi_1bitmask3 = _neon_nonzero_mask_u8(hi_1bit3) as u64;
+
+    let hi_1bit4 = _neon_srli_u8::<2>(data[3]);
+    let hi_1bitmask4 = _neon_nonzero_mask_u8(hi_1bit4) as u64;
+
+    let hi_merged_mask =
+        (hi_1bitmask4 << 48) | (hi_1bitmask3 << 32) | (hi_1bitmask2 << 16) | hi_1bitmask1;
     unsafe { std::ptr::write_unaligned(out.add(16).cast(), hi_merged_mask) };
 }
 

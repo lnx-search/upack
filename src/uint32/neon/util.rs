@@ -273,8 +273,8 @@ pub(super) fn pack_u32_to_u16_split_unordered(
 
     let lo_8bits_2a = _neon_and_u16(packed[0], lo_mask);
     let lo_8bits_2b = _neon_and_u16(packed[1], lo_mask);
-    let lo_8bits_2c = _neon_and_u16(packed[3], lo_mask);
-    let lo_8bits_2d = _neon_and_u16(packed[4], lo_mask);
+    let lo_8bits_2c = _neon_and_u16(packed[2], lo_mask);
+    let lo_8bits_2d = _neon_and_u16(packed[3], lo_mask);
 
     let lo_8bits_a = _neon_or_u16(lo_8bits_1a, lo_8bits_2a);
     let lo_8bits_b = _neon_or_u16(lo_8bits_1b, lo_8bits_2b);

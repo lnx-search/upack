@@ -30,7 +30,9 @@ pub(super) fn store_u32x64(block: &mut [u32; X64], data: [uint32x4_t; 16]) {
 /// Store 4, 128 bit registers holding 64 8-bit elements.
 pub(super) unsafe fn store_u8x16x4(out: *mut u8, data: [uint8x16_t; 4]) {
     unsafe { _neon_store_u8(out.add(0), data[0]) };
-    unsafe { _neon_store_u8(out.add(32), data[1]) };
+    unsafe { _neon_store_u8(out.add(16), data[1]) };
+    unsafe { _neon_store_u8(out.add(32), data[2]) };
+    unsafe { _neon_store_u8(out.add(48), data[3]) };
 }
 
 #[target_feature(enable = "neon")]
