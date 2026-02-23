@@ -4,6 +4,7 @@ use super::data::*;
 use super::polyfill::*;
 use super::util::*;
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 1-bit integers from the input pointer and return the result registers.
 ///
@@ -32,6 +33,7 @@ unsafe fn unpack_u1_registers(input: *const u8) -> [uint8x16_t; 4] {
     [packed1, packed2, packed3, packed4]
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 2-bit integers from the input pointer and return the result registers.
 ///
@@ -73,6 +75,7 @@ unsafe fn unpack_u2_registers(input: *const u8, read_n: usize) -> [uint8x16_t; 4
     [two_bits1, two_bits2, two_bits3, two_bits4]
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 3-bit integers from the input pointer and return the result registers.
 ///
@@ -125,6 +128,7 @@ unsafe fn unpack_u3_registers(input: *const u8, read_n: usize) -> [uint8x16_t; 4
     [three_bits1, three_bits2, three_bits3, three_bits4]
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 4-bit integers from the input pointer and return the result registers.
 ///
@@ -149,6 +153,7 @@ pub(super) unsafe fn unpack_u4_registers(input: *const u8) -> [uint8x16_t; 4] {
     [d1, d2, d3, d4]
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 5-bit integers from the input pointer and return the result registers.
 ///
@@ -173,6 +178,7 @@ unsafe fn unpack_u5_registers(input: *const u8, read_n: usize) -> [uint8x16_t; 4
     or_u8_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 6-bit integers from the input pointer and return the result registers.
 ///
@@ -197,6 +203,7 @@ unsafe fn unpack_u6_registers(input: *const u8, read_n: usize) -> [uint8x16_t; 4
     or_u8_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 7-bit integers from the input pointer and return the result registers.
 ///
@@ -221,6 +228,7 @@ unsafe fn unpack_u7_registers(input: *const u8, read_n: usize) -> [uint8x16_t; 4
     or_u8_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 8-bit integers from the input pointer and return the result registers.
 ///
@@ -233,6 +241,7 @@ pub unsafe fn from_u8(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u8_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 9-bit integers from the input pointer and return the result registers.
 ///
@@ -253,6 +262,7 @@ pub unsafe fn from_u9(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 10-bit integers from the input pointer and return the result registers.
 ///
@@ -273,6 +283,7 @@ pub unsafe fn from_u10(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 11-bit integers from the input pointer and return the result registers.
 ///
@@ -293,6 +304,7 @@ pub unsafe fn from_u11(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 12-bit integers from the input pointer and return the result registers.
 ///
@@ -313,6 +325,7 @@ pub unsafe fn from_u12(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 13-bit integers from the input pointer and return the result registers.
 ///
@@ -333,6 +346,7 @@ pub unsafe fn from_u13(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 14-bit integers from the input pointer and return the result registers.
 ///
@@ -353,6 +367,7 @@ pub unsafe fn from_u14(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 15-bit integers from the input pointer and return the result registers.
 ///
@@ -373,6 +388,7 @@ pub unsafe fn from_u15(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 16-bit integers from the input pointer and return the result registers.
 ///
@@ -385,6 +401,7 @@ pub unsafe fn from_u16(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     unpack_u16_to_u32_ordered(packed)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 17-bit integers from the input pointer and return the result registers.
 ///
@@ -404,6 +421,7 @@ pub unsafe fn from_u17(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 18-bit integers from the input pointer and return the result registers.
 ///
@@ -423,6 +441,7 @@ pub unsafe fn from_u18(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 19-bit integers from the input pointer and return the result registers.
 ///
@@ -442,6 +461,7 @@ pub unsafe fn from_u19(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 20-bit integers from the input pointer and return the result registers.
 ///
@@ -461,6 +481,7 @@ pub unsafe fn from_u20(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 21-bit integers from the input pointer and return the result registers.
 ///
@@ -480,6 +501,7 @@ pub unsafe fn from_u21(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 22-bit integers from the input pointer and return the result registers.
 ///
@@ -499,6 +521,7 @@ pub unsafe fn from_u22(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 23-bit integers from the input pointer and return the result registers.
 ///
@@ -518,6 +541,7 @@ pub unsafe fn from_u23(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 24-bit integers from the input pointer and return the result registers.
 ///
@@ -537,6 +561,7 @@ pub unsafe fn from_u24(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 25-bit integers from the input pointer and return the result registers.
 ///
@@ -564,6 +589,7 @@ pub unsafe fn from_u25(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 26-bit integers from the input pointer and return the result registers.
 ///
@@ -591,6 +617,7 @@ pub unsafe fn from_u26(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 27-bit integers from the input pointer and return the result registers.
 ///
@@ -618,6 +645,7 @@ pub unsafe fn from_u27(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 28-bit integers from the input pointer and return the result registers.
 ///
@@ -645,6 +673,7 @@ pub unsafe fn from_u28(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 29-bit integers from the input pointer and return the result registers.
 ///
@@ -672,6 +701,7 @@ pub unsafe fn from_u29(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 30-bit integers from the input pointer and return the result registers.
 ///
@@ -699,6 +729,7 @@ pub unsafe fn from_u30(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 31-bit integers from the input pointer and return the result registers.
 ///
@@ -725,6 +756,7 @@ pub unsafe fn from_u31(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
     or_u32_all(hi_bits, lo_bits)
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack the 32-bit integers from the input pointer and return the result registers.
 ///

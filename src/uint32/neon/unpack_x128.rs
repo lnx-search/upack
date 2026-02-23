@@ -369,12 +369,23 @@ fn decode_delta(last_value: uint32x4_t, block: &mut [uint32x4_t; 16]) -> uint32x
 
 #[target_feature(enable = "neon")]
 fn decode_delta1(last_value: uint32x4_t, block: &mut [uint32x4_t; 16]) -> uint32x4_t {
+    let zero = vdupq_n_u32(0);
     let ones = vdupq_n_u32(1);
+
     #[allow(clippy::needless_range_loop)]
     for i in 0..16 {
         block[i] = vaddq_u32(block[i], ones);
+        block[i] = vaddq_u32(block[i], vextq_u32::<3>(zero, block[i]));
+        block[i] = vaddq_u32(block[i], vextq_u32::<2>(zero, block[i]));
     }
-    decode_delta(last_value, block)
+
+    block[0] = vaddq_u32(block[0], last_value);
+    for i in 1..16 {
+        let last = vdupq_laneq_u32::<3>(block[i - 1]);
+        block[i] = vaddq_u32(block[i], last);
+    }
+
+    vdupq_laneq_u32::<3>(block[15])
 }
 
 #[cfg(test)]

@@ -32,7 +32,6 @@ pub unsafe fn from_u2(input: *const u8) -> [u32x8; 8] {
     unpack_u8_to_u32_unordered(packed)
 }
 
-#[inline]
 /// Unpack eight registers containing 64 8-bit elements from a 2-bit bitmap provided
 /// by `input`.
 unsafe fn unpack_u2_registers(input: *const u8) -> [u8x32; 2] {

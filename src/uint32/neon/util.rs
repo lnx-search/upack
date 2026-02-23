@@ -146,6 +146,7 @@ pub(super) fn pack_u32_to_u16_unordered(data: [uint32x4_t; 16]) -> [uint16x8_t; 
     ]
 }
 
+#[inline]
 #[target_feature(enable = "neon")]
 /// Unpack 2 sets of registers containing 8-bit elements and produce 8 registers holding
 /// 32-bit elements.
