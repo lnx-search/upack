@@ -90,10 +90,12 @@ just bench
 #### Small Summary
 
 **Compression**
-![compression.png](assets/compression.png)
+![compression-graph.png](assets/compression-graph.png)
+![compression-table.png](assets/compression-table.png)
 
 **Decompression**
-![decompression.png](assets/decompression.png)
+![decompression-graph.png](assets/decompression-graph.png)
+![decompression-table.png](assets/decompression-table.png)
 
 <details>
 <summary>
