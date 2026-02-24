@@ -33,12 +33,12 @@ fn test_nonzero_mask(data: [uint8x16_t; 4], mask: uint8x16_t) -> u64 {
     let cmp3 = _neon_and_u8(d3, mask);
     let cmp4 = _neon_and_u8(d4, mask);
 
-    let mask1 = _neon_nonzero_mask_u8(cmp1) as u64;
-    let mask2 = _neon_nonzero_mask_u8(cmp2) as u64;
-    let mask3 = _neon_nonzero_mask_u8(cmp3) as u64;
-    let mask4 = _neon_nonzero_mask_u8(cmp4) as u64;
+    let cmp1 = _neon_and_u8(d1, select_mask);
+    let cmp2 = _neon_and_u8(d2, select_mask);
+    let cmp3 = _neon_and_u8(d3, select_mask);
+    let cmp4 = _neon_and_u8(d4, select_mask);
 
-    (mask4 << 48) | (mask3 << 32) | (mask2 << 16) | mask1
+    _neon_nonzero_mask_u8([cmp1, cmp2, cmp3, cmp4])
 }
 
 #[target_feature(enable = "neon")]

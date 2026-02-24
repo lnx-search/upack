@@ -226,21 +226,37 @@ pub(super) fn _neon_slli_u8<const IMM8: i32>(a: uint8x16_t) -> uint8x16_t {
 #[inline]
 #[target_feature(enable = "neon")]
 /// Return a bitmask with a set bit indicating the element at the same index is non-zero.
-pub fn _neon_nonzero_mask_u8(a: uint8x16_t) -> u16 {
-    const MASK: [u8; 16] = [
-        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
-        0x80,
+pub fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
+    let d0 = vuzp1q_u8(regs[0], regs[2]);
+    let d1 = vuzp2q_u8(regs[0], regs[2]);
+    let d2 = vuzp1q_u8(regs[1], regs[3]);
+    let d3 = vuzp2q_u8(regs[1], regs[3]);
+
+    let e0 = vuzp1q_u8(d0, d2);
+    let e1 = vuzp2q_u8(d0, d2);
+    let e2 = vuzp1q_u8(d1, d3);
+    let e3 = vuzp2q_u8(d1, d3);
+
+    let zeroes = vdupq_n_u8(0);
+    let chunks = [
+        vcneqq_u8(e0, zeroes),
+        vcneqq_u8(e2, zeroes),
+        vcneqq_u8(e1, zeroes),
+        vcneqq_u8(e3, zeroes),
     ];
 
-    let cmp = vmvnq_u8(vceqq_u8(a, vdupq_n_u8(0)));
-    let bitmask = unsafe { vld1q_u8(MASK.as_ptr()) };
+    vmovmaskq_u8(chunks)
+}
 
-    let masked = vandq_u8(cmp, bitmask);
-    let mut paired = vpadd_u8(vget_low_u8(masked), vget_high_u8(masked));
-    paired = vpadd_u8(paired, paired);
-    paired = vpadd_u8(paired, paired);
-
-    vget_lane_u16::<0>(vreinterpret_u16_u8(paired))
+#[inline]
+#[target_feature(enable = "neon")]
+fn vmovmaskq_u8(chunks: [uint8x16_t; 4]) -> u64 {
+    let t0 = vsriq_n_u8::<1>(chunks[1], chunks[0]);
+    let t1 = vsriq_n_u8::<1>(chunks[3], chunks[2]);
+    let t2 = vsriq_n_u8::<2>(t1, t0);
+    let t3 = vsriq_n_u8::<4>(t2, t2);
+    let t4 = vshrn_n_u16::<4>(vreinterpretq_u16_u8(t3));
+    unsafe { std::mem::transmute::<uint8x8_t, u64>(t4) }
 }
 
 #[inline]

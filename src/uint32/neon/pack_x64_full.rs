@@ -29,14 +29,9 @@ unsafe fn pack_u1_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     let cmp3 = _neon_and_u8(d3, select_mask);
     let cmp4 = _neon_and_u8(d4, select_mask);
 
-    let mask1 = _neon_nonzero_mask_u8(cmp1) as u64;
-    let mask2 = _neon_nonzero_mask_u8(cmp2) as u64;
-    let mask3 = _neon_nonzero_mask_u8(cmp3) as u64;
-    let mask4 = _neon_nonzero_mask_u8(cmp4) as u64;
-
-    let merged_mask = (mask4 << 48) | (mask3 << 32) | (mask2 << 16) | mask1;
+    let mask = _neon_nonzero_mask_u8([cmp1, cmp2, cmp3, cmp4]);
     // We assume LE endianness
-    unsafe { std::ptr::write_unaligned(out.add(0).cast(), merged_mask) };
+    unsafe { std::ptr::write_unaligned(out.add(0).cast(), mask) };
 }
 
 #[target_feature(enable = "neon")]
@@ -80,20 +75,12 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [uint8x16_t; 4]) {
     unsafe { _neon_store_u8(out.add(0), packed) };
 
     let hi_1bit1 = _neon_srli_u8::<2>(data[0]);
-    let hi_1bitmask1 = _neon_nonzero_mask_u8(hi_1bit1) as u64;
-
     let hi_1bit2 = _neon_srli_u8::<2>(data[1]);
-    let hi_1bitmask2 = _neon_nonzero_mask_u8(hi_1bit2) as u64;
-
     let hi_1bit3 = _neon_srli_u8::<2>(data[2]);
-    let hi_1bitmask3 = _neon_nonzero_mask_u8(hi_1bit3) as u64;
-
     let hi_1bit4 = _neon_srli_u8::<2>(data[3]);
-    let hi_1bitmask4 = _neon_nonzero_mask_u8(hi_1bit4) as u64;
 
-    let hi_merged_mask =
-        (hi_1bitmask4 << 48) | (hi_1bitmask3 << 32) | (hi_1bitmask2 << 16) | hi_1bitmask1;
-    unsafe { std::ptr::write_unaligned(out.add(16).cast(), hi_merged_mask) };
+    let mask = _neon_nonzero_mask_u8([hi_1bit1, hi_1bit2, hi_1bit3, hi_1bit4]);
+    unsafe { std::ptr::write_unaligned(out.add(16).cast(), mask) };
 }
 
 #[target_feature(enable = "neon")]
