@@ -87,6 +87,14 @@ You can run the benchmarks via
 just bench
 ```
 
+##### Small Summary
+
+**Compression**
+![compression.png](assets/compression.png)
+
+**Decompression**
+![decompression.png](assets/decompression.png)
+
 <details>
 <summary>
   <h3>AVX512 - Zen5 - AMD 9950x</h3>
@@ -257,7 +265,7 @@ just bench
 
 <details>
 <summary>
-  <h3>SCALAR - Hetzner CX23 (ARM)</h3>
+  <h3>NEON - Hetzner CX23 (ARM)</h3>
 </summary>
 
 ```
