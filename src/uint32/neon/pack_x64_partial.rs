@@ -33,11 +33,6 @@ fn test_nonzero_mask(data: [uint8x16_t; 4], mask: uint8x16_t) -> u64 {
     let cmp3 = _neon_and_u8(d3, mask);
     let cmp4 = _neon_and_u8(d4, mask);
 
-    let cmp1 = _neon_and_u8(d1, select_mask);
-    let cmp2 = _neon_and_u8(d2, select_mask);
-    let cmp3 = _neon_and_u8(d3, select_mask);
-    let cmp4 = _neon_and_u8(d4, select_mask);
-
     _neon_nonzero_mask_u8([cmp1, cmp2, cmp3, cmp4])
 }
 
@@ -452,11 +447,7 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u1() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 2) as u32;
-        }
+        let data: [u32; X64] = std::array::from_fn(|i| (i % 2) as u32);
         let data = unsafe { load_u32x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];

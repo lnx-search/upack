@@ -227,25 +227,18 @@ pub(super) fn _neon_slli_u8<const IMM8: i32>(a: uint8x16_t) -> uint8x16_t {
 #[target_feature(enable = "neon")]
 /// Return a bitmask with a set bit indicating the element at the same index is non-zero.
 pub fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
-    let d0 = vuzp1q_u8(regs[0], regs[2]);
-    let d1 = vuzp2q_u8(regs[0], regs[2]);
-    let d2 = vuzp1q_u8(regs[1], regs[3]);
-    let d3 = vuzp2q_u8(regs[1], regs[3]);
-
-    let e0 = vuzp1q_u8(d0, d2);
-    let e1 = vuzp2q_u8(d0, d2);
-    let e2 = vuzp1q_u8(d1, d3);
-    let e3 = vuzp2q_u8(d1, d3);
+    let view = unsafe { std::mem::transmute::<[uint8x16_t; 4], [u8; 64]>(regs) };
+    let interleaved = unsafe { vld4q_u8(view.as_ptr()) };
 
     let zeroes = vdupq_n_u8(0);
     let chunks = [
-        vcneqq_u8(e0, zeroes),
-        vcneqq_u8(e2, zeroes),
-        vcneqq_u8(e1, zeroes),
-        vcneqq_u8(e3, zeroes),
+        vceqq_u8(interleaved.0, zeroes),
+        vceqq_u8(interleaved.1, zeroes),
+        vceqq_u8(interleaved.2, zeroes),
+        vceqq_u8(interleaved.3, zeroes),
     ];
 
-    vmovmaskq_u8(chunks)
+    !vmovmaskq_u8(chunks)
 }
 
 #[inline]
@@ -289,7 +282,6 @@ pub(super) fn _neon_pack_nibbles(a: [uint8x16_t; 2], b: [uint8x16_t; 2]) -> [uin
     let a_shifted = vshlq_n_u8::<4>(a_odd);
     let packed1 = vorrq_u8(a_masked, a_shifted);
 
-    // Process d2: pack 32 bytes -> 16 bytes
     let b_even = vuzp1q_u8(b[0], b[1]);
     let b_odd = vuzp2q_u8(b[0], b[1]);
 
@@ -418,12 +410,30 @@ mod tests {
     fn test_movmask_u8() {
         unsafe {
             let a = _neon_set1_u8(0);
-            let result = _neon_nonzero_mask_u8(a);
+            let result = _neon_nonzero_mask_u8([a, a, a, a]);
             assert_eq!(result, 0);
 
             let a = _neon_set1_u8(u8::MAX);
-            let result = _neon_nonzero_mask_u8(a);
-            assert_eq!(result, u16::MAX);
+            let result = _neon_nonzero_mask_u8([a, a, a, a]);
+            assert_eq!(result, u64::MAX);
+
+            const BLOCKS_1: [u32; 4] = [0xFF_00_00_FF, 0xFF_FF_00_FF, 0xFF_00_FF_FF, 0xFF_FF_FF_00];
+            const BLOCKS_2: [u32; 4] = [0xFF_FF_00_FF, 0xFF_FF_00_FF, 0xFF_00_FF_FF, 0xFF_FF_FF_00];
+            
+            let a = vreinterpretq_u8_u32(_neon_load_u32(BLOCKS_1.as_ptr()));
+            let b = vreinterpretq_u8_u32(_neon_load_u32(BLOCKS_2.as_ptr()));
+            
+            let result = _neon_nonzero_mask_u8([a, b, a, a]);
+            assert_eq!(format!("{:016b}", result as u16), "1110101111011001");
+            assert_eq!(format!("{:016b}", (result >> 16) as u16), "1110101111011101");
+            assert_eq!(format!("{:016b}", (result >> 32) as u16), "1110101111011001");
+            assert_eq!(format!("{:016b}", (result >> 48) as u16), "1110101111011001");
+
+            let result = _neon_nonzero_mask_u8([b, b, a, b]);
+            assert_eq!(format!("{:016b}", result as u16), "1110101111011101");
+            assert_eq!(format!("{:016b}", (result >> 16) as u16), "1110101111011101");
+            assert_eq!(format!("{:016b}", (result >> 32) as u16), "1110101111011001");
+            assert_eq!(format!("{:016b}", (result >> 48) as u16), "1110101111011101");
         }
     }
 
@@ -440,6 +450,8 @@ mod tests {
             let result = _neon_mov_maskz_u8(0, a);
             let view = std::mem::transmute::<uint8x16_t, [u8; 16]>(result);
             assert_eq!(view, [0; 16]);
+            
+            
         }
     }
 }
