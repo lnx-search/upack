@@ -56,6 +56,21 @@ fn main() {
         filter: args.filter,
     };
 
+    #[cfg(target_arch = "aarch64")]
+    if std::arch::is_aarch64_feature_detected!("neon") {
+        tracing::info!("cpu feature enabled = neon");
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    if std::arch::is_x86_feature_detected!("avx512f") {
+        tracing::info!("cpu feature enabled = avx512");
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    if std::arch::is_x86_feature_detected!("avx2") {
+        tracing::info!("cpu feature enabled = avx2");
+    }
+
     let mut runner = runner::RunContext::from(config);
 
     // Compressors
