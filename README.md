@@ -265,84 +265,84 @@ just bench
 
 <details>
 <summary>
-  <h3>NEON - Hetzner CX23 (ARM)</h3>
+  <h3>NEON - Apple M4</h3>
 </summary>
 
 ```
 ╭────────────────────────────────────┬────────────────────┬──────────────────╮
 │ Routine Name                       ┆ Integer Throughput ┆ Bytes Throughput │
 ╞════════════════════════════════════╪════════════════════╪══════════════════╡
-│ compress/upack-base/x128           ┆ 1.56B int/sec      ┆ 6.24 GB/sec      │
+│ compress/upack-base/x128           ┆ 4.12B int/sec      ┆ 16.47 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta/x128          ┆ 1.27B int/sec      ┆ 5.06 GB/sec      │
+│ compress/upack-delta/x128          ┆ 3.56B int/sec      ┆ 14.24 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta1/x128         ┆ 1.29B int/sec      ┆ 5.15 GB/sec      │
+│ compress/upack-delta1/x128         ┆ 3.48B int/sec      ┆ 13.93 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/bitpacking-base/x128      ┆ 1.99B int/sec      ┆ 7.95 GB/sec      │
+│ compress/bitpacking-base/x128      ┆ 6.53B int/sec      ┆ 26.11 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/bitpacking-delta/x128     ┆ 1.68B int/sec      ┆ 6.72 GB/sec      │
+│ compress/bitpacking-delta/x128     ┆ 4.51B int/sec      ┆ 18.02 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/bitpacking-delta1/x128    ┆ 1.51B int/sec      ┆ 6.04 GB/sec      │
+│ compress/bitpacking-delta1/x128    ┆ 4.11B int/sec      ┆ 16.43 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-base/random-len     ┆ 825.79M int/sec    ┆ 3.30 GB/sec      │
+│ compress/upack-base/random-len     ┆ 1.86B int/sec      ┆ 7.43 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta/random-len    ┆ 706.98M int/sec    ┆ 2.83 GB/sec      │
+│ compress/upack-delta/random-len    ┆ 1.75B int/sec      ┆ 7.02 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta1/random-len   ┆ 676.67M int/sec    ┆ 2.71 GB/sec      │
+│ compress/upack-delta1/random-len   ┆ 1.72B int/sec      ┆ 6.89 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-base/x32            ┆ 396.23M int/sec    ┆ 1.58 GB/sec      │
+│ compress/upack-base/x32            ┆ 1.04B int/sec      ┆ 4.14 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-base/x64            ┆ 795.43M int/sec    ┆ 3.18 GB/sec      │
+│ compress/upack-base/x64            ┆ 2.07B int/sec      ┆ 8.29 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-base/x96            ┆ 1.20B int/sec      ┆ 4.79 GB/sec      │
+│ compress/upack-base/x96            ┆ 3.11B int/sec      ┆ 12.45 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta/x32           ┆ 317.87M int/sec    ┆ 1.27 GB/sec      │
+│ compress/upack-delta/x32           ┆ 898.52M int/sec    ┆ 3.59 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta/x64           ┆ 633.81M int/sec    ┆ 2.54 GB/sec      │
+│ compress/upack-delta/x64           ┆ 1.80B int/sec      ┆ 7.20 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta/x96           ┆ 958.04M int/sec    ┆ 3.83 GB/sec      │
+│ compress/upack-delta/x96           ┆ 2.70B int/sec      ┆ 10.78 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta1/x32          ┆ 321.19M int/sec    ┆ 1.28 GB/sec      │
+│ compress/upack-delta1/x32          ┆ 870.41M int/sec    ┆ 3.48 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta1/x64          ┆ 642.55M int/sec    ┆ 2.57 GB/sec      │
+│ compress/upack-delta1/x64          ┆ 1.75B int/sec      ┆ 7.02 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ compress/upack-delta1/x96          ┆ 962.13M int/sec    ┆ 3.85 GB/sec      │
+│ compress/upack-delta1/x96          ┆ 2.63B int/sec      ┆ 10.53 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-base/x128         ┆ 2.27B int/sec      ┆ 9.09 GB/sec      │
+│ decompress/upack-base/x128         ┆ 6.45B int/sec      ┆ 25.80 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta/x128        ┆ 1.67B int/sec      ┆ 6.69 GB/sec      │
+│ decompress/upack-delta/x128        ┆ 5.12B int/sec      ┆ 20.49 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta1/x128       ┆ 1.55B int/sec      ┆ 6.21 GB/sec      │
+│ decompress/upack-delta1/x128       ┆ 4.98B int/sec      ┆ 19.93 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/bitpacking-base/x128    ┆ 2.86B int/sec      ┆ 11.43 GB/sec     │
+│ decompress/bitpacking-base/x128    ┆ 7.01B int/sec      ┆ 28.04 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/bitpacking-delta/x128   ┆ 1.85B int/sec      ┆ 7.39 GB/sec      │
+│ decompress/bitpacking-delta/x128   ┆ 5.70B int/sec      ┆ 22.79 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/bitpacking-delta1/x128  ┆ 1.73B int/sec      ┆ 6.91 GB/sec      │
+│ decompress/bitpacking-delta1/x128  ┆ 5.45B int/sec      ┆ 21.79 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-base/random-len   ┆ 1.14B int/sec      ┆ 4.55 GB/sec      │
+│ decompress/upack-base/random-len   ┆ 3.05B int/sec      ┆ 12.21 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta/random-len  ┆ 853.19M int/sec    ┆ 3.41 GB/sec      │
+│ decompress/upack-delta/random-len  ┆ 2.66B int/sec      ┆ 10.65 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta1/random-len ┆ 822.71M int/sec    ┆ 3.29 GB/sec      │
+│ decompress/upack-delta1/random-len ┆ 2.64B int/sec      ┆ 10.54 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-base/x32          ┆ 571.24M int/sec    ┆ 2.28 GB/sec      │
+│ decompress/upack-base/x32          ┆ 1.68B int/sec      ┆ 6.74 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-base/x64          ┆ 1.15B int/sec      ┆ 4.60 GB/sec      │
+│ decompress/upack-base/x64          ┆ 3.18B int/sec      ┆ 12.74 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-base/x96          ┆ 1.70B int/sec      ┆ 6.81 GB/sec      │
+│ decompress/upack-base/x96          ┆ 4.90B int/sec      ┆ 19.59 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta/x32         ┆ 418.58M int/sec    ┆ 1.67 GB/sec      │
+│ decompress/upack-delta/x32         ┆ 1.31B int/sec      ┆ 5.23 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta/x64         ┆ 831.91M int/sec    ┆ 3.33 GB/sec      │
+│ decompress/upack-delta/x64         ┆ 2.63B int/sec      ┆ 10.54 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta/x96         ┆ 1.25B int/sec      ┆ 4.99 GB/sec      │
+│ decompress/upack-delta/x96         ┆ 3.94B int/sec      ┆ 15.77 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta1/x32        ┆ 396.12M int/sec    ┆ 1.58 GB/sec      │
+│ decompress/upack-delta1/x32        ┆ 1.23B int/sec      ┆ 4.93 GB/sec      │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta1/x64        ┆ 793.17M int/sec    ┆ 3.17 GB/sec      │
+│ decompress/upack-delta1/x64        ┆ 2.50B int/sec      ┆ 10.01 GB/sec     │
 ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┼╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│ decompress/upack-delta1/x96        ┆ 1.19B int/sec      ┆ 4.77 GB/sec      │
+│ decompress/upack-delta1/x96        ┆ 3.68B int/sec      ┆ 14.70 GB/sec     │
 ╰────────────────────────────────────┴────────────────────┴──────────────────╯
 ```
 </details>

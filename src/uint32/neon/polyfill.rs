@@ -226,40 +226,64 @@ pub(super) fn _neon_slli_u8<const IMM8: i32>(a: uint8x16_t) -> uint8x16_t {
 #[inline]
 #[target_feature(enable = "neon")]
 /// Return a bitmask with a set bit indicating the element at the same index is non-zero.
-pub fn _neon_nonzero_mask_u8(a: uint8x16_t) -> u16 {
-    const MASK: [u8; 16] = [
-        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40,
-        0x80,
+pub fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
+    let view = unsafe { std::mem::transmute::<[uint8x16_t; 4], [u8; 64]>(regs) };
+    let interleaved = unsafe { vld4q_u8(view.as_ptr()) };
+
+    let zeroes = vdupq_n_u8(0);
+    let chunks = [
+        vceqq_u8(interleaved.0, zeroes),
+        vceqq_u8(interleaved.1, zeroes),
+        vceqq_u8(interleaved.2, zeroes),
+        vceqq_u8(interleaved.3, zeroes),
     ];
 
-    let cmp = vmvnq_u8(vceqq_u8(a, vdupq_n_u8(0)));
-    let bitmask = unsafe { vld1q_u8(MASK.as_ptr()) };
-
-    let masked = vandq_u8(cmp, bitmask);
-    let mut paired = vpadd_u8(vget_low_u8(masked), vget_high_u8(masked));
-    paired = vpadd_u8(paired, paired);
-    paired = vpadd_u8(paired, paired);
-
-    vget_lane_u16::<0>(vreinterpret_u16_u8(paired))
+    !vmovmaskq_u8(chunks)
 }
 
 #[inline]
 #[target_feature(enable = "neon")]
-/// Selectively move elements from `a` into the output register based on the respective
-/// bit flag in `mask`.
-pub(super) fn _neon_mov_maskz_u8(mask: u16, a: uint8x16_t) -> uint8x16_t {
-    const BIT_POS: [u8; 8] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80];
+fn vmovmaskq_u8(chunks: [uint8x16_t; 4]) -> u64 {
+    let t0 = vsriq_n_u8::<1>(chunks[1], chunks[0]);
+    let t1 = vsriq_n_u8::<1>(chunks[3], chunks[2]);
+    let t2 = vsriq_n_u8::<2>(t1, t0);
+    let t3 = vsriq_n_u8::<4>(t2, t2);
+    let t4 = vshrn_n_u16::<4>(vreinterpretq_u16_u8(t3));
+    unsafe { std::mem::transmute::<uint8x8_t, u64>(t4) }
+}
 
-    let k_lo = vdup_n_u8(mask as u8);
-    let k_hi = vdup_n_u8((mask >> 8) as u8);
+#[inline]
+#[target_feature(enable = "neon")]
+/// Broadcast a u64 bitmask to 64 8-bit elements, where each element is set
+/// to the corresponding bit in the input mask.
+pub(super) fn _neon_mov_maskz_u8(mask: u64) -> [uint8x16_t; 4] {
+    const MASK_1: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1];
+    const MASK_2: [u8; 16] = [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3];
+    const MASK_3: [u8; 16] = [4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5];
+    const MASK_4: [u8; 16] = [6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7];
+    const TESTS: [u8; 16] = [1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128];
 
-    let bit_pos = unsafe { vld1_u8(BIT_POS.as_ptr()) };
+    let mask = vreinterpretq_u8_u64(vdupq_n_u64(mask));
 
-    let test_lo = vtst_u8(k_lo, bit_pos);
-    let test_hi = vtst_u8(k_hi, bit_pos);
+    let idx0 = unsafe { vld1q_u8(MASK_1.as_ptr()) };
+    let idx1 = unsafe { vld1q_u8(MASK_2.as_ptr()) };
+    let idx2 = unsafe { vld1q_u8(MASK_3.as_ptr()) };
+    let idx3 = unsafe { vld1q_u8(MASK_4.as_ptr()) };
 
-    let mask = vcombine_u8(test_lo, test_hi);
-    vandq_u8(a, mask)
+    let bits = unsafe { vld1q_u8(TESTS.as_ptr()) };
+    let ones = vdupq_n_u8(1);
+
+    let s0 = vqtbl1q_u8(mask, idx0);
+    let s1 = vqtbl1q_u8(mask, idx1);
+    let s2 = vqtbl1q_u8(mask, idx2);
+    let s3 = vqtbl1q_u8(mask, idx3);
+
+    let d1 = vandq_u8(vtstq_u8(s0, bits), ones);
+    let d2 = vandq_u8(vtstq_u8(s1, bits), ones);
+    let d3 = vandq_u8(vtstq_u8(s2, bits), ones);
+    let d4 = vandq_u8(vtstq_u8(s3, bits), ones);
+
+    [d1, d2, d3, d4]
 }
 
 #[inline]
@@ -273,7 +297,6 @@ pub(super) fn _neon_pack_nibbles(a: [uint8x16_t; 2], b: [uint8x16_t; 2]) -> [uin
     let a_shifted = vshlq_n_u8::<4>(a_odd);
     let packed1 = vorrq_u8(a_masked, a_shifted);
 
-    // Process d2: pack 32 bytes -> 16 bytes
     let b_even = vuzp1q_u8(b[0], b[1]);
     let b_odd = vuzp2q_u8(b[0], b[1]);
 
@@ -402,12 +425,48 @@ mod tests {
     fn test_movmask_u8() {
         unsafe {
             let a = _neon_set1_u8(0);
-            let result = _neon_nonzero_mask_u8(a);
+            let result = _neon_nonzero_mask_u8([a, a, a, a]);
             assert_eq!(result, 0);
 
             let a = _neon_set1_u8(u8::MAX);
-            let result = _neon_nonzero_mask_u8(a);
-            assert_eq!(result, u16::MAX);
+            let result = _neon_nonzero_mask_u8([a, a, a, a]);
+            assert_eq!(result, u64::MAX);
+
+            const BLOCKS_1: [u32; 4] = [0xFF_00_00_FF, 0xFF_FF_00_FF, 0xFF_00_FF_FF, 0xFF_FF_FF_00];
+            const BLOCKS_2: [u32; 4] = [0xFF_FF_00_FF, 0xFF_FF_00_FF, 0xFF_00_FF_FF, 0xFF_FF_FF_00];
+
+            let a = vreinterpretq_u8_u32(_neon_load_u32(BLOCKS_1.as_ptr()));
+            let b = vreinterpretq_u8_u32(_neon_load_u32(BLOCKS_2.as_ptr()));
+
+            let result = _neon_nonzero_mask_u8([a, b, a, a]);
+            assert_eq!(format!("{:016b}", result as u16), "1110101111011001");
+            assert_eq!(
+                format!("{:016b}", (result >> 16) as u16),
+                "1110101111011101"
+            );
+            assert_eq!(
+                format!("{:016b}", (result >> 32) as u16),
+                "1110101111011001"
+            );
+            assert_eq!(
+                format!("{:016b}", (result >> 48) as u16),
+                "1110101111011001"
+            );
+
+            let result = _neon_nonzero_mask_u8([b, b, a, b]);
+            assert_eq!(format!("{:016b}", result as u16), "1110101111011101");
+            assert_eq!(
+                format!("{:016b}", (result >> 16) as u16),
+                "1110101111011101"
+            );
+            assert_eq!(
+                format!("{:016b}", (result >> 32) as u16),
+                "1110101111011001"
+            );
+            assert_eq!(
+                format!("{:016b}", (result >> 48) as u16),
+                "1110101111011101"
+            );
         }
     }
 
@@ -415,15 +474,13 @@ mod tests {
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_mov_maskz_u8() {
         unsafe {
-            let a = _neon_set1_u8(2);
-            let result = _neon_mov_maskz_u8(u16::MAX, a);
-            let view = std::mem::transmute::<uint8x16_t, [u8; 16]>(result);
-            assert_eq!(view, [2; 16]);
+            let result = _neon_mov_maskz_u8(u64::MAX);
+            let view = std::mem::transmute::<[uint8x16_t; 4], [u8; 64]>(result);
+            assert_eq!(view, [1; 64]);
 
-            let a = _neon_set1_u8(2);
-            let result = _neon_mov_maskz_u8(0, a);
-            let view = std::mem::transmute::<uint8x16_t, [u8; 16]>(result);
-            assert_eq!(view, [0; 16]);
+            let result = _neon_mov_maskz_u8(0);
+            let view = std::mem::transmute::<[uint8x16_t; 4], [u8; 64]>(result);
+            assert_eq!(view, [0; 64]);
         }
     }
 }

@@ -21,13 +21,7 @@ pub unsafe fn from_u1(input: *const u8) -> [uint32x4_t; 16] {
 /// by `input`.
 unsafe fn unpack_u1_registers(input: *const u8) -> [uint8x16_t; 4] {
     let mask: u64 = unsafe { std::ptr::read_unaligned(input.add(0).cast()) };
-
-    let ones = _neon_set1_u8(0b1);
-    let packed1 = _neon_mov_maskz_u8(mask as u16, ones);
-    let packed2 = _neon_mov_maskz_u8((mask >> 16) as u16, ones);
-    let packed3 = _neon_mov_maskz_u8((mask >> 32) as u16, ones);
-    let packed4 = _neon_mov_maskz_u8((mask >> 48) as u16, ones);
-    [packed1, packed2, packed3, packed4]
+    _neon_mov_maskz_u8(mask)
 }
 
 #[inline]
@@ -71,13 +65,8 @@ unsafe fn unpack_u3_registers(input: *const u8) -> [uint8x16_t; 4] {
 
     let hi_bitmask: u64 = unsafe { std::ptr::read_unaligned(input.add(16).cast()) };
 
-    let ones = _neon_set1_u8(0b100);
-    let hi_1bits1 = _neon_mov_maskz_u8(hi_bitmask as u16, ones);
-    let hi_1bits2 = _neon_mov_maskz_u8((hi_bitmask >> 16) as u16, ones);
-    let hi_1bits3 = _neon_mov_maskz_u8((hi_bitmask >> 32) as u16, ones);
-    let hi_1bits4 = _neon_mov_maskz_u8((hi_bitmask >> 48) as u16, ones);
-
-    let hi_1bits = [hi_1bits1, hi_1bits2, hi_1bits3, hi_1bits4];
+    let mut hi_1bits = _neon_mov_maskz_u8(hi_bitmask);
+    hi_1bits = slli_u8::<2, 4>(hi_1bits);
 
     or_u8_all(hi_1bits, lo_2bits)
 }
