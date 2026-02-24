@@ -87,7 +87,7 @@ You can run the benchmarks via
 just bench
 ```
 
-##### Small Summary
+#### Small Summary
 
 **Compression**
 ![compression.png](assets/compression.png)
