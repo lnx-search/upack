@@ -5,8 +5,66 @@ use std::arch::aarch64::*;
 use super::polyfill::*;
 
 #[target_feature(enable = "neon")]
-/// Pack 4 sets of registers containing 16-bit elements and produce 2 registers holding
-/// 9-bit elements.
+/// Pack 4 sets of registers containing 16-bit elements and produce 4 registers holding
+/// 8-bit elements.
+///
+/// The order of elements is **not** maintained.
+pub(super) fn pack_u16_to_u8_unordered(data: [uint16x8_t; 8]) -> [uint8x16_t; 4] {
+    let mask = _neon_set1_u16(0x00FF);
+    let lo = [
+        _neon_and_u16(data[0], mask),
+        _neon_and_u16(data[1], mask),
+        _neon_and_u16(data[2], mask),
+        _neon_and_u16(data[3], mask),
+    ];
+    let hi = [
+        _neon_slli_u16::<8>(data[4]),
+        _neon_slli_u16::<8>(data[5]),
+        _neon_slli_u16::<8>(data[6]),
+        _neon_slli_u16::<8>(data[7]),
+    ];
+
+    [
+        vreinterpretq_u8_u16(_neon_or_u16(hi[0], lo[0])),
+        vreinterpretq_u8_u16(_neon_or_u16(hi[1], lo[1])),
+        vreinterpretq_u8_u16(_neon_or_u16(hi[2], lo[2])),
+        vreinterpretq_u8_u16(_neon_or_u16(hi[3], lo[3])),
+    ]
+}
+
+#[target_feature(enable = "neon")]
+/// Split the 16-bit values in the provided registers producing two 8-bit
+/// halves, packing the results while **not** maintaining the order.
+pub(super) fn split_u16_unordered(data: [uint16x8_t; 8]) -> ([uint8x16_t; 4], [uint8x16_t; 4]) {
+    let mask = _neon_set1_u16(0x00FF);
+
+    let lo_bits = and_u16(data, mask);
+    let hi_bits = srli_u16::<8, 8>(data);
+
+    let lo_packed = pack_u16_to_u8_unordered(lo_bits);
+    let hi_packed = pack_u16_to_u8_unordered(hi_bits);
+
+    (hi_packed, lo_packed)
+}
+
+#[target_feature(enable = "neon")]
+/// Split the 16-bit values in the provided registers producing two 8-bit
+/// halves, packing the results while maintaining the order.
+pub(super) fn split_u16_ordered(data: [uint16x8_t; 8]) -> ([uint8x16_t; 4], [uint8x16_t; 4]) {
+    let mask = _neon_set1_u16(0x00FF);
+
+    let lo_bits = and_u16(data, mask);
+    let hi_bits = srli_u16::<8, 8>(data);
+
+    let lo_packed = pack_u16_to_u8_ordered(lo_bits);
+    let hi_packed = pack_u16_to_u8_ordered(hi_bits);
+
+    (hi_packed, lo_packed)
+}
+
+#[target_feature(enable = "neon")]
+/// Pack 4 sets of registers containing 16-bit elements and produce 4 registers holding
+/// 8-bit elements.
 ///
 /// The order of elements is maintained.
 pub(super) fn pack_u16_to_u8_ordered(data: [uint16x8_t; 8]) -> [uint8x16_t; 4] {
@@ -173,18 +231,6 @@ pub(super) fn srli_u16<const IMM8: i32, const N: usize>(
 
 #[inline]
 #[target_feature(enable = "neon")]
-/// Shift all registers right by [IMM8] in 32-bit lanes.
-pub(super) fn srli_u32<const IMM8: i32, const N: usize>(
-    mut data: [uint32x4_t; N],
-) -> [uint32x4_t; N] {
-    for i in 0..N {
-        data[i] = _neon_srli_u32::<IMM8>(data[i]);
-    }
-    data
-}
-
-#[inline]
-#[target_feature(enable = "neon")]
 /// Shift all registers left by [IMM8] in 8-bit lanes.
 pub(super) fn slli_u8<const IMM8: i32, const N: usize>(
     mut data: [uint8x16_t; N],
@@ -211,12 +257,8 @@ pub(super) fn slli_u16<const IMM8: i32, const N: usize>(
 mod tests {
     use super::*;
     use crate::X64;
-    use crate::uint16::neon::data::{load_u8x16x4, load_u16x64};
-    use crate::uint16::test_util::{
-        PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT,
-        PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,
-        PACK_U32_TO_U16_EXPECTED_UNORDERED_LAYOUT,
-    };
+    use crate::uint16::neon::data::load_u8x16x4;
+    use crate::uint16::test_util::PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT;
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]

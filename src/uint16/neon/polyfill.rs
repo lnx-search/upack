@@ -2,13 +2,6 @@ use std::arch::aarch64::*;
 
 #[inline]
 #[target_feature(enable = "neon")]
-/// Broadcast the single 32-bit element across all lanes in the register.
-pub(super) fn _neon_set1_u32(value: u32) -> uint32x4_t {
-    vdupq_n_u32(value)
-}
-
-#[inline]
-#[target_feature(enable = "neon")]
 /// Broadcast the single 16-bit element across all lanes in the register.
 pub(super) fn _neon_set1_u16(value: u16) -> uint16x8_t {
     vdupq_n_u16(value)
@@ -273,24 +266,6 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
-    fn test_pack_u32() {
-        unsafe {
-            let a = _neon_set1_u32(4);
-            let b = _neon_set1_u32(2);
-            let result = _neon_pack_u32(a, b);
-            let view = std::mem::transmute::<uint16x8_t, [u16; 8]>(result);
-            assert_eq!(
-                view,
-                [
-                    4, 4, 4, 4, // a_lo
-                    2, 2, 2, 2, // b_lo
-                ]
-            );
-        }
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_pack_u16() {
         unsafe {
             let a = _neon_set1_u16(4);
@@ -304,18 +279,6 @@ mod tests {
                     2, 2, 2, 2, 2, 2, 2, 2, // b_lo
                 ]
             );
-        }
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "neon"), ignore)]
-    fn test_cvteu32_u16() {
-        unsafe {
-            let a = _neon_set1_u32(4);
-            let b = _neon_set1_u32(4);
-            let result = _neon_cvteu32_u16(a, b);
-            let view = std::mem::transmute::<uint16x8_t, [u16; 8]>(result);
-            assert_eq!(view, [4; 8]);
         }
     }
 
@@ -344,17 +307,6 @@ mod tests {
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
-    fn test_cvteu16_u32() {
-        unsafe {
-            let a = _neon_set1_u16(4);
-            let result = _neon_cvteu16_u32(a);
-            let view = std::mem::transmute::<[uint32x4_t; 2], [u32; 8]>(result);
-            assert_eq!(view, [4; 8]);
-        }
-    }
-
-    #[test]
-    #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_movmask_u8() {
         unsafe {
             let a = _neon_set1_u8(0);
@@ -368,8 +320,8 @@ mod tests {
             const BLOCKS_1: [u32; 4] = [0xFF_00_00_FF, 0xFF_FF_00_FF, 0xFF_00_FF_FF, 0xFF_FF_FF_00];
             const BLOCKS_2: [u32; 4] = [0xFF_FF_00_FF, 0xFF_FF_00_FF, 0xFF_00_FF_FF, 0xFF_FF_FF_00];
 
-            let a = vreinterpretq_u8_u32(_neon_load_u32(BLOCKS_1.as_ptr()));
-            let b = vreinterpretq_u8_u32(_neon_load_u32(BLOCKS_2.as_ptr()));
+            let a = _neon_load_u8(BLOCKS_1.as_ptr().cast());
+            let b = _neon_load_u8(BLOCKS_2.as_ptr().cast());
 
             let result = _neon_nonzero_mask_u8([a, b, a, a]);
             assert_eq!(format!("{:016b}", result as u16), "1110101111011001");

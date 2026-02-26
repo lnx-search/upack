@@ -88,7 +88,7 @@ pub unsafe fn from_nbits_delta1(
     debug_assert!(nbits <= 16, "BUG: invalid nbits provided: {nbits}");
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
-    const LUT: [unsafe fn(u16, out: *const u8, &mut [u16; X128], usize); 33] = [
+    const LUT: [unsafe fn(u16, out: *const u8, &mut [u16; X128], usize); 17] = [
         from_u0_delta1,
         from_u1_delta1,
         from_u2_delta1,
@@ -130,7 +130,7 @@ unsafe fn from_u0_delta1(
 ) {
     #[allow(clippy::needless_range_loop)]
     for i in 0..X128 {
-        out[i] = (i as u32).wrapping_add(last_value).wrapping_add(1);
+        out[i] = (i as u16).wrapping_add(last_value).wrapping_add(1);
     }
 }
 
@@ -176,7 +176,7 @@ macro_rules! define_x128_unpacker_delta {
         ) {
             let [left, right] = split_block_mut(out);
 
-            let mut last_value = vdupq_n_u32(last_value);
+            let mut last_value = vdupq_n_u16(last_value);
 
             if read_n <= 64 {
                 let mut unpacked =
@@ -267,43 +267,45 @@ define_x128_unpacker_delta!(from_u15_delta1, from_u15, 15, decode_delta1);
 define_x128_unpacker_delta!(from_u16_delta1, from_u16, 16, decode_delta1);
 
 #[target_feature(enable = "neon")]
-fn decode_delta(last_value: uint32x4_t, block: &mut [uint32x4_t; 16]) -> uint32x4_t {
-    let zero = vdupq_n_u32(0);
+fn decode_delta(last_value: uint16x8_t, block: &mut [uint16x8_t; 8]) -> uint16x8_t {
+    let zero = vdupq_n_u16(0);
 
     #[allow(clippy::needless_range_loop)]
-    for i in 0..16 {
-        block[i] = vaddq_u32(block[i], vextq_u32::<3>(zero, block[i]));
-        block[i] = vaddq_u32(block[i], vextq_u32::<2>(zero, block[i]));
+    for i in 0..8 {
+        block[i] = vaddq_u16(block[i], vextq_u16::<7>(zero, block[i]));
+        block[i] = vaddq_u16(block[i], vextq_u16::<6>(zero, block[i]));
+        block[i] = vaddq_u16(block[i], vextq_u16::<4>(zero, block[i]));
     }
 
-    block[0] = vaddq_u32(block[0], last_value);
-    for i in 1..16 {
-        let last = vdupq_laneq_u32::<3>(block[i - 1]);
-        block[i] = vaddq_u32(block[i], last);
+    block[0] = vaddq_u16(block[0], last_value);
+    for i in 1..8 {
+        let last = vdupq_laneq_u16::<7>(block[i - 1]);
+        block[i] = vaddq_u16(block[i], last);
     }
 
-    vdupq_laneq_u32::<3>(block[15])
+    vdupq_laneq_u16::<7>(block[7])
 }
 
 #[target_feature(enable = "neon")]
-fn decode_delta1(last_value: uint32x4_t, block: &mut [uint32x4_t; 16]) -> uint32x4_t {
-    let zero = vdupq_n_u32(0);
-    let ones = vdupq_n_u32(1);
+fn decode_delta1(last_value: uint16x8_t, block: &mut [uint16x8_t; 8]) -> uint16x8_t {
+    let zero = vdupq_n_u16(0);
+    let ones = vdupq_n_u16(1);
 
     #[allow(clippy::needless_range_loop)]
-    for i in 0..16 {
-        block[i] = vaddq_u32(block[i], ones);
-        block[i] = vaddq_u32(block[i], vextq_u32::<3>(zero, block[i]));
-        block[i] = vaddq_u32(block[i], vextq_u32::<2>(zero, block[i]));
+    for i in 0..8 {
+        block[i] = vaddq_u16(block[i], ones);
+        block[i] = vaddq_u16(block[i], vextq_u16::<7>(zero, block[i]));
+        block[i] = vaddq_u16(block[i], vextq_u16::<6>(zero, block[i]));
+        block[i] = vaddq_u16(block[i], vextq_u16::<4>(zero, block[i]));
     }
 
-    block[0] = vaddq_u32(block[0], last_value);
-    for i in 1..16 {
-        let last = vdupq_laneq_u32::<3>(block[i - 1]);
-        block[i] = vaddq_u32(block[i], last);
+    block[0] = vaddq_u16(block[0], last_value);
+    for i in 1..8 {
+        let last = vdupq_laneq_u16::<7>(block[i - 1]);
+        block[i] = vaddq_u16(block[i], last);
     }
 
-    vdupq_laneq_u32::<3>(block[15])
+    vdupq_laneq_u16::<7>(block[7])
 }
 
 #[cfg(test)]
@@ -313,46 +315,46 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta_zero_starting_value() {
-        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32);
+        let expected_values: [u16; X64] = std::array::from_fn(|i| i as u16);
         let mut block = [1; X64];
         block[0] = 0;
         let data =
-            unsafe { std::mem::transmute::<&mut [u32; X64], &mut [uint32x4_t; 16]>(&mut block) };
-        unsafe { decode_delta(vdupq_n_u32(0), data) };
+            unsafe { std::mem::transmute::<&mut [u16; X64], &mut [uint16x8_t; 8]>(&mut block) };
+        unsafe { decode_delta(vdupq_n_u16(0), data) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta_starting_value() {
-        let expected_values: [u32; X64] = std::array::from_fn(|i| 4 + i as u32);
+        let expected_values: [u16; X64] = std::array::from_fn(|i| 4 + i as u16);
         let mut block = [1; X64];
         block[0] = 0;
         let data =
-            unsafe { std::mem::transmute::<&mut [u32; X64], &mut [uint32x4_t; 16]>(&mut block) };
-        unsafe { decode_delta(vdupq_n_u32(4), data) };
+            unsafe { std::mem::transmute::<&mut [u16; X64], &mut [uint16x8_t; 8]>(&mut block) };
+        unsafe { decode_delta(vdupq_n_u16(4), data) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta1_zero_starting_value() {
-        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32 + 1);
+        let expected_values: [u16; X64] = std::array::from_fn(|i| i as u16 + 1);
         let mut block = [0; X64];
         let data =
-            unsafe { std::mem::transmute::<&mut [u32; X64], &mut [uint32x4_t; 16]>(&mut block) };
-        unsafe { decode_delta1(vdupq_n_u32(0), data) };
+            unsafe { std::mem::transmute::<&mut [u16; X64], &mut [uint16x8_t; 8]>(&mut block) };
+        unsafe { decode_delta1(vdupq_n_u16(0), data) };
         assert_eq!(block, expected_values);
     }
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_decode_delta1_starting_value() {
-        let expected_values: [u32; X64] = std::array::from_fn(|i| i as u32 + 5);
+        let expected_values: [u16; X64] = std::array::from_fn(|i| i as u16 + 5);
         let mut block = [0; X64];
         let data =
-            unsafe { std::mem::transmute::<&mut [u32; X64], &mut [uint32x4_t; 16]>(&mut block) };
-        unsafe { decode_delta1(vdupq_n_u32(4), data) };
+            unsafe { std::mem::transmute::<&mut [u16; X64], &mut [uint16x8_t; 8]>(&mut block) };
+        unsafe { decode_delta1(vdupq_n_u16(4), data) };
         assert_eq!(block, expected_values);
     }
 

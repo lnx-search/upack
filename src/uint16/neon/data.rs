@@ -9,10 +9,10 @@ use crate::X64;
 #[target_feature(enable = "neon")]
 /// Load 8, 128 bit registers holding 64 16-bit elements.
 pub(super) fn load_u16x64(block: &[u16; X64]) -> [uint16x8_t; 8] {
-    let ptr: *const u32 = block.as_ptr();
+    let ptr: *const u16 = block.as_ptr();
     let mut data: [MaybeUninit<uint16x8_t>; 8] = [const { MaybeUninit::uninit() }; 8];
     for i in 0..8 {
-        data[i].write(unsafe { _neon_load_u32(ptr.add(i * 8)) });
+        data[i].write(unsafe { _neon_load_u16(ptr.add(i * 8)) });
     }
     unsafe { std::mem::transmute::<[MaybeUninit<uint16x8_t>; 8], [uint16x8_t; 8]>(data) }
 }
@@ -22,7 +22,7 @@ pub(super) fn load_u16x64(block: &[u16; X64]) -> [uint16x8_t; 8] {
 pub(super) fn store_u16x64(block: &mut [u16; X64], data: [uint16x8_t; 8]) {
     let ptr: *mut u16 = block.as_mut_ptr();
     for i in 0..8 {
-        unsafe { _neon_store_u32(ptr.add(i * 8), data[i]) };
+        unsafe { _neon_store_u16(ptr.add(i * 8), data[i]) };
     }
 }
 

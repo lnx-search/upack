@@ -211,12 +211,8 @@ pub(super) fn slli_u16x16<const IMM8: u32, const N: usize>(mut data: [u16x16; N]
 mod tests {
     use super::*;
     use crate::X64;
-    use crate::uint16::scalar::data::{load_u8x32x2, load_u16x64};
-    use crate::uint16::test_util::{
-        PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT,
-        PACK_U32_TO_U8_EXPECTED_UNORDERED_LAYOUT,
-        PACK_U32_TO_U16_EXPECTED_UNORDERED_LAYOUT,
-    };
+    use crate::uint16::scalar::data::load_u8x32x2;
+    use crate::uint16::test_util::PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT;
 
     #[test]
     fn test_pack_u16_to_u8_ordered() {

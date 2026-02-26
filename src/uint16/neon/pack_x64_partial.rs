@@ -7,7 +7,7 @@ use super::util::*;
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 1-bit elements.
 pub(crate) unsafe fn to_u1(out: *mut u8, block: [uint16x8_t; 8], _pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u1_registers(out, partially_packed) }
 }
 
@@ -39,7 +39,7 @@ fn test_nonzero_mask(data: [uint8x16_t; 4], mask: uint8x16_t) -> u64 {
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 2-bit elements.
 pub(crate) unsafe fn to_u2(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u2_registers(out, partially_packed, pack_n) }
 }
 
@@ -62,7 +62,7 @@ unsafe fn pack_u2_registers(out: *mut u8, data: [uint8x16_t; 4], pack_n: usize) 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 3-bit elements.
 pub(crate) unsafe fn to_u3(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u3_registers(out, partially_packed, pack_n) }
 }
 
@@ -88,7 +88,7 @@ unsafe fn pack_u3_registers(out: *mut u8, data: [uint8x16_t; 4], pack_n: usize) 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 4-bit elements.
 pub(crate) unsafe fn to_u4(out: *mut u8, block: [uint16x8_t; 8], _pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u4_registers(out, partially_packed) }
 }
 
@@ -105,7 +105,7 @@ pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: [uint8x16_t; 4]) {
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 5-bit elements.
 pub(crate) unsafe fn to_u5(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u5_registers(out, partially_packed, pack_n) }
 }
 
@@ -127,7 +127,7 @@ unsafe fn pack_u5_registers(out: *mut u8, data: [uint8x16_t; 4], pack_n: usize) 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 6-bit elements.
 pub(crate) unsafe fn to_u6(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u6_registers(out, partially_packed, pack_n) }
 }
 
@@ -149,7 +149,7 @@ unsafe fn pack_u6_registers(out: *mut u8, data: [uint8x16_t; 4], pack_n: usize) 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 7-bit elements.
 pub(crate) unsafe fn to_u7(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { pack_u7_registers(out, partially_packed, pack_n) }
 }
 
@@ -171,14 +171,14 @@ unsafe fn pack_u7_registers(out: *mut u8, data: [uint8x16_t; 4], pack_n: usize) 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 8-bit elements.
 pub(crate) unsafe fn to_u8(out: *mut u8, block: [uint16x8_t; 8], _pack_n: usize) {
-    let partially_packed = pack_u16_to_u8_urdered(block);
+    let partially_packed = pack_u16_to_u8_ordered(block);
     unsafe { store_u8x16x4(out, partially_packed) }
 }
 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 9-bit elements.
 pub(crate) unsafe fn to_u9(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u1_registers(out.add(pack_n), hi) }
 }
@@ -186,7 +186,7 @@ pub(crate) unsafe fn to_u9(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) 
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 10-bit elements.
 pub(crate) unsafe fn to_u10(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u2_registers(out.add(pack_n), hi, pack_n) }
 }
@@ -194,7 +194,7 @@ pub(crate) unsafe fn to_u10(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize)
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 11-bit elements.
 pub(crate) unsafe fn to_u11(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u3_registers(out.add(pack_n), hi, pack_n) }
 }
@@ -202,7 +202,7 @@ pub(crate) unsafe fn to_u11(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize)
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 12-bit elements.
 pub(crate) unsafe fn to_u12(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u4_registers(out.add(pack_n), hi) }
 }
@@ -210,7 +210,7 @@ pub(crate) unsafe fn to_u12(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize)
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 13-bit elements.
 pub(crate) unsafe fn to_u13(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u5_registers(out.add(pack_n), hi, pack_n) }
 }
@@ -218,7 +218,7 @@ pub(crate) unsafe fn to_u13(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize)
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 14-bit elements.
 pub(crate) unsafe fn to_u14(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u6_registers(out.add(pack_n), hi, pack_n) }
 }
@@ -226,7 +226,7 @@ pub(crate) unsafe fn to_u14(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize)
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 15-bit elements.
 pub(crate) unsafe fn to_u15(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize) {
-    let (hi, lo) = pack_u32_to_u16_split_ordered(block);
+    let (hi, lo) = split_u16_ordered(block);
     unsafe { store_u8x16x4(out.add(0), lo) };
     unsafe { pack_u7_registers(out.add(pack_n), hi, pack_n) }
 }
@@ -234,8 +234,7 @@ pub(crate) unsafe fn to_u15(out: *mut u8, block: [uint16x8_t; 8], pack_n: usize)
 #[target_feature(enable = "neon")]
 /// Bitpack the provided block of integers to 16-bit elements.
 pub(crate) unsafe fn to_u16(out: *mut u8, block: [uint16x8_t; 8], _pack_n: usize) {
-    let packed = pack_u32_to_u16_ordered(block);
-    unsafe { store_u16x8x8(out, packed) };
+    unsafe { store_u16x8x8(out, block) };
 }
 
 #[cfg(test)]
@@ -247,8 +246,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u1() {
-        let data: [u32; X64] = std::array::from_fn(|i| (i % 2) as u32);
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 2) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u1(out.as_mut_ptr(), data, 64) };
@@ -262,7 +261,7 @@ mod tests {
         data[4] = 1;
         data[8] = 1;
         data[9] = 1;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u1(out.as_mut_ptr(), data, 10) };
@@ -273,12 +272,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u2() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 3) as u32;
-        }
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 3) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u2(out.as_mut_ptr(), data, 64) };
@@ -297,7 +292,7 @@ mod tests {
         data[4] = 1;
         data[8] = 1;
         data[9] = 2;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u2(out.as_mut_ptr(), data, 10) };
@@ -313,12 +308,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u3() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 4) as u32;
-        }
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 4) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u3(out.as_mut_ptr(), data, 64) };
@@ -339,7 +330,7 @@ mod tests {
         data[4] = 1;
         data[8] = 5;
         data[9] = 2;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u3(out.as_mut_ptr(), data, 10) };
@@ -356,12 +347,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u4() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 16) as u32;
-        }
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 16) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u4(out.as_mut_ptr(), data, 64) };
@@ -379,7 +366,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 15;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u4(out.as_mut_ptr(), data, 15) };
@@ -393,12 +380,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u5() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 32) as u32;
-        }
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 32) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u5(out.as_mut_ptr(), data, 64) };
@@ -417,7 +400,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 17;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u5(out.as_mut_ptr(), data, 15) };
@@ -433,12 +416,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u6() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 64) as u32;
-        }
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 64) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u6(out.as_mut_ptr(), data, 64) };
@@ -458,7 +437,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 59;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u6(out.as_mut_ptr(), data, 15) };
@@ -476,12 +455,8 @@ mod tests {
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_to_u7() {
-        let mut data = [0; X64];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..X64 {
-            data[i] = (i % 64) as u32;
-        }
-        let data = unsafe { load_u32x64(&data) };
+        let data: [u16; X64] = std::array::from_fn(|i| (i % 64) as u16);
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u7(out.as_mut_ptr(), data, 64) };
@@ -502,7 +477,7 @@ mod tests {
         data[8] = 5;
         data[9] = 2;
         data[14] = 127;
-        let data = unsafe { load_u32x64(&data) };
+        let data = unsafe { load_u16x64(&data) };
 
         let mut out = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { to_u7(out.as_mut_ptr(), data, 15) };
@@ -539,12 +514,12 @@ mod tests {
     #[cfg_attr(not(target_feature = "neon"), ignore)]
     fn test_saturation(
         #[case] bit_len: u8,
-        #[case] packer: unsafe fn(*mut u8, [uint32x4_t; 16], usize),
+        #[case] packer: unsafe fn(*mut u8, [uint16x8_t; 8], usize),
     ) {
-        let pack_value = (2u64.pow(bit_len as u32) - 1) as u32;
+        let pack_value = (2u64.pow(bit_len as u32) - 1) as u16;
 
         let values = [pack_value; X64];
-        let data = unsafe { load_u32x64(&values) };
+        let data = unsafe { load_u16x64(&values) };
 
         let mut output = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { packer(output.as_mut_ptr(), data, X64) };
