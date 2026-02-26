@@ -4,7 +4,7 @@ use comfy_table::Table;
 use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
 
-use crate::routine::Routine;
+use super::routine::Routine;
 
 const WARMUP_TIME: Duration = Duration::from_secs(10);
 
@@ -62,7 +62,7 @@ impl RunContext {
         tracing::info!("starting warmup");
         let start = Instant::now();
         while start.elapsed() < WARMUP_TIME {
-            let samples = crate::generate::sample_input(
+            let samples = super::generate::sample_input(
                 self.config.sample_size,
                 self.config.seed,
                 1,
@@ -83,7 +83,7 @@ impl RunContext {
 
         let measurements_start = Instant::now();
         loop {
-            let samples = crate::generate::sample_input(
+            let samples = super::generate::sample_input(
                 self.config.sample_size,
                 self.config.seed,
                 1,
