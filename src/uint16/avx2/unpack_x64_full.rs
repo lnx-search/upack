@@ -293,8 +293,6 @@ mod tests {
     use super::*;
     use crate::X64;
     use crate::uint16::avx2::pack_x64_full::*;
-    #[cfg(feature = "avx512")]
-    use crate::uint16::avx512;
     use crate::uint16::{X128_MAX_OUTPUT_LEN, scalar};
 
     #[rstest::rstest]
@@ -360,51 +358,6 @@ mod tests {
             *value = fastrand::u16(0..max_value);
         }
         let data = unsafe { load_u16x64(&values) };
-
-        let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
-        unsafe { packer(packed.as_mut_ptr(), data) };
-
-        let unpacked = unsafe { unpacker(packed.as_ptr()) };
-        let unpacked = unsafe { std::mem::transmute::<[__m256i; 4], [u16; X64]>(unpacked) };
-        assert_eq!(unpacked, values);
-    }
-
-    #[cfg(feature = "avx512")]
-    #[rstest::rstest]
-    #[case(1, avx512::pack_x64_full::to_u1, from_u1)]
-    #[case(2, avx512::pack_x64_full::to_u2, from_u2)]
-    #[case(3, avx512::pack_x64_full::to_u3, from_u3)]
-    #[case(4, avx512::pack_x64_full::to_u4, from_u4)]
-    #[case(5, avx512::pack_x64_full::to_u5, from_u5)]
-    #[case(6, avx512::pack_x64_full::to_u6, from_u6)]
-    #[case(7, avx512::pack_x64_full::to_u7, from_u7)]
-    #[case(8, avx512::pack_x64_full::to_u8, from_u8)]
-    #[case(9, avx512::pack_x64_full::to_u9, from_u9)]
-    #[case(10, avx512::pack_x64_full::to_u10, from_u10)]
-    #[case(11, avx512::pack_x64_full::to_u11, from_u11)]
-    #[case(12, avx512::pack_x64_full::to_u12, from_u12)]
-    #[case(13, avx512::pack_x64_full::to_u13, from_u13)]
-    #[case(14, avx512::pack_x64_full::to_u14, from_u14)]
-    #[case(15, avx512::pack_x64_full::to_u15, from_u15)]
-    #[case(16, avx512::pack_x64_full::to_u16, from_u16)]
-    #[cfg_attr(
-        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
-        ignore
-    )]
-    fn test_unpack_avx512_packed(
-        #[case] bit_len: u8,
-        #[case] packer: unsafe fn(*mut u8, [__m512i; 2]),
-        #[case] unpacker: unsafe fn(*const u8) -> [__m256i; 4],
-    ) {
-        fastrand::seed(5876358762523525);
-
-        let max_value = (2u64.pow(bit_len as u32) - 1) as u16;
-
-        let mut values = [0; X64];
-        for value in values.iter_mut() {
-            *value = fastrand::u16(0..max_value);
-        }
-        let data = unsafe { avx512::data::load_u16x64(&values) };
 
         let mut packed = [0; X128_MAX_OUTPUT_LEN / 2];
         unsafe { packer(packed.as_mut_ptr(), data) };

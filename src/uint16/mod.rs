@@ -7,8 +7,6 @@ compile_error!("big endian machines are not supported");
 
 #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
 pub mod avx2;
-#[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-pub mod avx512;
 #[cfg(all(target_arch = "aarch64", feature = "neon"))]
 pub mod neon;
 pub mod scalar;
@@ -59,11 +57,6 @@ impl CompressibleArray for [u16; X128] {
     fn compress(n: usize, input: &Self, output: &mut Self::CompressedBuffer) -> CompressionDetails {
         assert!(n <= X128, "provided n is is greater than 128");
 
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            return unsafe { avx512::pack_x128(output, input, n) };
-        }
-
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
             return unsafe { avx2::pack_x128(output, input, n) };
@@ -85,11 +78,6 @@ impl CompressibleArray for [u16; X128] {
     ) -> CompressionDetails {
         assert!(n <= X128, "provided n is is greater than 128",);
 
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            return unsafe { avx512::pack_delta_x128(initial_value, output, input, n) };
-        }
-
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
             return unsafe { avx2::pack_delta_x128(initial_value, output, input, n) };
@@ -110,11 +98,6 @@ impl CompressibleArray for [u16; X128] {
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails {
         assert!(n <= X128, "provided n is is greater than 128");
-
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            return unsafe { avx512::pack_delta1_x128(initial_value, output, input, n) };
-        }
 
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
@@ -139,11 +122,6 @@ impl CompressibleArray for [u16; X128] {
             "input buffer is too small/incorrectly padded to safely decompress",
         );
         assert!(n <= X128, "provided n is is greater than 128");
-
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            return unsafe { avx512::unpack_x128(compressed_bit_length, input, output, n) };
-        }
 
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
@@ -174,13 +152,6 @@ impl CompressibleArray for [u16; X128] {
             "input buffer is too small/incorrectly padded to safely decompress",
         );
         assert!(n <= X128, "provided n is is greater than 128");
-
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            return unsafe {
-                avx512::unpack_delta_x128(compressed_bit_length, initial_value, input, output, n)
-            };
-        }
 
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {
@@ -215,13 +186,6 @@ impl CompressibleArray for [u16; X128] {
             "input buffer is too small/incorrectly padded to safely decompress",
         );
         assert!(n <= X128, "provided n is is greater than 128",);
-
-        #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
-        if avx512::can_use() {
-            return unsafe {
-                avx512::unpack_delta1_x128(compressed_bit_length, initial_value, input, output, n)
-            };
-        }
 
         #[cfg(all(target_arch = "x86_64", feature = "avx2"))]
         if avx2::can_use() {

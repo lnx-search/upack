@@ -19,7 +19,7 @@ pub(crate) fn load_u16x64(block: &[u16; X64]) -> [__m256i; 4] {
 /// Store 4, 256 bit registers holding 64 16-bit elements.
 pub(super) fn store_u16x64(block: &mut [u16; X64], data: [__m256i; 4]) {
     let ptr: *mut __m256i = block.as_mut_ptr().cast();
-    for i in 0..8 {
+    for i in 0..4 {
         unsafe { _mm256_storeu_si256(ptr.add(i), data[i]) };
     }
 }

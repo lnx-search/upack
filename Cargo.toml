@@ -25,7 +25,7 @@ serde_json = "1"
 serde = { version = "1", features = ["derive"] }
 
 [features]
-avx512 = []
+avx512 = ["avx2"]
 avx2 = []
 neon = []
 default = ["avx512", "avx2", "neon"]
