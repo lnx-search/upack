@@ -1,0 +1,92 @@
+use std::collections::BTreeMap;
+
+use serde::Deserialize;
+
+use crate::{X64, X128};
+
+#[rustfmt::skip]
+/// The expected layout for unordered packing functions.
+pub const PACK_U16_TO_U8_EXPECTED_UNORDERED_LAYOUT: [u8; X64] = [
+    0, 32, 1, 33, 2, 34, 3, 35,
+    4, 36, 5, 37, 6, 38, 7, 39,
+    8, 40, 9, 41, 10, 42, 11, 43,
+    12, 44, 13, 45, 14, 46, 15, 47,
+    16, 48, 17, 49, 18, 50, 19, 51,
+    20, 52, 21, 53, 22, 54, 23, 55,
+    24, 56, 25, 57, 26, 58, 27, 59,
+    28, 60, 29, 61, 30, 62, 31, 63,
+];
+
+#[derive(Deserialize)]
+struct LayoutMetadata {
+    seeds: Vec<u64>,
+    offsets: BTreeMap<String, Vec<BlockMetadata>>,
+}
+
+#[derive(Deserialize, Clone)]
+struct BlockMetadata {
+    seed: u64,
+    compressed_start: usize,
+    compressed_length: usize,
+    input_start: usize,
+}
+
+/// The regression layout allows a test to lookup the expected
+/// compressed format for a given
+pub struct RegressionLayout {
+    metadata: LayoutMetadata,
+    inputs_data: BTreeMap<u64, Vec<u8>>,
+    compressed_data: BTreeMap<u64, Vec<u8>>,
+}
+
+impl RegressionLayout {
+    /// Iterate over tests to see if the (de)compressed output of the various routines, are as expected.
+    pub fn iter_tests(&self) -> impl Iterator<Item = (usize, u8, &[u16; X128], &[u8])> {
+        (1..=X128)
+            .flat_map(|len| (1..=16).map(move |bit_len: u8| (len, bit_len)))
+            .flat_map(move |(len, bit_len)| {
+                let key = format!("len:{len},bit:{bit_len}");
+                let blocks = self.metadata.offsets.get(&key).expect("unknown key");
+
+                blocks.iter().cloned().map(move |meta| {
+                    let data = self.inputs_data.get(&meta.seed).expect("unknown seed");
+                    let input_data: &[u16] = bytemuck::cast_slice(data);
+
+                    let compressed = self.compressed_data.get(&meta.seed).expect("unknown seed");
+
+                    let input: &[u16; X128] =
+                        (input_data[meta.input_start..][..X128]).try_into().unwrap();
+                    let output = &compressed[meta.compressed_start..][..meta.compressed_length];
+                    (len, bit_len, input, output)
+                })
+            })
+    }
+}
+
+/// Load the v1 layout samples from the data folder for regression testing.
+pub fn load_uint16_regression_layout() -> RegressionLayout {
+    let layout_path = std::path::Path::new("data/v1-layout-uint16/");
+
+    let metadata_bytes =
+        std::fs::read(layout_path.join("metadata.json")).expect("read v1 layout metadata");
+    let metadata: LayoutMetadata =
+        serde_json::from_slice(&metadata_bytes).expect("deserialize metadata");
+
+    let mut inputs_data = BTreeMap::new();
+    let mut compressed_data = BTreeMap::new();
+
+    for seed in metadata.seeds.iter().copied() {
+        let inputs =
+            std::fs::read(layout_path.join(format!("seeded-{seed}.raw"))).expect("read raw inputs");
+        let compressed = std::fs::read(layout_path.join(format!("seeded-{seed}.upack")))
+            .expect("read compressed outputs");
+        inputs_data.insert(seed, inputs);
+        compressed_data.insert(seed, compressed);
+    }
+
+    RegressionLayout {
+        metadata,
+        inputs_data,
+        compressed_data,
+    }
+}

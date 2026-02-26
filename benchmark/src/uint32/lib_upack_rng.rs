@@ -1,8 +1,8 @@
 use upack::X128;
 use upack::uint32::X128_MAX_OUTPUT_LEN;
 
-use crate::generate::GeneratedSamples;
-use crate::routine::Routine;
+use super::generate::GeneratedSamples;
+use super::routine::Routine;
 
 /// Execute the base upack compressor.
 pub struct UpackRandomLenCompressBase {

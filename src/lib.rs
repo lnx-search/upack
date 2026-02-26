@@ -1,4 +1,5 @@
 mod core;
+pub mod uint16;
 pub mod uint32;
 mod util;
 

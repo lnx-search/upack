@@ -1,8 +1,8 @@
 use upack::X128;
-use upack::uint32::X128_MAX_OUTPUT_LEN;
+use upack::uint16::X128_MAX_OUTPUT_LEN;
 
-use crate::generate::GeneratedSamples;
-use crate::routine::Routine;
+use super::generate::GeneratedSamples;
+use super::routine::Routine;
 
 /// Execute the base upack compressor.
 pub struct UpackCompressBase<const BLOCK_SIZE: usize = X128> {
@@ -126,12 +126,12 @@ impl<const BLOCK_SIZE: usize> Routine for UpackCompressDelta1<BLOCK_SIZE> {
 
 pub struct PreCompressed {
     compressed: Vec<u8>,
-    metadata: Vec<(u32, u8)>,
+    metadata: Vec<(u16, u8)>,
 }
 
 /// Execute the base upack decompressor.
 pub struct UpackDecompressBase<const BLOCK_SIZE: usize = X128> {
-    output: Box<[u32; X128]>,
+    output: Box<[u16; X128]>,
 }
 
 impl<const BLOCK_SIZE: usize> Default for UpackDecompressBase<BLOCK_SIZE> {
@@ -190,7 +190,7 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressBase<BLOCK_SIZE> {
 
 /// Execute the delta upack decompressor.
 pub struct UpackDecompressDelta<const BLOCK_SIZE: usize = X128> {
-    output: Box<[u32; X128]>,
+    output: Box<[u16; X128]>,
 }
 
 impl<const BLOCK_SIZE: usize> Default for UpackDecompressDelta<BLOCK_SIZE> {
@@ -255,7 +255,7 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta<BLOCK_SIZE> {
 
 /// Execute the delta-1 upack decompressor.
 pub struct UpackDecompressDelta1<const BLOCK_SIZE: usize = X128> {
-    output: Box<[u32; X128]>,
+    output: Box<[u16; X128]>,
 }
 
 impl<const BLOCK_SIZE: usize> Default for UpackDecompressDelta1<BLOCK_SIZE> {

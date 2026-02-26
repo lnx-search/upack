@@ -1,4 +1,4 @@
-use crate::generate::GeneratedSamples;
+use super::generate::GeneratedSamples;
 
 /// A routine that can be benchmarked and measured.
 pub trait Routine: Default {
