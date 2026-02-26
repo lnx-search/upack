@@ -81,20 +81,20 @@ pub struct RegressionLayout {
 
 impl RegressionLayout {
     /// Iterate over tests to see if the (de)compressed output of the various routines, are as expected.
-    pub fn iter_tests(&self) -> impl Iterator<Item = (usize, u8, &[u32; X128], &[u8])> {
+    pub fn iter_tests(&self) -> impl Iterator<Item = (usize, u8, &[u16; X128], &[u8])> {
         (1..=X128)
-            .flat_map(|len| (1..=32).map(move |bit_len: u8| (len, bit_len)))
+            .flat_map(|len| (1..=16).map(move |bit_len: u8| (len, bit_len)))
             .flat_map(move |(len, bit_len)| {
                 let key = format!("len:{len},bit:{bit_len}");
                 let blocks = self.metadata.offsets.get(&key).expect("unknown key");
 
                 blocks.iter().cloned().map(move |meta| {
                     let data = self.inputs_data.get(&meta.seed).expect("unknown seed");
-                    let input_data: &[u32] = bytemuck::cast_slice(data);
+                    let input_data: &[u16] = bytemuck::cast_slice(data);
 
                     let compressed = self.compressed_data.get(&meta.seed).expect("unknown seed");
 
-                    let input: &[u32; X128] =
+                    let input: &[u16; X128] =
                         (input_data[meta.input_start..][..X128]).try_into().unwrap();
                     let output = &compressed[meta.compressed_start..][..meta.compressed_length];
                     (len, bit_len, input, output)
@@ -104,8 +104,8 @@ impl RegressionLayout {
 }
 
 /// Load the v1 layout samples from the data folder for regression testing.
-pub fn load_uint32_regression_layout() -> RegressionLayout {
-    let layout_path = std::path::Path::new("data/v1-layout-uint32/");
+pub fn load_uint16_regression_layout() -> RegressionLayout {
+    let layout_path = std::path::Path::new("data/v1-layout-uint16/");
 
     let metadata_bytes =
         std::fs::read(layout_path.join("metadata.json")).expect("read v1 layout metadata");

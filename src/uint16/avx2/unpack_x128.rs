@@ -366,21 +366,21 @@ mod tests {
         assert_eq!(result, expected_values);
     }
 
-    // #[test]
-    // #[cfg_attr(not(target_feature = "avx2"), ignore)]
-    // fn test_v1_layout_regression() {
-    //     let tester = crate::uint16::test_util::load_uint32_regression_layout();
-    //
-    //     let mut output_buffer = [0u16; X128];
-    //     for (len, bit_len, expected_output, input) in tester.iter_tests() {
-    //         unsafe { from_nbits(bit_len as usize, input.as_ptr(), &mut output_buffer, len) };
-    //
-    //         let produced_buffer = &output_buffer[..len];
-    //         assert_eq!(
-    //             produced_buffer,
-    //             &expected_output[..len],
-    //             "regression test failed, outputs do not match, length:{len} bit_len:{bit_len}"
-    //         )
-    //     }
-    // }
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_v1_layout_regression() {
+        let tester = crate::uint16::test_util::load_uint16_regression_layout();
+
+        let mut output_buffer = [0u16; X128];
+        for (len, bit_len, expected_output, input) in tester.iter_tests() {
+            unsafe { from_nbits(bit_len as usize, input.as_ptr(), &mut output_buffer, len) };
+
+            let produced_buffer = &output_buffer[..len];
+            assert_eq!(
+                produced_buffer,
+                &expected_output[..len],
+                "regression test failed, outputs do not match, length:{len} bit_len:{bit_len}"
+            )
+        }
+    }
 }

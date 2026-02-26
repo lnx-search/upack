@@ -77,25 +77,25 @@ define_x128_packer!(to_u14, 14);
 define_x128_packer!(to_u15, 15);
 define_x128_packer!(to_u16, 16);
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::uint16::X128_MAX_OUTPUT_LEN;
-//
-//     #[test]
-//     #[cfg_attr(not(target_feature = "avx2"), ignore)]
-//     fn test_v1_layout_regression() {
-//         let tester = crate::uint16::test_util::load_uint32_regression_layout();
-//
-//         let mut output_buffer = [0; X128_MAX_OUTPUT_LEN];
-//         for (len, bit_len, input, expected_output) in tester.iter_tests() {
-//             unsafe { to_nbits(bit_len as usize, output_buffer.as_mut_ptr(), input, len) };
-//
-//             let produced_buffer = &output_buffer[..expected_output.len()];
-//             assert_eq!(
-//                 produced_buffer, expected_output,
-//                 "regression test failed, outputs do not match, length:{len} bit_len:{bit_len}"
-//             )
-//         }
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::uint16::X128_MAX_OUTPUT_LEN;
+
+    #[test]
+    #[cfg_attr(not(target_feature = "avx2"), ignore)]
+    fn test_v1_layout_regression() {
+        let tester = crate::uint16::test_util::load_uint16_regression_layout();
+
+        let mut output_buffer = [0; X128_MAX_OUTPUT_LEN];
+        for (len, bit_len, input, expected_output) in tester.iter_tests() {
+            unsafe { to_nbits(bit_len as usize, output_buffer.as_mut_ptr(), input, len) };
+
+            let produced_buffer = &output_buffer[..expected_output.len()];
+            assert_eq!(
+                produced_buffer, expected_output,
+                "regression test failed, outputs do not match, length:{len} bit_len:{bit_len}"
+            )
+        }
+    }
+}
