@@ -96,12 +96,12 @@ just bench --kind uint16
 #### Small Summary (uint32)
 
 **Compression**
-![Compression graph uint32 results](assets/compression-graph.png)
+![Compression graph uint32 results](https://github.com/lnx-search/upack/blob/main/assets/compression-graph.png?raw=true)
 
-![Compression table uint32 results](assets/compression-table.png)
+![Compression table uint32 results](https://github.com/lnx-search/upack/blob/main/assets/compression-table.png?raw=true)
 
 **Decompression**
 
-![Decompression graph uint32 results](assets/decompression-graph.png)
+![Decompression graph uint32 results](https://github.com/lnx-search/upack/blob/main/assets/decompression-graph.png?raw=true)
 
-![Decompression table uint32 results](assets/decompression-table.png)
+![Decompression table uint32 results](https://github.com/lnx-search/upack/blob/main/assets/decompression-table.png?raw=true)

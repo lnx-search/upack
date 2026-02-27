@@ -1,8 +1,10 @@
 [package]
 name = "upack"
-version = "1.0.0"
+version = "1.0.2"
 edition = "2024"
 description = "Faster and more flexible SIMD bitpacking compression in pure Rust."
+repository = "https://github.com/lnx-search/upack"
+rust-version = "1.90.0"
 keywords = ["compression", "simd"]
 authors = ["chillfish8 harrison.burt@cf8.gg"]
 license = "Apache-2.0"
