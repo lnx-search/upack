@@ -8,6 +8,7 @@ pub mod avx512;
 #[cfg(all(target_arch = "aarch64", feature = "neon"))]
 pub mod neon;
 pub mod scalar;
+mod util;
 
 /// The maximum output size of a compressed buffer for a [X128] block, assuming worst case compression
 /// using the **Adaptive Delta** algorithm.

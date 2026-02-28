@@ -12,19 +12,9 @@ pub unsafe fn pack_adaptive_delta_x128(
     block: &mut [u32; X128],
     pack_n: usize,
 ) -> CompressionDetails {
-    let mut min_delta = u32::MAX;
-    for v in block.iter_mut().take(pack_n) {
-        let value = *v;
-        *v = value.wrapping_sub(last_value);
-        min_delta = min_delta.min(*v);
-        last_value = value;
-    }
+    let adaptive_delta = super::util::adaptive_delta_encode(&mut last_value, block, pack_n);
 
-    for delta in block.iter_mut() {
-        *delta -= min_delta;
-    }
-
-    unsafe { std::ptr::write_unaligned(out.as_mut_ptr().cast(), min_delta) };
+    unsafe { std::ptr::write_unaligned(out.as_mut_ptr().cast(), adaptive_delta) };
     let out = super::select_compression_buffer(out);
     let details = unsafe { crate::uint32::scalar::pack_x128(out, block, pack_n) };
 
