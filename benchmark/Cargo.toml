@@ -13,7 +13,7 @@ comfy-table = "7"
 fastrand = "2"
 
 clap = { version = "4", features = ["derive"] }
-upack = { path = "..", default-features = false }
+upack = { path = "..", default-features = false, features = ["adaptive-delta"] }
 
 [features]
 avx2 = ["upack/avx2"]

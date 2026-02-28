@@ -56,6 +56,7 @@ pub fn run_benchmark(args: Args) {
     runner.run::<lib_upack::UpackCompressBase>();
     runner.run::<lib_upack::UpackCompressDelta>();
     runner.run::<lib_upack::UpackCompressDelta1>();
+    runner.run::<lib_upack::UpackCompressAdaptiveDelta>();
     runner.run::<lib_bitpacking::BitpackingCompressBase>();
     runner.run::<lib_bitpacking::BitpackingCompressDelta>();
     runner.run::<lib_bitpacking::BitpackingCompressDelta1>();
