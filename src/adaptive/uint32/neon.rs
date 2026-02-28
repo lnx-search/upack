@@ -1,4 +1,5 @@
 use crate::adaptive::uint32::X128_MAX_OUTPUT_LEN;
+use crate::uint32::compressed_size;
 use crate::{CompressionDetails, X128};
 
 #[inline]
@@ -48,11 +49,13 @@ pub unsafe fn pack_adaptive_delta_x128(
 ///   a given bit length.
 /// - `nbits` must be no greater than `32`.
 pub unsafe fn unpack_adaptive_delta_x128(
-    _nbits: u8,
-    _last_value: u32,
-    _input: &[u8],
-    _block: &mut [u32; X128],
-    _read_n: usize,
+    nbits: u8,
+    last_value: u32,
+    input: &[u8],
+    block: &mut [u32; X128],
+    read_n: usize,
 ) -> usize {
-    todo!()
+    let adaptive_delta: u32 = unsafe { std::ptr::read_unaligned(input.as_ptr().cast()) };
+
+    compressed_size(nbits as usize, read_n)
 }

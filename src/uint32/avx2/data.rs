@@ -17,7 +17,7 @@ pub(crate) fn load_u32x64(block: &[u32; X64]) -> [__m256i; 8] {
 
 #[target_feature(enable = "avx2")]
 /// Store 8, 256 bit registers holding 64 32-bit elements.
-pub(super) fn store_u32x64(block: &mut [u32; X64], data: [__m256i; 8]) {
+pub(crate) fn store_u32x64(block: &mut [u32; X64], data: [__m256i; 8]) {
     let ptr: *mut __m256i = block.as_mut_ptr().cast();
     for i in 0..8 {
         unsafe { _mm256_storeu_si256(ptr.add(i), data[i]) };

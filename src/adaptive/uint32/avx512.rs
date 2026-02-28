@@ -1,5 +1,8 @@
-use crate::adaptive::uint32::X128_MAX_OUTPUT_LEN;
-use crate::{CompressionDetails, X128};
+use std::arch::x86_64::*;
+
+use crate::adaptive::uint32::{DELTA_OVERHEAD, X128_MAX_OUTPUT_LEN, compressed_size};
+use crate::uint32::avx512::{data, unpack_x64_full, unpack_x64_partial};
+use crate::{CompressionDetails, X64, X128};
 
 #[inline]
 /// Returns `true` if the runtime CPU can safely execute the AVX512 backed implementation.
@@ -49,11 +52,177 @@ pub unsafe fn pack_adaptive_delta_x128(
 ///   a given bit length.
 /// - `nbits` must be no greater than `32`.
 pub unsafe fn unpack_adaptive_delta_x128(
-    _nbits: u8,
-    _last_value: u32,
-    _input: &[u8],
-    _block: &mut [u32; X128],
-    _read_n: usize,
+    nbits: u8,
+    last_value: u32,
+    input: &[u8],
+    block: &mut [u32; X128],
+    read_n: usize,
 ) -> usize {
-    todo!()
+    let input_ptr = input.as_ptr();
+
+    let adaptive_delta: u32 = unsafe { std::ptr::read_unaligned(input_ptr.add(0).cast()) };
+
+    unsafe {
+        from_nbits(
+            nbits as usize,
+            last_value,
+            adaptive_delta,
+            input_ptr.add(DELTA_OVERHEAD),
+            block,
+            read_n,
+        )
+    };
+
+    compressed_size(nbits as usize, read_n)
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+unsafe fn from_nbits(
+    nbits: usize,
+    last_value: u32,
+    adaptive_delta: u32,
+    input: *const u8,
+    out: &mut [u32; X128],
+    read_n: usize,
+) {
+    debug_assert!(nbits <= 32, "BUG: invalid nbits provided: {nbits}");
+    debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
+    #[allow(clippy::type_complexity)]
+    const LUT: [unsafe fn(u32, u32, out: *const u8, &mut [u32; X128], usize); 33] = [
+        from_u0, from_u1, from_u2, from_u3, from_u4, from_u5, from_u6, from_u7, from_u8, from_u9,
+        from_u10, from_u11, from_u12, from_u13, from_u14, from_u15, from_u16, from_u17, from_u18,
+        from_u19, from_u20, from_u21, from_u22, from_u23, from_u24, from_u25, from_u26, from_u27,
+        from_u28, from_u29, from_u30, from_u31, from_u32,
+    ];
+    let func = unsafe { LUT.get_unchecked(nbits) };
+    unsafe { func(last_value, adaptive_delta, input, out, read_n) };
+}
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+unsafe fn from_u0(
+    last_value: u32,
+    adaptive_delta: u32,
+    _input: *const u8,
+    out: &mut [u32; X128],
+    _read_n: usize,
+) {
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..X128 {
+        out[i] = (i as u32)
+            .wrapping_add(last_value)
+            .wrapping_add(adaptive_delta);
+    }
+}
+
+macro_rules! define_x128_unpacker_adaptive_delta {
+    ($func_name:ident, $unpack_func_name:ident, $bit_length:expr, $delta_func_name:ident) => {
+        #[target_feature(enable = "avx512f", enable = "avx512bw")]
+        unsafe fn $func_name(
+            last_value: u32,
+            adaptive_delta: u32,
+            input: *const u8,
+            out: &mut [u32; X128],
+            read_n: usize,
+        ) {
+            let [left, right] = crate::util::split_slice_mut(out);
+
+            let mut last_value = _mm512_set1_epi32(last_value as i32);
+            let adaptive_delta = _mm512_set1_epi32(adaptive_delta as i32);
+
+            if read_n <= 64 {
+                let mut unpacked =
+                    unsafe { unpack_x64_partial::$unpack_func_name(input.add(0), read_n) };
+                $delta_func_name(last_value, adaptive_delta, &mut unpacked);
+                data::store_u32x64(left, unpacked);
+            } else if read_n < 128 {
+                let mut unpacked = unsafe { unpack_x64_full::$unpack_func_name(input.add(0)) };
+                last_value = $delta_func_name(last_value, adaptive_delta, &mut unpacked);
+                data::store_u32x64(left, unpacked);
+
+                unpacked = unsafe {
+                    unpack_x64_partial::$unpack_func_name(
+                        input.add(crate::uint32::max_compressed_size::<X64>($bit_length)),
+                        read_n - X64,
+                    )
+                };
+                $delta_func_name(last_value, adaptive_delta, &mut unpacked);
+                data::store_u32x64(right, unpacked);
+            } else {
+                let mut unpacked = unsafe { unpack_x64_full::$unpack_func_name(input.add(0)) };
+                last_value = $delta_func_name(last_value, adaptive_delta, &mut unpacked);
+                data::store_u32x64(left, unpacked);
+
+                unpacked = unsafe {
+                    unpack_x64_full::$unpack_func_name(
+                        input.add(crate::uint32::max_compressed_size::<X64>($bit_length)),
+                    )
+                };
+                $delta_func_name(last_value, adaptive_delta, &mut unpacked);
+                data::store_u32x64(right, unpacked);
+            }
+        }
+    };
+}
+
+define_x128_unpacker_adaptive_delta!(from_u1, from_u1, 1, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u2, from_u2, 2, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u3, from_u3, 3, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u4, from_u4, 4, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u5, from_u5, 5, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u6, from_u6, 6, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u7, from_u7, 7, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u8, from_u8, 8, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u9, from_u9, 9, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u10, from_u10, 10, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u11, from_u11, 11, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u12, from_u12, 12, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u13, from_u13, 13, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u14, from_u14, 14, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u15, from_u15, 15, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u16, from_u16, 16, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u17, from_u17, 17, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u18, from_u18, 18, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u19, from_u19, 19, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u20, from_u20, 20, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u21, from_u21, 21, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u22, from_u22, 22, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u23, from_u23, 23, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u24, from_u24, 24, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u25, from_u25, 25, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u26, from_u26, 26, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u27, from_u27, 27, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u28, from_u28, 28, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u29, from_u29, 29, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u30, from_u30, 30, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u31, from_u31, 31, decode_adaptive_delta);
+define_x128_unpacker_adaptive_delta!(from_u32, from_u32, 32, decode_adaptive_delta);
+
+#[target_feature(enable = "avx512f", enable = "avx512bw")]
+fn decode_adaptive_delta(
+    last_value: __m512i,
+    adaptive_delta: __m512i,
+    block: &mut [__m512i; 4],
+) -> __m512i {
+    block[0] = _mm512_add_epi32(block[0], adaptive_delta);
+    block[1] = _mm512_add_epi32(block[1], adaptive_delta);
+    block[2] = _mm512_add_epi32(block[2], adaptive_delta);
+    block[3] = _mm512_add_epi32(block[3], adaptive_delta);
+
+    let zero = _mm512_setzero_si512();
+    let idx_last = _mm512_set1_epi32(15);
+
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..4 {
+        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<15>(block[i], zero));
+        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<14>(block[i], zero));
+        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<12>(block[i], zero));
+        block[i] = _mm512_add_epi32(block[i], _mm512_alignr_epi32::<8>(block[i], zero));
+    }
+
+    block[0] = _mm512_add_epi32(block[0], last_value);
+    block[1] = _mm512_add_epi32(block[1], _mm512_permutexvar_epi32(idx_last, block[0]));
+    block[2] = _mm512_add_epi32(block[2], _mm512_permutexvar_epi32(idx_last, block[1]));
+    block[3] = _mm512_add_epi32(block[3], _mm512_permutexvar_epi32(idx_last, block[2]));
+
+    _mm512_permutexvar_epi32(idx_last, block[3])
 }

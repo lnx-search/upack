@@ -1,4 +1,5 @@
-use crate::adaptive::uint32::X128_MAX_OUTPUT_LEN;
+use crate::adaptive::uint32::{DELTA_OVERHEAD, X128_MAX_OUTPUT_LEN};
+use crate::uint32::compressed_size;
 use crate::{CompressionDetails, X128};
 
 /// Pack a block of 128 32-bit integers after applying the adaptive delta algorithm
@@ -38,11 +39,43 @@ pub unsafe fn pack_adaptive_delta_x128(
 ///   a given bit length.
 /// - `nbits` must be no greater than `32`.
 pub unsafe fn unpack_adaptive_delta_x128(
-    _nbits: u8,
-    _last_value: u32,
-    _input: &[u8],
-    _block: &mut [u32; X128],
-    _read_n: usize,
+    nbits: u8,
+    last_value: u32,
+    input: &[u8],
+    block: &mut [u32; X128],
+    read_n: usize,
 ) -> usize {
-    todo!()
+    let adaptive_delta: u32 = unsafe { std::ptr::read_unaligned(input.as_ptr().cast()) };
+    unsafe { crate::uint32::scalar::unpack_x128(nbits, &input[DELTA_OVERHEAD..], block, read_n) };
+    decode_adaptive_delta(last_value, adaptive_delta, block);
+    compressed_size(nbits as usize, read_n)
+}
+
+fn decode_adaptive_delta(mut last_value: u32, adaptive_delta: u32, block: &mut [u32; X128]) -> u32 {
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..128 {
+        last_value = last_value
+            .wrapping_add(block[i])
+            .wrapping_add(adaptive_delta);
+        block[i] = last_value;
+    }
+    last_value
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_decode_adaptive_delta() {
+        let mut input = [0; X128];
+        decode_adaptive_delta(0, 4, &mut input);
+        let expected: [u32; X128] = std::array::from_fn(|i| (i as u32 + 1) * 4);
+        assert_eq!(input, expected);
+
+        let mut input = [0; X128];
+        decode_adaptive_delta(4, 4, &mut input);
+        let expected: [u32; X128] = std::array::from_fn(|i| 4 + (i as u32 + 1) * 4);
+        assert_eq!(input, expected);
+    }
 }
