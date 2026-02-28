@@ -13,7 +13,7 @@ pub unsafe fn pack_adaptive_delta_x128(
     pack_n: usize,
 ) -> CompressionDetails {
     let mut min_delta = u32::MAX;
-    for v in block.iter_mut() {
+    for v in block.iter_mut().take(pack_n) {
         let value = *v;
         *v = value.wrapping_sub(last_value);
         min_delta = min_delta.min(*v);
