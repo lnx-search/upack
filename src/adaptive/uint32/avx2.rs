@@ -32,6 +32,7 @@ pub unsafe fn pack_adaptive_delta_x128(
         *delta -= min_delta;
     }
 
+    unsafe { std::ptr::write_unaligned(out.as_mut_ptr().cast(), min_delta) };
     let out = super::select_compression_buffer(out);
     unsafe { crate::uint32::avx2::pack_x128(out, block, pack_n) }
 }
