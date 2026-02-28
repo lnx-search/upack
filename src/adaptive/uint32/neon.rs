@@ -1,5 +1,4 @@
-use crate::adaptive::uint32::X128_MAX_OUTPUT_LEN;
-use crate::uint32::compressed_size;
+use crate::adaptive::uint32::{X128_MAX_OUTPUT_LEN, compressed_size};
 use crate::{CompressionDetails, X128};
 
 #[inline]
@@ -35,7 +34,12 @@ pub unsafe fn pack_adaptive_delta_x128(
 
     unsafe { std::ptr::write_unaligned(out.as_mut_ptr().cast(), min_delta) };
     let out = super::select_compression_buffer(out);
-    unsafe { crate::uint32::neon::pack_x128(out, block, pack_n) }
+    let details = unsafe { crate::uint32::neon::pack_x128(out, block, pack_n) };
+
+    CompressionDetails {
+        compressed_bit_length: details.compressed_bit_length,
+        bytes_written: compressed_size(details.compressed_bit_length as usize, pack_n),
+    }
 }
 
 #[target_feature(enable = "neon")]

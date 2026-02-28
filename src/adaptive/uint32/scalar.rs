@@ -1,5 +1,4 @@
-use crate::adaptive::uint32::{DELTA_OVERHEAD, X128_MAX_OUTPUT_LEN};
-use crate::uint32::compressed_size;
+use crate::adaptive::uint32::{DELTA_OVERHEAD, X128_MAX_OUTPUT_LEN, compressed_size};
 use crate::{CompressionDetails, X128};
 
 /// Pack a block of 128 32-bit integers after applying the adaptive delta algorithm
@@ -27,7 +26,12 @@ pub unsafe fn pack_adaptive_delta_x128(
 
     unsafe { std::ptr::write_unaligned(out.as_mut_ptr().cast(), min_delta) };
     let out = super::select_compression_buffer(out);
-    unsafe { crate::uint32::scalar::pack_x128(out, block, pack_n) }
+    let details = unsafe { crate::uint32::scalar::pack_x128(out, block, pack_n) };
+
+    CompressionDetails {
+        compressed_bit_length: details.compressed_bit_length,
+        bytes_written: compressed_size(details.compressed_bit_length as usize, pack_n),
+    }
 }
 
 /// Unpack a block of 128 32-bit integers from the compressed input after reversing

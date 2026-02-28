@@ -264,6 +264,7 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta<BLOCK_SIZE> {
             compressed.extend_from_slice(&temp_buffer[..output.bytes_written]);
             metadata.push((last_value, output.compressed_bit_length));
         }
+        compressed.resize(compressed.len() + adaptive::uint32::X128_MAX_OUTPUT_LEN, 0);
 
         PreCompressed {
             compressed,
@@ -329,6 +330,7 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta1<BLOCK_SIZE> {
             compressed.extend_from_slice(&temp_buffer[..output.bytes_written]);
             metadata.push((last_value, output.compressed_bit_length));
         }
+        compressed.resize(compressed.len() + adaptive::uint32::X128_MAX_OUTPUT_LEN, 0);
 
         PreCompressed {
             compressed,
@@ -394,6 +396,7 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressAdaptiveDelta<BLOCK_SIZ
             compressed.extend_from_slice(&temp_buffer[..output.bytes_written]);
             metadata.push((last_value, output.compressed_bit_length));
         }
+        compressed.resize(compressed.len() + adaptive::uint32::X128_MAX_OUTPUT_LEN, 0);
 
         PreCompressed {
             compressed,

@@ -79,7 +79,9 @@ impl AdaptiveCompressibleArray for [u32; X128] {
         );
         assert!(
             input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
-            "input buffer is too small/incorrectly padded to safely decompress",
+            "input buffer is too small/incorrectly padded to safely decompress len={} expected={}",
+            input.len(),
+            max_compressed_size::<X128>(compressed_bit_length as usize),
         );
         assert!(n <= X128, "provided n is is greater than 128");
 
