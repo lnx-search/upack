@@ -60,6 +60,19 @@ pub fn run_benchmark(args: Args) {
     runner.run::<lib_bitpacking::BitpackingCompressDelta>();
     runner.run::<lib_bitpacking::BitpackingCompressDelta1>();
 
+    // Decompressors
+    runner.run::<lib_upack::UpackDecompressBase>();
+    runner.run::<lib_upack::UpackDecompressDelta>();
+    runner.run::<lib_upack::UpackDecompressDelta1>();
+    runner.run::<lib_bitpacking::BitpackingDecompressBase>();
+    runner.run::<lib_bitpacking::BitpackingDecompressDelta>();
+    runner.run::<lib_bitpacking::BitpackingDecompressDelta1>();
+
+    // Decompressors - random block len
+    runner.run::<lib_upack_rng::UpackRandomLenDecompressBase>();
+    runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta>();
+    runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta1>();
+
     // Compressors - random block len
     runner.run::<lib_upack_rng::UpackRandomLenCompressBase>();
     runner.run::<lib_upack_rng::UpackRandomLenCompressDelta>();
@@ -76,20 +89,7 @@ pub fn run_benchmark(args: Args) {
     runner.run::<lib_upack::UpackCompressDelta1<64>>();
     runner.run::<lib_upack::UpackCompressDelta1<96>>();
 
-    // Decompressors
-    runner.run::<lib_upack::UpackDecompressBase>();
-    runner.run::<lib_upack::UpackDecompressDelta>();
-    runner.run::<lib_upack::UpackDecompressDelta1>();
-    runner.run::<lib_bitpacking::BitpackingDecompressBase>();
-    runner.run::<lib_bitpacking::BitpackingDecompressDelta>();
-    runner.run::<lib_bitpacking::BitpackingDecompressDelta1>();
-
-    // Decompressors - random block len
-    runner.run::<lib_upack_rng::UpackRandomLenDecompressBase>();
-    runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta>();
-    runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta1>();
-
-    // Compressors - block step len
+    // Deompressors - block step len
     runner.run::<lib_upack::UpackDecompressBase<32>>();
     runner.run::<lib_upack::UpackDecompressBase<64>>();
     runner.run::<lib_upack::UpackDecompressBase<96>>();
