@@ -1,6 +1,6 @@
 [package]
 name = "upack"
-version = "1.0.2"
+version = "1.1.0"
 edition = "2024"
 description = "Faster and more flexible SIMD bitpacking compression in pure Rust."
 repository = "https://github.com/lnx-search/upack"
@@ -35,6 +35,7 @@ serde = { version = "1", features = ["derive"] }
 avx512 = []
 avx2 = []
 neon = []
+adaptive-delta = []
 default = ["avx512", "avx2", "neon"]
 
 [profile.release]

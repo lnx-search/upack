@@ -1,3 +1,5 @@
+#[cfg(feature = "adaptive-delta")]
+pub mod adaptive;
 mod core;
 pub mod uint16;
 pub mod uint32;
@@ -48,6 +50,19 @@ where
     A: CompressibleArray,
 {
     A::compress_delta1(initial_value, n, input, out)
+}
+
+#[cfg(feature = "adaptive-delta")]
+pub fn compress_adaptive_delta<A>(
+    initial_value: A::InitialValue,
+    n: usize,
+    input: &mut A,
+    out: &mut A::CompressedBuffer,
+) -> CompressionDetails
+where
+    A: adaptive::AdaptiveCompressibleArray,
+{
+    A::compress_adaptive_delta(initial_value, n, input, out)
 }
 
 /// Decompress the input block containing the packed values, writing the decompressed
@@ -105,6 +120,31 @@ where
     A: CompressibleArray,
 {
     A::decompress_delta1(initial_value, n, compressed_bit_length, input, out)
+}
+
+#[cfg(feature = "adaptive-delta")]
+/// Decompress the input block containing the packed values, reverse the Adaptive Delta encoding
+/// and then write the decompressed values to `out`.
+///
+/// This requires that the values contained were originally compressed
+/// with [compress_adaptive_delta].
+///
+/// - `n` should be the number of elements that the compressed buffer holds.
+/// - `compressed_bit_length` should be the bit length of the compressed block values
+///   as reported by the [CompressionDetails] after compressing the block.
+///
+/// Returns the number of bytes read from the `input`.
+pub fn decompress_adaptive_delta<A>(
+    initial_value: A::InitialValue,
+    n: usize,
+    compressed_bit_length: u8,
+    input: &[u8],
+    out: &mut A,
+) -> usize
+where
+    A: adaptive::AdaptiveCompressibleArray,
+{
+    A::decompress_adaptive_delta(initial_value, n, compressed_bit_length, input, out)
 }
 
 #[cfg(test)]

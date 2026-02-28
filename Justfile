@@ -19,7 +19,7 @@ test:
     RUSTFLAGS="-Ctarget-cpu=native" cargo nextest run --workspace --no-fail-fast
 
 asm target="":
-    cargo asm -p upack --lib --simplify {{target}}
+    cargo asm --features "adaptive-delta" -p upack --lib --simplify {{target}}
 
 mca target:
-    cargo asm -p upack --lib --simplify {{target}} --mca
+    cargo asm --features "adaptive-delta" -p upack --lib --simplify {{target}} --mca
