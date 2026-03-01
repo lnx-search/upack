@@ -35,6 +35,11 @@ pub struct Args {
     #[arg(short, long, default_value = "")]
     /// A prefix filter to only run routines that start with the given input.
     filter: String,
+    #[arg(long)]
+    /// Run extended benchmarks testing random block lengths and variable sizes.
+    ///
+    /// Takes significantly longer.
+    extended: bool,
 }
 
 pub fn run_benchmark(args: Args) {
@@ -70,37 +75,39 @@ pub fn run_benchmark(args: Args) {
     runner.run::<lib_bitpacking::BitpackingDecompressDelta>();
     runner.run::<lib_bitpacking::BitpackingDecompressDelta1>();
 
-    // // Decompressors - random block len
-    // runner.run::<lib_upack_rng::UpackRandomLenDecompressBase>();
-    // runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta>();
-    // runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta1>();
-    //
-    // // Compressors - random block len
-    // runner.run::<lib_upack_rng::UpackRandomLenCompressBase>();
-    // runner.run::<lib_upack_rng::UpackRandomLenCompressDelta>();
-    // runner.run::<lib_upack_rng::UpackRandomLenCompressDelta1>();
-    //
-    // // Compressors - block step len
-    // runner.run::<lib_upack::UpackCompressBase<32>>();
-    // runner.run::<lib_upack::UpackCompressBase<64>>();
-    // runner.run::<lib_upack::UpackCompressBase<96>>();
-    // runner.run::<lib_upack::UpackCompressDelta<32>>();
-    // runner.run::<lib_upack::UpackCompressDelta<64>>();
-    // runner.run::<lib_upack::UpackCompressDelta<96>>();
-    // runner.run::<lib_upack::UpackCompressDelta1<32>>();
-    // runner.run::<lib_upack::UpackCompressDelta1<64>>();
-    // runner.run::<lib_upack::UpackCompressDelta1<96>>();
-    //
-    // // Deompressors - block step len
-    // runner.run::<lib_upack::UpackDecompressBase<32>>();
-    // runner.run::<lib_upack::UpackDecompressBase<64>>();
-    // runner.run::<lib_upack::UpackDecompressBase<96>>();
-    // runner.run::<lib_upack::UpackDecompressDelta<32>>();
-    // runner.run::<lib_upack::UpackDecompressDelta<64>>();
-    // runner.run::<lib_upack::UpackDecompressDelta<96>>();
-    // runner.run::<lib_upack::UpackDecompressDelta1<32>>();
-    // runner.run::<lib_upack::UpackDecompressDelta1<64>>();
-    // runner.run::<lib_upack::UpackDecompressDelta1<96>>();
+    if args.extended {
+        // Decompressors - random block len
+        runner.run::<lib_upack_rng::UpackRandomLenDecompressBase>();
+        runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta>();
+        runner.run::<lib_upack_rng::UpackRandomLenDecompressDelta1>();
+
+        // Compressors - random block len
+        runner.run::<lib_upack_rng::UpackRandomLenCompressBase>();
+        runner.run::<lib_upack_rng::UpackRandomLenCompressDelta>();
+        runner.run::<lib_upack_rng::UpackRandomLenCompressDelta1>();
+
+        // Compressors - block step len
+        runner.run::<lib_upack::UpackCompressBase<32>>();
+        runner.run::<lib_upack::UpackCompressBase<64>>();
+        runner.run::<lib_upack::UpackCompressBase<96>>();
+        runner.run::<lib_upack::UpackCompressDelta<32>>();
+        runner.run::<lib_upack::UpackCompressDelta<64>>();
+        runner.run::<lib_upack::UpackCompressDelta<96>>();
+        runner.run::<lib_upack::UpackCompressDelta1<32>>();
+        runner.run::<lib_upack::UpackCompressDelta1<64>>();
+        runner.run::<lib_upack::UpackCompressDelta1<96>>();
+
+        // Deompressors - block step len
+        runner.run::<lib_upack::UpackDecompressBase<32>>();
+        runner.run::<lib_upack::UpackDecompressBase<64>>();
+        runner.run::<lib_upack::UpackDecompressBase<96>>();
+        runner.run::<lib_upack::UpackDecompressDelta<32>>();
+        runner.run::<lib_upack::UpackDecompressDelta<64>>();
+        runner.run::<lib_upack::UpackDecompressDelta<96>>();
+        runner.run::<lib_upack::UpackDecompressDelta1<32>>();
+        runner.run::<lib_upack::UpackDecompressDelta1<64>>();
+        runner.run::<lib_upack::UpackDecompressDelta1<96>>();
+    }
 
     tracing::info!("benchmark complete, results:");
 

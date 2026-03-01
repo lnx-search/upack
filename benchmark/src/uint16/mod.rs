@@ -48,11 +48,13 @@ pub fn run_benchmark(args: Args) {
     runner.run::<lib_upack::UpackCompressBase>();
     runner.run::<lib_upack::UpackCompressDelta>();
     runner.run::<lib_upack::UpackCompressDelta1>();
+    runner.run::<lib_upack::UpackCompressAdaptiveDelta>();
 
     // Decompressors
     runner.run::<lib_upack::UpackDecompressBase>();
     runner.run::<lib_upack::UpackDecompressDelta>();
     runner.run::<lib_upack::UpackDecompressDelta1>();
+    runner.run::<lib_upack::UpackDecompressAdaptiveDelta>();
 
     tracing::info!("benchmark complete, results:");
 

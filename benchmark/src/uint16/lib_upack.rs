@@ -1,5 +1,5 @@
-use upack::X128;
 use upack::uint16::X128_MAX_OUTPUT_LEN;
+use upack::{X128, adaptive};
 
 use super::generate::GeneratedSamples;
 use super::routine::Routine;
@@ -117,6 +117,46 @@ impl<const BLOCK_SIZE: usize> Routine for UpackCompressDelta1<BLOCK_SIZE> {
 
         for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
             let output = upack::compress_delta1(*last_value, 128, sample, &mut self.output);
+            std::hint::black_box(output);
+        }
+
+        total_samples * BLOCK_SIZE
+    }
+}
+
+/// Execute the Adaptive Delta upack compressor.
+pub struct UpackCompressAdaptiveDelta<const BLOCK_SIZE: usize = X128> {
+    output: Box<[u8; adaptive::uint16::X128_MAX_OUTPUT_LEN]>,
+}
+
+impl<const BLOCK_SIZE: usize> Default for UpackCompressAdaptiveDelta<BLOCK_SIZE> {
+    fn default() -> Self {
+        Self {
+            output: Box::new([0; adaptive::uint16::X128_MAX_OUTPUT_LEN]),
+        }
+    }
+}
+
+impl<const BLOCK_SIZE: usize> Routine for UpackCompressAdaptiveDelta<BLOCK_SIZE> {
+    type PreparedInput = GeneratedSamples;
+
+    fn name() -> String {
+        format!("compress/upack-adaptive-delta/x{BLOCK_SIZE}")
+    }
+
+    fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
+        samples
+    }
+
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
+        let GeneratedSamples {
+            samples,
+            last_values,
+        } = input;
+        let total_samples = samples.len();
+
+        for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
+            let output = upack::compress_adaptive_delta(*last_value, 128, sample, &mut self.output);
             std::hint::black_box(output);
         }
 
@@ -306,6 +346,71 @@ impl<const BLOCK_SIZE: usize> Routine for UpackDecompressDelta1<BLOCK_SIZE> {
         let mut offset = 0;
         for (last_value, nbits) in metadata.iter().copied() {
             offset += upack::decompress_delta1(
+                last_value,
+                128,
+                nbits,
+                &compressed[offset..],
+                &mut *self.output,
+            );
+        }
+
+        total_samples * BLOCK_SIZE
+    }
+}
+
+/// Execute the Adaptive Delta upack decompressor.
+pub struct UpackDecompressAdaptiveDelta<const BLOCK_SIZE: usize = X128> {
+    output: Box<[u16; X128]>,
+}
+
+impl<const BLOCK_SIZE: usize> Default for UpackDecompressAdaptiveDelta<BLOCK_SIZE> {
+    fn default() -> Self {
+        Self {
+            output: Box::new([0; X128]),
+        }
+    }
+}
+
+impl<const BLOCK_SIZE: usize> Routine for UpackDecompressAdaptiveDelta<BLOCK_SIZE> {
+    type PreparedInput = PreCompressed;
+
+    fn name() -> String {
+        format!("decompress/upack-adaptive-delta/x{BLOCK_SIZE}")
+    }
+
+    fn prep(&mut self, samples: GeneratedSamples) -> Self::PreparedInput {
+        let GeneratedSamples {
+            mut samples,
+            last_values,
+        } = samples;
+
+        let mut temp_buffer = Box::new([0; adaptive::uint16::X128_MAX_OUTPUT_LEN]);
+
+        let mut compressed = Vec::new();
+        let mut metadata = Vec::new();
+
+        for (sample, last_value) in std::iter::zip(samples.iter_mut(), last_values) {
+            let output = upack::compress_adaptive_delta(last_value, 128, sample, &mut temp_buffer);
+            compressed.extend_from_slice(&temp_buffer[..output.bytes_written]);
+            metadata.push((last_value, output.compressed_bit_length));
+        }
+
+        PreCompressed {
+            compressed,
+            metadata,
+        }
+    }
+
+    fn execute(&mut self, input: &mut Self::PreparedInput) -> usize {
+        let PreCompressed {
+            compressed,
+            metadata,
+        } = input;
+        let total_samples = metadata.len();
+
+        let mut offset = 0;
+        for (last_value, nbits) in metadata.iter().copied() {
+            offset += upack::decompress_adaptive_delta(
                 last_value,
                 128,
                 nbits,
