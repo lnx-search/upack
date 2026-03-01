@@ -19,7 +19,7 @@ pub(super) fn load_u32x64(block: &[u32; X64]) -> [uint32x4_t; 16] {
 
 #[target_feature(enable = "neon")]
 /// Store 8, 256 bit registers holding 64 32-bit elements.
-pub(super) fn store_u32x64(block: &mut [u32; X64], data: [uint32x4_t; 16]) {
+pub(crate) fn store_u32x64(block: &mut [u32; X64], data: [uint32x4_t; 16]) {
     let ptr: *mut u32 = block.as_mut_ptr();
     for i in 0..16 {
         unsafe { _neon_store_u32(ptr.add(i * 4), data[i]) };

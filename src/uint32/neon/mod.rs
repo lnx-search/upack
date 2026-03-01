@@ -1,14 +1,14 @@
 use crate::uint32::{X128_MAX_OUTPUT_LEN, compressed_size};
 use crate::{CompressionDetails, X128};
 
-pub(super) mod data;
+pub(crate) mod data;
 mod pack_x128;
 mod pack_x64_full;
 mod pack_x64_partial;
 mod polyfill;
 mod unpack_x128;
-mod unpack_x64_full;
-mod unpack_x64_partial;
+pub(crate) mod unpack_x64_full;
+pub(crate) mod unpack_x64_partial;
 mod util;
 
 #[inline]
