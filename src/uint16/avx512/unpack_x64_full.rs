@@ -9,7 +9,7 @@ use super::util::*;
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(1)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u1(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u1(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u1_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -27,7 +27,7 @@ unsafe fn unpack_u1_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(2)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u2(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u2(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u2_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -44,7 +44,7 @@ unsafe fn unpack_u2_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(3)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u3(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u3(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u3_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -68,7 +68,7 @@ unsafe fn unpack_u3_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(4)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u4(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u4(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u4_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -85,7 +85,7 @@ unsafe fn unpack_u4_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(5)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u5(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u5(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u5_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -104,7 +104,7 @@ unsafe fn unpack_u5_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(6)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u6(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u6(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u6_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -123,7 +123,7 @@ unsafe fn unpack_u6_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(7)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u7(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u7(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { unpack_u7_registers(input) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -142,7 +142,7 @@ unsafe fn unpack_u7_registers(input: *const u8) -> __m512i {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(8)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u8(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u8(input: *const u8) -> [__m512i; 2] {
     let packed = unsafe { _mm512_loadu_epi8(input.cast()) };
     unpack_u8_to_u16_unordered(packed)
 }
@@ -153,7 +153,7 @@ pub(super) unsafe fn from_u8(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(9)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u9(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u9(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -170,7 +170,7 @@ pub(super) unsafe fn from_u9(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(10)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u10(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u10(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -187,7 +187,7 @@ pub(super) unsafe fn from_u10(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(11)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u11(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u11(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -204,7 +204,7 @@ pub(super) unsafe fn from_u11(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(12)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u12(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u12(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -221,7 +221,7 @@ pub(super) unsafe fn from_u12(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(13)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u13(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u13(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -238,7 +238,7 @@ pub(super) unsafe fn from_u13(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(14)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u14(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u14(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -255,7 +255,7 @@ pub(super) unsafe fn from_u14(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(15)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u15(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u15(input: *const u8) -> [__m512i; 2] {
     let lo_bits = unsafe { _mm512_loadu_epi8(input.add(0).cast()) };
     let lo_bits = unpack_u8_to_u16_unordered(lo_bits);
 
@@ -272,7 +272,7 @@ pub(super) unsafe fn from_u15(input: *const u8) -> [__m512i; 2] {
 /// # Safety
 /// - `input` must be safe to read `max_compressed_size::<X64>(16)` bytes from.
 /// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
-pub(super) unsafe fn from_u16(input: *const u8) -> [__m512i; 2] {
+pub(crate) unsafe fn from_u16(input: *const u8) -> [__m512i; 2] {
     unsafe { load_si512x2(input) }
 }
 

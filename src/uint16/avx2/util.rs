@@ -208,7 +208,7 @@ pub(super) fn slli_epi16<const IMM8: i32, const N: usize>(mut data: [__m256i; N]
 mod tests {
     use super::*;
     use crate::X64;
-    use crate::uint16::avx2::data::{load_si256x2, load_si256x4, load_u16x64};
+    use crate::uint16::avx2::data::{load_si256x2, load_si256x4};
     use crate::uint16::test_util::*;
 
     #[test]

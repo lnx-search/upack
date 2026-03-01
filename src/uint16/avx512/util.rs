@@ -164,11 +164,9 @@ pub(super) fn slli_epi16<const IMM8: u32, const N: usize>(mut data: [__m512i; N]
 
 #[cfg(test)]
 mod tests {
-    use std::cmp;
-
     use super::*;
     use crate::X64;
-    use crate::uint16::avx512::data::{load_si512x2, load_u16x64};
+    use crate::uint16::avx512::data::load_si512x2;
     use crate::uint16::test_util::*;
 
     #[test]

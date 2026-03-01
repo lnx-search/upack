@@ -142,5 +142,6 @@ impl AdaptiveCompressibleArray for [u32; X128] {
 fn select_compression_buffer(
     input: &mut [u8; X128_MAX_OUTPUT_LEN],
 ) -> &mut [u8; crate::uint32::X128_MAX_OUTPUT_LEN] {
+    const { assert!(X128_MAX_OUTPUT_LEN == crate::uint32::X128_MAX_OUTPUT_LEN + DELTA_OVERHEAD) };
     unsafe { (&mut input[DELTA_OVERHEAD..]).try_into().unwrap_unchecked() }
 }
