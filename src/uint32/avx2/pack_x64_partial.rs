@@ -108,7 +108,8 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [__m256i; 8], _pack_n: usize) {
 /// Pack four registers containing 32 8-bit elements each into a 4-bit
 /// bitmap and write to `out`.
 pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: [__m256i; 2]) {
-    let [d1, d2] = data;
+    let mask = _mm256_set1_epi8(0b1111);
+    let [d1, d2] = and_si256(data, mask);
 
     let madd_multiplier = _mm256_set1_epi16(0x1001);
 
@@ -131,9 +132,7 @@ pub(crate) unsafe fn to_u5(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 /// Pack four registers containing 32 8-bit elements each into a 5-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u5_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
-    let mask = _mm256_set1_epi8(0b1111);
-    let masked = and_si256(data, mask);
-    unsafe { pack_u4_registers(out, masked) };
+    unsafe { pack_u4_registers(out, data) };
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
@@ -152,9 +151,7 @@ pub(crate) unsafe fn to_u6(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 /// Pack four registers containing 32 8-bit elements each into a 6-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u6_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
-    let mask = _mm256_set1_epi8(0b1111);
-    let masked = and_si256(data, mask);
-    unsafe { pack_u4_registers(out, masked) };
+    unsafe { pack_u4_registers(out, data) };
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
@@ -173,9 +170,7 @@ pub(crate) unsafe fn to_u7(out: *mut u8, block: [__m256i; 8], pack_n: usize) {
 /// Pack four registers containing 32 8-bit elements each into a 7-bit
 /// bitmap and write to `out`.
 unsafe fn pack_u7_registers(out: *mut u8, data: [__m256i; 2], pack_n: usize) {
-    let mask = _mm256_set1_epi8(0b1111);
-    let masked = and_si256(data, mask);
-    unsafe { pack_u4_registers(out, masked) };
+    unsafe { pack_u4_registers(out, data) };
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
