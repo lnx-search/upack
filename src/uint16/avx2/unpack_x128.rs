@@ -118,22 +118,12 @@ unsafe fn from_u0(_input: *const u8, out: &mut [u16; X128], _read_n: usize) {
 }
 
 #[target_feature(enable = "avx2")]
-unsafe fn from_u0_delta(
-    last_value: u16,
-    _input: *const u8,
-    out: &mut [u16; X128],
-    _read_n: usize,
-) {
+unsafe fn from_u0_delta(last_value: u16, _input: *const u8, out: &mut [u16; X128], _read_n: usize) {
     out.fill(last_value);
 }
 
 #[target_feature(enable = "avx2")]
-unsafe fn from_u0_delta1(
-    last_value: u16,
-    _input: *const u8,
-    out: &mut [u16; X128],
-    read_n: usize,
-) {
+unsafe fn from_u0_delta1(last_value: u16, _input: *const u8, out: &mut [u16; X128], read_n: usize) {
     for i in 0..read_n {
         out[i] = (i as u16).wrapping_add(last_value).wrapping_add(1);
     }
