@@ -26,4 +26,4 @@ jobs:
       - name: Run tests
         env:
           CARGO_TERM_COLOR: always
-        run: RUSTFLAGS="-C target-cpu=native" cargo nextest run
+        run: RUSTFLAGS="-C target-cpu=native" cargo nextest run --workspace --no-fail-fast
