@@ -227,15 +227,12 @@ pub(super) fn _neon_slli_u8<const IMM8: i32>(a: uint8x16_t) -> uint8x16_t {
 #[target_feature(enable = "neon")]
 /// Return a bitmask with a set bit indicating the element at the same index is non-zero.
 pub fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
-    let view = unsafe { std::mem::transmute::<[uint8x16_t; 4], [u8; 64]>(regs) };
-    let interleaved = unsafe { vld4q_u8(view.as_ptr()) };
-
     let zeroes = vdupq_n_u8(0);
     let chunks = [
-        vceqq_u8(interleaved.0, zeroes),
-        vceqq_u8(interleaved.1, zeroes),
-        vceqq_u8(interleaved.2, zeroes),
-        vceqq_u8(interleaved.3, zeroes),
+        vceqq_u8(regs[0], zeroes),
+        vceqq_u8(regs[1], zeroes),
+        vceqq_u8(regs[2], zeroes),
+        vceqq_u8(regs[3], zeroes),
     ];
 
     !vmovmaskq_u8(chunks)
@@ -244,12 +241,26 @@ pub fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
 #[inline]
 #[target_feature(enable = "neon")]
 fn vmovmaskq_u8(chunks: [uint8x16_t; 4]) -> u64 {
-    let t0 = vsriq_n_u8::<1>(chunks[1], chunks[0]);
-    let t1 = vsriq_n_u8::<1>(chunks[3], chunks[2]);
-    let t2 = vsriq_n_u8::<2>(t1, t0);
-    let t3 = vsriq_n_u8::<4>(t2, t2);
-    let t4 = vshrn_n_u16::<4>(vreinterpretq_u16_u8(t3));
-    unsafe { std::mem::transmute::<uint8x8_t, u64>(t4) }
+    let mask1 = match_mask_u8x16(chunks[0]);
+    let mask2 = match_mask_u8x16(chunks[1]);
+    let mask3 = match_mask_u8x16(chunks[2]);
+    let mask4 = match_mask_u8x16(chunks[3]);
+    (mask4 << 48) | (mask3 << 32) | (mask2 << 16) | mask1
+}
+
+#[inline]
+#[target_feature(enable = "neon")]
+fn match_mask_u8x16(reg: uint8x16_t) -> u64 {
+    let mut hi = vgetq_lane_u64::<1>(vreinterpretq_u64_u8(reg));
+    let mut lo = vgetq_lane_u64::<0>(vreinterpretq_u64_u8(reg));
+
+    // Magic number to get the shift mask:
+    // https://stackoverflow.com/questions/14547087/extracting-bits-with-a-single-multiplication
+    const MAGIC: u64 = 0x000103070f1f3f80;
+
+    hi = (hi.wrapping_mul(MAGIC)) >> 56;
+    lo = (lo.wrapping_mul(MAGIC)) >> 56;
+    (hi << 8) + lo
 }
 
 #[inline]
@@ -337,6 +348,30 @@ pub(super) fn _neon_blend_every_other_u16(a: uint16x8_t, b: uint16x8_t) -> uint1
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg_attr(not(target_feature = "neon"), ignore)]
+    fn test_match_mask() {
+        unsafe {
+            let a = _neon_set1_u8(4);
+            let b = _neon_set1_u8(2);
+
+            let cmp = vceqq_u8(a, a);
+            let mask = match_mask_u8x16(cmp);
+            assert_eq!(mask, 0b1111111111111111);
+
+            let cmp = vceqq_u8(a, b);
+            let mask = match_mask_u8x16(cmp);
+            assert_eq!(mask, 0b0);
+
+            let sample = [4, 2, 2, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4];
+            let c = _neon_load_u8(sample.as_ptr());
+
+            let cmp = vceqq_u8(a, c);
+            let mask = match_mask_u8x16(cmp);
+            assert_eq!(mask, 0b1111111101011001);
+        }
+    }
 
     #[test]
     #[cfg_attr(not(target_feature = "neon"), ignore)]
