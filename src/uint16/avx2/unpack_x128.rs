@@ -90,7 +90,7 @@ pub unsafe fn from_nbits_delta1(
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
     const LUT: [unsafe fn(u16, out: *const u8, &mut [u16; X128], usize); 17] = [
-        from_u0_delta,
+        from_u0_delta1,
         from_u1_delta1,
         from_u2_delta1,
         from_u3_delta1,
@@ -118,13 +118,15 @@ unsafe fn from_u0(_input: *const u8, out: &mut [u16; X128], _read_n: usize) {
 }
 
 #[target_feature(enable = "avx2")]
-unsafe fn from_u0_delta(
-    _last_value: u16,
-    _input: *const u8,
-    out: &mut [u16; X128],
-    _read_n: usize,
-) {
-    out.fill(0);
+unsafe fn from_u0_delta(last_value: u16, _input: *const u8, out: &mut [u16; X128], _read_n: usize) {
+    out.fill(last_value);
+}
+
+#[target_feature(enable = "avx2")]
+unsafe fn from_u0_delta1(last_value: u16, _input: *const u8, out: &mut [u16; X128], read_n: usize) {
+    for i in 0..read_n {
+        out[i] = (i as u16).wrapping_add(last_value).wrapping_add(1);
+    }
 }
 
 macro_rules! define_x128_unpacker {
@@ -169,7 +171,7 @@ macro_rules! define_x128_unpacker_delta {
         ) {
             let [left, right] = split_block_mut(out);
 
-            let mut last_value = _mm256_set1_epi32(last_value as i32);
+            let mut last_value = _mm256_set1_epi16(last_value as i16);
 
             if read_n <= 64 {
                 let mut unpacked =

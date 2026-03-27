@@ -108,7 +108,7 @@ pub unsafe fn from_nbits_delta1(
     debug_assert!(read_n <= X128, "BUG: invalid read_n provided: {read_n}");
     #[allow(clippy::type_complexity)]
     const LUT: [unsafe fn(u32, out: *const u8, &mut [u32; X128], usize); 33] = [
-        from_u0_delta,
+        from_u0_delta1,
         from_u1_delta1,
         from_u2_delta1,
         from_u3_delta1,
@@ -152,13 +152,21 @@ unsafe fn from_u0(_input: *const u8, out: &mut [u32; X128], _read_n: usize) {
 }
 
 #[target_feature(enable = "avx2")]
-unsafe fn from_u0_delta(
-    _last_value: u32,
+unsafe fn from_u0_delta(last_value: u32, _input: *const u8, out: &mut [u32; X128], _read_n: usize) {
+    out.fill(last_value);
+}
+
+#[target_feature(enable = "avx2")]
+unsafe fn from_u0_delta1(
+    last_value: u32,
     _input: *const u8,
     out: &mut [u32; X128],
     _read_n: usize,
 ) {
-    out.fill(0);
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..X128 {
+        out[i] = (i as u32).wrapping_add(last_value).wrapping_add(1);
+    }
 }
 
 macro_rules! define_x128_unpacker {
