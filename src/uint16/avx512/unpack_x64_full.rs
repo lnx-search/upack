@@ -425,6 +425,10 @@ mod tests {
     #[case(14, scalar::pack_x64_full::to_u14, from_u14)]
     #[case(15, scalar::pack_x64_full::to_u15, from_u15)]
     #[case(16, scalar::pack_x64_full::to_u16, from_u16)]
+    #[cfg_attr(
+        not(all(target_feature = "avx512f", target_feature = "avx512bw")),
+        ignore
+    )]
     fn test_unpack_scalar_packed(
         #[case] bit_len: u8,
         #[case] packer: unsafe fn(*mut u8, [scalar::polyfill::u16x16; 4]),
