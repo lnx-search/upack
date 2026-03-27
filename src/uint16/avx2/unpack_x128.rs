@@ -171,7 +171,7 @@ macro_rules! define_x128_unpacker_delta {
         ) {
             let [left, right] = split_block_mut(out);
 
-            let mut last_value = _mm256_set1_epi32(last_value as i32);
+            let mut last_value = _mm256_set1_epi16(last_value as i16);
 
             if read_n <= 64 {
                 let mut unpacked =

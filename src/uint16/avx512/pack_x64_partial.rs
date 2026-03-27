@@ -101,6 +101,9 @@ pub(crate) unsafe fn to_u4(out: *mut u8, block: [__m512i; 2], _pack_n: usize) {
 ///
 /// Any non-zero value will be treated as a set bit.
 pub(super) unsafe fn pack_u4_registers(out: *mut u8, data: __m512i) {
+    let mask = _mm512_set1_epi8(0b1111);
+    let data = _mm512_and_si512(data, mask);
+
     let madd_multiplier = _mm512_set1_epi16(0x1001);
     let nibbles = _mm512_maddubs_epi16(data, madd_multiplier);
     let ordered = _mm512_cvtepi16_epi8(nibbles);
@@ -124,9 +127,7 @@ pub(crate) unsafe fn to_u5(out: *mut u8, block: [__m512i; 2], pack_n: usize) {
 ///
 /// Any non-zero value will be treated as a set bit.
 unsafe fn pack_u5_registers(out: *mut u8, data: __m512i, pack_n: usize) {
-    let mask = _mm512_set1_epi8(0b1111);
-    let masked = _mm512_and_si512(data, mask);
-    unsafe { pack_u4_registers(out.add(0), masked) };
+    unsafe { pack_u4_registers(out.add(0), data) };
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
@@ -151,9 +152,7 @@ pub(crate) unsafe fn to_u6(out: *mut u8, block: [__m512i; 2], pack_n: usize) {
 ///
 /// Any non-zero value will be treated as a set bit.
 unsafe fn pack_u6_registers(out: *mut u8, data: __m512i, pack_n: usize) {
-    let mask = _mm512_set1_epi8(0b1111);
-    let masked = _mm512_and_si512(data, mask);
-    unsafe { pack_u4_registers(out, masked) };
+    unsafe { pack_u4_registers(out, data) };
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
@@ -178,9 +177,7 @@ pub(crate) unsafe fn to_u7(out: *mut u8, block: [__m512i; 2], pack_n: usize) {
 ///
 /// Any non-zero value will be treated as a set bit.
 unsafe fn pack_u7_registers(out: *mut u8, data: __m512i, pack_n: usize) {
-    let mask = _mm512_set1_epi8(0b1111);
-    let masked = _mm512_and_si512(data, mask);
-    unsafe { pack_u4_registers(out, masked) };
+    unsafe { pack_u4_registers(out, data) };
 
     // 4bit * 64 / 8-bits per byte.
     let offset = pack_n.div_ceil(2);
