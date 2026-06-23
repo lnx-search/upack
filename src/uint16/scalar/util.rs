@@ -91,8 +91,10 @@ pub(super) fn unpack_u8_to_u16_unordered(data: [u8x32; 2]) -> [u16x16; 4] {
 }
 
 pub(super) fn pack_u8_to_u4_unordered(data: [u8x32; 2]) -> u8x32 {
+    let mask = _scalar_set1_u8(0x0F);
+    let lo = _scalar_and_u8x32(data[0], mask);
     let shifted = _scalar_slli_u8x32::<4>(data[1]);
-    _scalar_or_u8x32(data[0], shifted)
+    _scalar_or_u8x32(lo, shifted)
 }
 
 pub(super) fn unpack_u4_to_u8_unordered(data: u8x32) -> [u8x32; 2] {

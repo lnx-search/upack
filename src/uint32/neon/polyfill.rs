@@ -226,7 +226,7 @@ pub(super) fn _neon_slli_u8<const IMM8: i32>(a: uint8x16_t) -> uint8x16_t {
 #[inline]
 #[target_feature(enable = "neon")]
 /// Return a bitmask with a set bit indicating the element at the same index is non-zero.
-pub fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
+pub(super) fn _neon_nonzero_mask_u8(regs: [uint8x16_t; 4]) -> u64 {
     let zeroes = vdupq_n_u8(0);
     let chunks = [
         vceqq_u8(regs[0], zeroes),

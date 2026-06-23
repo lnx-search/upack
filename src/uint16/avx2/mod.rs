@@ -17,7 +17,7 @@ pub fn can_use() -> bool {
 }
 
 #[target_feature(enable = "avx2")]
-/// Pack a block of 128 32-bit integers and write the compressed block to `out`.
+/// Pack a block of 128 16-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
 /// - The runtime CPU must support the `avx2` instructions.
@@ -39,7 +39,7 @@ pub unsafe fn pack_x128(
 }
 
 #[target_feature(enable = "avx2")]
-/// Pack a block of 128 32-bit integers and write the compressed block to `out` after
+/// Pack a block of 128 16-bit integers and write the compressed block to `out` after
 /// applying Delta encoding.
 ///
 /// # Safety
@@ -61,7 +61,7 @@ pub unsafe fn pack_delta_x128(
 }
 
 #[target_feature(enable = "avx2")]
-/// Pack a block of 128 32-bit integers and write the compressed block to `out` after
+/// Pack a block of 128 16-bit integers and write the compressed block to `out` after
 /// applying Delta-1 encoding.
 ///
 /// # Safety
@@ -83,14 +83,14 @@ pub unsafe fn pack_delta1_x128(
 }
 
 #[target_feature(enable = "avx2")]
-/// Pack a block of 128 32-bit integers and write the compressed block to `out`.
+/// Pack a block of 128 16-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
 /// - The runtime CPU must support the `avx2` instructions.
 /// - `read_n` must be less than or equal to 128.
 /// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
 ///   a given bit length.
-/// - `nbits` must be no greater than `32`.
+/// - `nbits` must be no greater than `16`.
 pub unsafe fn unpack_x128(
     nbits: u8,
     input: &[u8],
@@ -102,7 +102,7 @@ pub unsafe fn unpack_x128(
 }
 
 #[target_feature(enable = "avx2")]
-/// Pack a block of 128 32-bit integers and write the compressed block to `out` after
+/// Pack a block of 128 16-bit integers and write the compressed block to `out` after
 /// applying Delta encoding.
 ///
 /// # Safety
@@ -110,7 +110,7 @@ pub unsafe fn unpack_x128(
 /// - `read_n` must be less than or equal to 128.
 /// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
 ///   a given bit length.
-/// - `nbits` must be no greater than `32`.
+/// - `nbits` must be no greater than `16`.
 pub unsafe fn unpack_delta_x128(
     nbits: u8,
     last_value: u16,
@@ -125,7 +125,7 @@ pub unsafe fn unpack_delta_x128(
 }
 
 #[target_feature(enable = "avx2")]
-/// Pack a block of 128 32-bit integers and write the compressed block to `out` after
+/// Pack a block of 128 16-bit integers and write the compressed block to `out` after
 /// applying Delta-1 encoding.
 ///
 /// # Safety
@@ -133,7 +133,7 @@ pub unsafe fn unpack_delta_x128(
 /// - `read_n` must be less than or equal to 128.
 /// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
 ///   a given bit length.
-/// - `nbits` must be no greater than `32`.
+/// - `nbits` must be no greater than `16`.
 pub unsafe fn unpack_delta1_x128(
     nbits: u8,
     last_value: u16,

@@ -10,8 +10,16 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
-        runner: [ubuntu-latest, macos-latest]
+        include:
+          # Default features + native CPU: exercises the AVX2/AVX-512 backend on
+          # x86 and the NEON backend on macOS aarch64.
+          - { runner: ubuntu-latest, args: "--workspace" }
+          - { runner: macos-latest, args: "--workspace" }
+          # No default features: forces the scalar fallback backend, which the
+          # runtime dispatch otherwise hides on any SIMD-capable runner.
+          - { runner: ubuntu-latest, args: "-p upack --no-default-features" }
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -26,4 +34,4 @@ jobs:
       - name: Run tests
         env:
           CARGO_TERM_COLOR: always
-        run: RUSTFLAGS="-C target-cpu=native" cargo nextest run --workspace --no-fail-fast
+        run: RUSTFLAGS="-C target-cpu=native" cargo nextest run --no-fail-fast ${{ matrix.args }}

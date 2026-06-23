@@ -22,6 +22,7 @@ fn test_uint32_compress_decompress() {
             &mut decompressed,
         );
         assert_eq!(read_n, details.bytes_written);
+        assert_eq!(decompressed, *sample);
     }
 }
 
@@ -32,6 +33,7 @@ fn test_uint32_compress_decompress_delta() {
     let mut compressed = [0; upack::uint32::X128_MAX_OUTPUT_LEN];
     let mut decompressed: [u32; X128] = [0; X128];
     for sample in samples.iter_mut() {
+        let original = *sample;
         let details = upack::compress_delta(0, X128, sample, &mut compressed);
         let read_n = upack::decompress_delta(
             0,
@@ -41,6 +43,7 @@ fn test_uint32_compress_decompress_delta() {
             &mut decompressed,
         );
         assert_eq!(read_n, details.bytes_written);
+        assert_eq!(decompressed, original);
     }
 }
 
@@ -51,6 +54,7 @@ fn test_uint32_compress_decompress_delta1() {
     let mut compressed = [0; upack::uint32::X128_MAX_OUTPUT_LEN];
     let mut decompressed: [u32; X128] = [0; X128];
     for sample in samples.iter_mut() {
+        let original = *sample;
         let details = upack::compress_delta1(0, X128, sample, &mut compressed);
         let read_n = upack::decompress_delta1(
             0,
@@ -60,6 +64,7 @@ fn test_uint32_compress_decompress_delta1() {
             &mut decompressed,
         );
         assert_eq!(read_n, details.bytes_written);
+        assert_eq!(decompressed, original);
     }
 }
 
@@ -68,7 +73,7 @@ fn test_uint16_compress_decompress() {
     let sample: [u16; X128] = std::array::from_fn(|i| i as u16);
 
     let mut compressed = [0; upack::uint16::X128_MAX_OUTPUT_LEN];
-    let mut decompressed: [u32; X128] = [0; X128];
+    let mut decompressed: [u16; X128] = [0; X128];
     let details = upack::compress(X128, &sample, &mut compressed);
     let read_n = upack::decompress(
         X128,
@@ -77,16 +82,18 @@ fn test_uint16_compress_decompress() {
         &mut decompressed,
     );
     assert_eq!(read_n, details.bytes_written);
+    assert_eq!(decompressed, sample);
 }
 
 #[test]
 fn test_uint16_compress_decompress_delta() {
     let mut sample: [u16; X128] = std::array::from_fn(|i| i as u16);
+    let original = sample;
 
     let mut compressed = [0; upack::uint16::X128_MAX_OUTPUT_LEN];
-    let mut decompressed: [u32; X128] = [0; X128];
+    let mut decompressed: [u16; X128] = [0; X128];
     let details = upack::compress_delta(0, X128, &mut sample, &mut compressed);
-    let read_n = upack::decompress_delta1(
+    let read_n = upack::decompress_delta(
         0,
         X128,
         details.compressed_bit_length,
@@ -94,14 +101,16 @@ fn test_uint16_compress_decompress_delta() {
         &mut decompressed,
     );
     assert_eq!(read_n, details.bytes_written);
+    assert_eq!(decompressed, original);
 }
 
 #[test]
 fn test_uint16_compress_decompress_delta1() {
     let mut sample: [u16; X128] = std::array::from_fn(|i| (i + 1) as u16);
+    let original = sample;
 
     let mut compressed = [0; upack::uint16::X128_MAX_OUTPUT_LEN];
-    let mut decompressed: [u32; X128] = [0; X128];
+    let mut decompressed: [u16; X128] = [0; X128];
     let details = upack::compress_delta1(0, X128, &mut sample, &mut compressed);
     let read_n = upack::decompress_delta1(
         0,
@@ -111,4 +120,5 @@ fn test_uint16_compress_decompress_delta1() {
         &mut decompressed,
     );
     assert_eq!(read_n, details.bytes_written);
+    assert_eq!(decompressed, original);
 }

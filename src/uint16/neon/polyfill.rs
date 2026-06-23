@@ -56,16 +56,6 @@ pub(super) unsafe fn _neon_store_u8(ptr: *mut u8, reg: uint8x16_t) {
 
 #[inline]
 #[target_feature(enable = "neon")]
-/// Pack the two provide [u32x8] registers to unsigned 16-bit integers in blocks
-/// of 128-bits.
-pub(super) fn _neon_pack_u32(a: uint32x4_t, b: uint32x4_t) -> uint16x8_t {
-    let lo = vmovn_u32(a);
-    let hi = vmovn_u32(b);
-    vcombine_u16(lo, hi)
-}
-
-#[inline]
-#[target_feature(enable = "neon")]
 /// Pack the two provide [u16x16] registers to unsigned 8-bit integers in blocks
 /// of 128-bits.
 pub(super) fn _neon_pack_u16x16(a: uint16x8_t, b: uint16x8_t) -> uint8x16_t {
@@ -251,13 +241,6 @@ pub(super) fn _neon_unpack_nibbles(packed: uint8x16_t) -> [uint8x16_t; 2] {
 pub(super) fn _neon_blend_every_other_u8(a: uint8x16_t, b: uint8x16_t) -> uint8x16_t {
     let mask = vreinterpretq_u8_u16(vdupq_n_u16(0x00FF));
     vbslq_u8(mask, a, b)
-}
-
-#[inline]
-#[target_feature(enable = "neon")]
-pub(super) fn _neon_blend_every_other_u16(a: uint16x8_t, b: uint16x8_t) -> uint16x8_t {
-    let mask = vreinterpretq_u16_u32(vdupq_n_u32(0x0000_FFFF));
-    vbslq_u16(mask, a, b)
 }
 
 #[cfg(test)]

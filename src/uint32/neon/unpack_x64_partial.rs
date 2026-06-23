@@ -63,6 +63,7 @@ unsafe fn unpack_u2_registers(input: *const u8, read_n: usize) -> [uint8x16_t; 4
 /// - `input` must be safe to read `max_compressed_size::<X64>(3)` bytes from.
 /// - `read_n` must be between no larger than `64`.
 pub unsafe fn from_u3(input: *const u8, read_n: usize) -> [uint32x4_t; 16] {
+    debug_assert!(read_n <= 64, "read_n must be less than or equal to 64.");
     let packed = unsafe { unpack_u3_registers(input, read_n) };
     unpack_u8_to_u32_ordered(packed)
 }

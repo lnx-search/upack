@@ -25,7 +25,7 @@ pub const fn max_compressed_size<const BLOCK_SIZE: usize>(bit_length: usize) -> 
     const {
         assert!(
             BLOCK_SIZE == X128 || BLOCK_SIZE == X64,
-            "BLOCK_SIZE must be either X128 or X256"
+            "BLOCK_SIZE must be either X128 or X64"
         )
     };
     compressed_size(bit_length, BLOCK_SIZE)
@@ -37,6 +37,10 @@ pub const fn max_compressed_size<const BLOCK_SIZE: usize>(bit_length: usize) -> 
 /// of elements that were packed when using the bitpacking functions.
 pub const fn compressed_size(bit_length: usize, num_elements: usize) -> usize {
     assert!(bit_length <= 32, "bit length must be between 0 and 32");
+    assert!(
+        num_elements <= X128,
+        "num_elements must be no more than 128"
+    );
     if num_elements > 64 {
         block_bytes(bit_length, 64) + block_bytes(bit_length, num_elements - 64)
     } else {
@@ -57,7 +61,7 @@ impl CompressibleArray for [u32; X128] {
     const MAX_OUTPUT_SIZE: usize = X128 * size_of::<u32>();
 
     fn compress(n: usize, input: &Self, output: &mut Self::CompressedBuffer) -> CompressionDetails {
-        assert!(n <= X128, "provided n is is greater than 128",);
+        assert!(n <= X128, "provided n is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
@@ -83,7 +87,7 @@ impl CompressibleArray for [u32; X128] {
         input: &mut Self,
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails {
-        assert!(n <= X128, "provided n is is greater than 128",);
+        assert!(n <= X128, "provided n is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
@@ -109,7 +113,7 @@ impl CompressibleArray for [u32; X128] {
         input: &mut Self,
         output: &mut Self::CompressedBuffer,
     ) -> CompressionDetails {
-        assert!(n <= X128, "provided n is is greater than 128",);
+        assert!(n <= X128, "provided n is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
@@ -138,7 +142,7 @@ impl CompressibleArray for [u32; X128] {
             input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
             "input buffer is too small/incorrectly padded to safely decompress",
         );
-        assert!(n <= X128, "provided n is is greater than 128",);
+        assert!(n <= X128, "provided n is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
@@ -173,7 +177,7 @@ impl CompressibleArray for [u32; X128] {
             input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
             "input buffer is too small/incorrectly padded to safely decompress",
         );
-        assert!(n <= X128, "provided n is is greater than 128",);
+        assert!(n <= X128, "provided n is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {
@@ -214,7 +218,7 @@ impl CompressibleArray for [u32; X128] {
             input.len() >= max_compressed_size::<X128>(compressed_bit_length as usize),
             "input buffer is too small/incorrectly padded to safely decompress",
         );
-        assert!(n <= X128, "provided n is is greater than 128",);
+        assert!(n <= X128, "provided n is greater than 128",);
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
         if avx512::can_use() {

@@ -28,7 +28,7 @@ pub unsafe fn from_nbits(nbits: usize, input: *const u8, out: &mut [u16; X128], 
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
-/// - `nbits` must be between 0 and 32.
+/// - `nbits` must be between 0 and 16.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits_delta(
     nbits: usize,
@@ -47,7 +47,7 @@ pub unsafe fn from_nbits_delta(
 ///
 /// # Safety
 /// - `out` must be safe to write `max_compressed_size::<X128>(nbits)` bytes to.
-/// - `nbits` must be between 0 and 32.
+/// - `nbits` must be between 0 and 16.
 /// - `read_n` must be no greater than 128.
 pub unsafe fn from_nbits_delta1(
     nbits: usize,

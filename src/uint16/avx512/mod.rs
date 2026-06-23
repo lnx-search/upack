@@ -21,7 +21,7 @@ pub fn can_use() -> bool {
 /// Pack a block of 128 16-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
-/// - The runtime CPU must support the `avx2` instructions.
+/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
 /// - `pack_n` must be less than or equal to 128.
 pub unsafe fn pack_x128(
     out: &mut [u8; X128_MAX_OUTPUT_LEN],
@@ -44,7 +44,7 @@ pub unsafe fn pack_x128(
 /// applying Delta encoding.
 ///
 /// # Safety
-/// - The runtime CPU must support the `avx2` instructions.
+/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
 /// - `pack_n` must be less than or equal to 128.
 pub unsafe fn pack_delta_x128(
     mut last_value: u16,
@@ -66,7 +66,7 @@ pub unsafe fn pack_delta_x128(
 /// applying Delta-1 encoding.
 ///
 /// # Safety
-/// - The runtime CPU must support the `avx2` instructions.
+/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
 /// - `pack_n` must be less than or equal to 128.
 pub unsafe fn pack_delta1_x128(
     mut last_value: u16,
@@ -87,7 +87,7 @@ pub unsafe fn pack_delta1_x128(
 /// Pack a block of 128 16-bit integers and write the compressed block to `out`.
 ///
 /// # Safety
-/// - The runtime CPU must support the `avx2` instructions.
+/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
 /// - `read_n` must be less than or equal to 128.
 /// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
 ///   a given bit length.
@@ -107,7 +107,7 @@ pub unsafe fn unpack_x128(
 /// applying Delta encoding.
 ///
 /// # Safety
-/// - The runtime CPU must support the `avx2` instructions.
+/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
 /// - `read_n` must be less than or equal to 128.
 /// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
 ///   a given bit length.
@@ -130,7 +130,7 @@ pub unsafe fn unpack_delta_x128(
 /// applying Delta-1 encoding.
 ///
 /// # Safety
-/// - The runtime CPU must support the `avx2` instructions.
+/// - The runtime CPU must support the `avx512f` and `avx512bw` instructions.
 /// - `read_n` must be less than or equal to 128.
 /// - `input` buffer must be able to hold the _maximum_ possible length of the packed values for
 ///   a given bit length.
