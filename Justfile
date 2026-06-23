@@ -9,6 +9,9 @@ clippy:
 format:
     cargo +nightly fmt --all
 
+coverage *ARGS:
+    RUSTFLAGS="-Ctarget-cpu=native" cargo llvm-cov nextest --all-features {{ARGS}}
+
 [arg("features", long="features", help="The upack features to enable")]
 [arg("duration", long="duration", help="The duration to bench each routine")]
 [arg("kind", long="kind", help="The datatype kind to benchmark")]
